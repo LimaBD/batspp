@@ -22,6 +22,8 @@ setuptools.setup(
     project_urls={
         "Bug Tracker": "https://github.com/LimaBD/batspp/issues",
     },
+    license='GNU Lesser General Public License v3 (LGPLv3)',
+    license_files=("LICENSE.txt"),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
