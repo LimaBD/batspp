@@ -11,7 +11,7 @@ import sys
 import unittest
 
 
-# Local packages
+# Installed packages
 from mezcla.unittest_wrapper import TestWrapper
 from mezcla import glue_helpers as gh
 from mezcla import debug
