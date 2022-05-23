@@ -105,7 +105,7 @@ You can replace the assigned id to the test with a title
 $ echo "here we will use a title for this test" | wc -c
 39
 ```
-running it we got:
+running it we see "testing batspp titles" instead of an id+number:
 ```
 $ batspp /path/to/test.batspp
 1..1
