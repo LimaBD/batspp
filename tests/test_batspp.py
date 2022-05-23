@@ -17,11 +17,6 @@ from mezcla import glue_helpers as gh
 from mezcla import debug
 
 
-# Module being tested
-sys.path.insert(0, './../batspp')
-import batspp
-
-
 class TestIt(TestWrapper):
     """Class for testcase definition"""
     script_module     = TestWrapper.derive_tested_module_name(__file__) + '.py'
