@@ -1,3 +1,8 @@
+[![release: 1.1.0](https://img.shields.io/badge/release-1.1.0-blue)](https://github.com/LimaBD/batspp/releases/tag/v1.1.0)
+[![License: LGPLv3](https://img.shields.io/badge/License-LGPLv3-orange)](https://github.com/LimaBD/batspp/blob/main/LICENSE.txt)
+[![Python: >=3.6](https://img.shields.io/badge/Python-%3E%3D3.6-yellow)](https://www.python.org/)
+
+
 # BATSPP
 
 This process and run shell style tests using bats-core
