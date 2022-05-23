@@ -22,6 +22,11 @@ sudo python3 -m pip install --upgrade tqdm
 sudo python3 -m pip install --upgrade twine
 
 
+echo "build - checking dependencies..."
+pip install mezcla
+pip install -r ./submodules/mezcla/requirements.txt
+
+
 echo "build - compiling package..."
 # This will create build, dist and project.egg.info folders
 python3 setup.py bdist_wheel
