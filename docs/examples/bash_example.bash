@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # Example tests using BATSPP.
 #
 # Usage: $ python3 batspp bash_example.bash
