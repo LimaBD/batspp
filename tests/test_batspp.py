@@ -24,8 +24,9 @@ import batspp
 
 class TestIt(TestWrapper):
     """Class for testcase definition"""
-    script_module     = TestWrapper.derive_tested_module_name(__file__) + '.py'
+    script_module     = TestWrapper.derive_tested_module_name(__file__)
     use_temp_base_dir = True
+    maxDiff           = None
 
 
     def setUp(self):
