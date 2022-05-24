@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 #
-# Tests for batspp.py module
+# Tests for batspp script
+#
 
 
-"""Tests for batspp.py module"""
+"""Tests for batspp script"""
 
 
 # Standard packages
