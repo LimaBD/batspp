@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 #
-# Tokenizer module
+# Lexer module
 #
 # TODO: module description
 #
 
 
-"""Tokenizer module"""
+"""Lexer module"""
 
 
 ## TODO: WORK-IN-PROGRESS
