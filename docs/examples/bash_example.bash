@@ -1,12 +1,13 @@
 #!/bin/bash
 #
-# Example tests using BATSPP.
+# Example embedded tests in comments 
+# using the BATSPP framework.
 #
 # Usage: $ python3 batspp bash_example.bash
 #
 
 
-# You can run tests using the command line 
+# You can run simple output assertions using the command line 
 # With '$ [command]' followed by the expected output.
 #
 # $ echo -e "hello\nworld"
@@ -15,14 +16,6 @@
 #
 
 
-# Also you can test bash functions:
-#
-# This test should work fine:
-# fibonacci 9 => "0 1 1 2 3 5 8 13 21 34"
-#
-# This is a negative test:
-# fibonacci 3 =/> "8 2 45 34 3 5"
-#
 function fibonacci () {
     result=""
 
@@ -40,7 +33,7 @@ function fibonacci () {
 }
 
 
-# And you can test aliases too:
+# You can test aliases too:
 #
 # $ run-fibonacci 9
 # The Fibonacci series is:
@@ -49,9 +42,8 @@ function fibonacci () {
 alias run-fibonacci='echo "The Fibonacci series is:"; fibonacci'
 
 
-# Setups for specific test can be done with
-# command lines too without output and you can
-# also add optional titles:
+# Local setups for specific test can be done with
+# command lines too and you can also add optional titles:
 #
 # Test setup and title
 # $ filepath=$(echo $TMP/testfile-"$$")
