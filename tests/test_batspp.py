@@ -8,7 +8,6 @@
 
 
 # Standard packages
-import sys
 import unittest
 
 
@@ -18,107 +17,47 @@ from mezcla import glue_helpers as gh
 from mezcla import debug
 
 
-# Module being tested
-sys.path.insert(0, './../batspp')
-import batspp
-
-
-class TestIt(TestWrapper):
+class TestBatspp(TestWrapper):
     """Class for testcase definition"""
-    script_module     = TestWrapper.derive_tested_module_name(__file__)
+    script_module     = f'./batspp/{TestWrapper.derive_tested_module_name(__file__)}'
     use_temp_base_dir = True
     maxDiff           = None
 
+    def test_file(self):
+        """Test for test file argument"""
+        debug.trace(debug.DETAILED, f"TestBatspp.test_file({self})")
 
-    def setUp(self):
-        """Per-test setup"""
-        debug.trace(debug.QUITE_DETAILED, f"TestIt.setUp(); self={self}")
-        super().setUp()
-        gh.write_file(self.temp_file, 'some content')
-        debug.assertion(self.temp_file)
-        gh.run(f'chmod +x {self.temp_file}')
+        self.temp_file += '.batspp'
+        file_content = ('# Example test\n\n'
+                        '$ echo "hello world"\n'
+                        'hello world\n\n')
+        gh.write_file(self.temp_file, file_content)
+        result = gh.run(f'python3 {self.script_module} {self.temp_file}')
+        self.assertEqual(result, '1..1\nok 1 test of line 3')
 
+    def test_save_path(self):
+        """Test for save argument"""
+        debug.trace(debug.DETAILED, f"TestBatspp.test_save_path({self})")
 
-    def test_assert_equal(self):
-        """Test for assert_equal [actual] [value]"""
-        debug.trace(debug.DETAILED, f"TestIt.test_multiple_tests({self})")
-        ## WORK-IN-PROGRESS
+        test_file = f'{self.temp_file}.batspp'
+        save_file = f'{self.temp_file}.bats'
 
-        ## OLD
-        ## Test assertion
-        ##test_content = (f'#! ./{self.script_module}\n'
-        ##                'test "this should work" { assert_equals 10 10; }\n')
-        ##gh.write_file(self.temp_file, test_content)
-        ##expected_result = '1..1\nok 1 this should work'
-        ##self.assertEqual(gh.run(f'{self.temp_file}'), expected_result)
+        file_content = ('# Example test\n\n'
+                        '$ echo "hello world"\n'
+                        'hello world\n\n')
+        gh.write_file(test_file, file_content)
 
-        ## OLD
-        ## Test assertion fail
-        ##test_content = (f'#! ./{self.script_module}\n'
-        ##                'test "this should not work" { assert_equals 6 78; }\n')
-        ##gh.write_file(self.temp_file, test_content)
-        ##expected_result = '1..1\nnot ok 1 this should not work\n'
-        ##self.assertTrue(expected_result in gh.run(f'{self.temp_file}'))
+        result = gh.run(f'python3 {self.script_module} --save {save_file} {test_file}')
+        self.assertEqual(result, '1..1\nok 1 test of line 3')
+        self.assertTrue(gh.read_file(save_file))
 
+    def test_output(self):
+        """Test output argument"""
+        debug.trace(debug.DETAILED, f"TestBatspp.test_output({self})")
 
-    def test_assert_not_equal(self):
-        """Test for assert_not_equal [actual] [value]"""
-        debug.trace(debug.DETAILED, f"TestIt.test_assert_not_equal({self})")
-        ## WORK-IN-PROGRESS
-
-        ## OLD
-        ## Test assertion
-        ##test_content = (f'#! ./{self.script_module}\n'
-        ##                'test "this should work" { assert_not_equals 6 34; }\n')
-        ##gh.write_file(self.temp_file, test_content)
-        ##expected_result = '1..1\nok 1 this should work'
-        ##self.assertEqual(gh.run(f'{self.temp_file}'), expected_result)
-
-        ## OLD
-        ## Test assertion fail
-        ##test_content = (f'#! ./{self.script_module}\n'
-        ##                'test "this should not work" { assert_not_equals 10 10; }\n')
-        ##gh.write_file(self.temp_file, test_content)
-        ##expected_result = '1..1\nnot ok 1 this should not work\n'
-        ##self.assertTrue(expected_result in gh.run(f'{self.temp_file}'))
-
-
-    def test_multiple_tests(self):
-        """Test for multiple tests"""
-        debug.trace(debug.DETAILED, f"TestIt.test_multiple_tests({self})")
-        ## WORK-IN-PROGRESS
-
-        ## OLD
-        ##test_content = (f'#! ./{self.script_module}\n'
-        ##                'test "some test" { assert_equals 10 10; }\n'
-        ##                'test "another test" {\n'
-        ##                '    assert_not_equals 123 543\n'
-        ##                '}\n')
-        ##gh.write_file(self.temp_file, test_content)
-        ##expected_result = '1..2\nok 1 some test\nok 2 another test'
-        ##self.assertEqual(gh.run(f'{self.temp_file}'), expected_result)
-
-
-    def test_execution_path(self):
-        """Test for execution file paths"""
-        debug.trace(debug.DETAILED, f"TestIt.test_multiple_tests({self})")
-        ## WORK-IN-PROGRESS
-
-        ## OLD
-        ##source_filename = self.temp_base + '/source_file.bash'
-        ##alias_name      = 'test-alias-' + str(random.randint(0000000, 9999999))
-        ##alias_message    = 12312313
-        ##gh.write_file(source_filename, f'alias {alias_name}="echo {alias_message}"')
-
-        ## OLD
-        ##test_content = (f'#! ./{self.script_module}\n'
-        ##                f'setup() {{ shopt -s expand_aliases\nsource {source_filename}; }}\n'
-        ##                f'test "test alias from source file" {{ assert_equals $({alias_name}) "{alias_message}"; }}')
-        ##gh.write_file(self.temp_file, test_content)
-
-        ## OLD
-        ##expected_result = '1..1\nok 1 test alias from source file'
-        ##self.assertEqual(gh.run(f'{self.temp_file}'), expected_result)
+        test_file = f'{self.temp_file}.batspp'
+        result = gh.run(f'python3 {self.script_module} --output {test_file}')
+        self.assertTrue(result.startswith('#!/usr/bin/env bats'))
 
 
 if __name__ == '__main__':
