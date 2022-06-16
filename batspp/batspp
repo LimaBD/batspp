@@ -13,6 +13,8 @@
 ## TODO: dont save file when no tests found
 ## TODO: implement tags e.g. <blank>
 ## TODO; add flag to print generated test (to follow bash pipes paradigm)
+## TODO: re-instate the --source option
+## TODO: use a separate pass of the test source to fill in the missing test names.
 
 
 """

@@ -6,6 +6,9 @@
 # an abstract syntax tree (AST) for Batspp
 #
 ## TODO: parse teardown blocks
+## TODO: solve: Setup and Continue referenced before assignment should print the correct line, not the next.
+## TODO: retain support for => and =\>
+## TODO: Setup and Continuation test name default to the last named test
 
 
 """
