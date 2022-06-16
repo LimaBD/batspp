@@ -112,11 +112,22 @@ class Batspp(Main):
             gh.run(f'chmod +x {self.save_path}')
             debug.trace(7, f'batspp - running test {self.save_path}')
 
-        # Print output
+        ## TODO: check if some test command need sudo need sudo privileges
+        root_privileges_needed = False
+
+        # Print direct generated Bats file
         if self.output:
             print(bats_content)
+
+        # Run generated Bats file
         elif bats_content:
-            print(gh.run(f'bats {self.save_path}'))
+            bats_command = f'bats {self.save_path}'
+            if root_privileges_needed:
+                print('Some founded test commands needs root privileges')
+                bats_command = f'sudo {bats_command}'
+            print(gh.run(bats_command))
+
+        # Otherwise
         else:
             print(f'Not founded tests on file {self.file}')
 
