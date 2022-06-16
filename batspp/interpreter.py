@@ -9,7 +9,6 @@
 ## TODO: debug - bash debug print function to avoid repeated debug code
 ## TODO: debug - add pipe to "hexview.perl" to debug and submodule
 ## TODO: make setups commands output nothing
-## TODO: return nothing empty string when no tests found
 ## TODO: some assertion commands (e.g. tee) that prints to stdout brokes the debug actual-expected text
 
 
@@ -62,10 +61,7 @@ class Interpreter(NodeVisitor):
     def visit_TestsSuite(self, node: TestsSuite) -> str:
         """Visit TestsSuite node"""
 
-        result = ('#!/usr/bin/env bats\n'
-                  '#\n'
-                  '# This test file was generated using Batspp\n'
-                  '# https://github.com/LimaBD/batspp\n\n\n')
+        result = ''
 
         # Interpret global setup node
         result += '' if node.setup is None else self.visit(node.setup)

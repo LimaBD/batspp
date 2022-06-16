@@ -10,11 +10,9 @@
 ## TODO: upgrade docstring
 ## TODO: add timer and print execution time
 ## TODO: set soft/hard interpretation with is_test_file to comment tests
-## TODO: dont save file when no tests found
 ## TODO: implement tags e.g. <blank>
-## TODO; add flag to print generated test (to follow bash pipes paradigm)
-## TODO: re-instate the --source option
 ## TODO: use a separate pass of the test source to fill in the missing test names.
+## TODO: implement --discover flag to discover all tests file in a folder.
 
 
 """
@@ -59,6 +57,7 @@ from interpreter import Interpreter
 # Command-line labels constants
 FILE = 'file'
 SAVE = 'save'
+SOURCE = 'source'
 OUTPUT = 'output'
 
 
@@ -74,6 +73,7 @@ class Batspp(Main):
     # (avoids need for class constructor)
     file = ''
     save_path = ''
+    source = ''
     output = False
 
     def setup(self):
@@ -82,6 +82,7 @@ class Batspp(Main):
         # Check the command-line options
         self.file = self.get_parsed_argument(FILE, self.file)
         self.save_path = self.get_parsed_argument(SAVE, self.save_path)
+        self.source = self.get_parsed_argument(SOURCE, self.source)
         self.output = self.has_parsed_option(OUTPUT)
 
         debug.trace(7, (f'batspp - file: {self.file}, '
@@ -91,26 +92,40 @@ class Batspp(Main):
     def run_main_step(self):
         """Process main script"""
 
-        # Check file
-        is_test_file = self.file.endswith(f'.{BATSPP_EXTENSION}')
-        file_content = system.read_file(self.file)
+        # Append bats file header
+        bats_content = ('#!/usr/bin/env bats\n'
+                        '#\n'
+                        '# This test file was generated using Batspp\n'
+                        '# https://github.com/LimaBD/batspp\n\n')
+
+        # Append files to be sourced/load (using args)
+        if self.source:
+            bats_content += ('# Load sources\n'
+                             'shopt -s expand_aliases\n'
+                             f'source {self.source}\n\n')
 
         # Process file content
+        is_test_file = self.file.endswith(f'.{BATSPP_EXTENSION}')
+        file_content = system.read_file(self.file)
         text = TextHandler(file_content)
         tokens = Lexer().tokenize(text)
         abstract_syntax_tree = Parser().parse(tokens)
-        bats_content = Interpreter().interpret(abstract_syntax_tree)
+        bats_body = Interpreter().interpret(abstract_syntax_tree)
 
-        # Set Bats output filename
+        # Check for bats_body content
+        if not bats_body:
+            print(f'Not founded tests on file {self.file}')
+            return
+        bats_content += bats_body
+
+        # Set Bats filename to save
         self.save_path = self.save_path if self.save_path else self.temp_file
         if self.save_path.endswith('/'):
             filename = re.search(r"\/(\w+)\.", self.file).group(0)
             self.save_path += f'{filename}.{BATS_EXTENSION}'
 
-        if bats_content:
-            gh.write_file(self.save_path, bats_content)
-            gh.run(f'chmod +x {self.save_path}')
-            debug.trace(7, f'batspp - running test {self.save_path}')
+        gh.write_file(self.save_path, bats_content)
+        gh.run(f'chmod +x {self.save_path}')
 
         ## TODO: check if some test command need sudo need sudo privileges
         root_privileges_needed = False
@@ -120,22 +135,20 @@ class Batspp(Main):
             print(bats_content)
 
         # Run generated Bats file
-        elif bats_content:
-            bats_command = f'bats {self.save_path}'
+        else:
+            sudo = ''
             if root_privileges_needed:
                 print('Some founded test commands needs root privileges')
-                bats_command = f'sudo {bats_command}'
-            print(gh.run(bats_command))
-
-        # Otherwise
-        else:
-            print(f'Not founded tests on file {self.file}')
+                sudo = 'sudo'
+            debug.trace(7, f'batspp - running test {self.save_path}')
+            print(gh.run(f'{sudo} bats {self.save_path}'))
 
 
 if __name__ == '__main__':
     app = Batspp(description = __doc__,
                  positional_arguments = [(FILE, 'filename')],
                  boolean_options = [(OUTPUT, 'print output test')],
-                 text_options = [(SAVE, 'specifies output path')],
+                 text_options = [(SAVE, 'specifies path to save the generated bats file'),
+                                 (SOURCE, 'specifies file to be sourced')],
                  manual_input = True)
     app.run()
