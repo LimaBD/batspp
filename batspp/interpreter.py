@@ -10,6 +10,7 @@
 ## TODO: debug - add pipe to "hexview.perl" to debug and submodule
 ## TODO: make setups commands output nothing
 ## TODO: return nothing empty string when no tests found
+## TODO: some assertion commands (e.g. tee) that prints to stdout brokes the debug actual-expected text
 
 
 """
