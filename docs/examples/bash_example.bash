@@ -1,13 +1,15 @@
 #!/bin/bash
 #
-# Example embedded tests in comments 
+# Example embedded tests in comments
 # using the BATSPP framework.
 #
-# Usage: $ python3 batspp bash_example.bash
+# Basic usage
+# - run tests: $ batspp ./batspp_example.batspp
+# - save bats file: $ batspp --save ./result.bats ./batspp_example.batspp
 #
 
 
-# You can run simple output assertions using the command line 
+# You can run simple output assertions using the command line
 # With '$ [command]' followed by the expected output.
 #
 # $ echo -e "hello\nworld"
@@ -62,7 +64,7 @@ alias run-fibonacci='echo "The Fibonacci series is:"; fibonacci'
 # 46
 
 
-## Tests with simple '#' on tests files are ignored 
+## Tests with simple '#' on tests files are ignored
 ## and with double # on shell scripts too.
 ##
 ## $ echo "this is a test" | wc -c

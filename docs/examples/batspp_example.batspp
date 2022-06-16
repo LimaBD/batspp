@@ -1,6 +1,10 @@
 #!/usr/bin/env batspp
 #
-# Example tests using Batspp framework
+# Example tests using Batspp
+#
+# Basic usage
+# - run tests: $ batspp ./batspp_example.batspp
+# - save bats file: $ batspp --save ./result.bats ./batspp_example.batspp
 #
 
 
