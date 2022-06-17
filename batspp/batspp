@@ -110,7 +110,7 @@ class Batspp(Main):
         text = TextHandler(file_content)
         tokens = Lexer().tokenize(text)
         abstract_syntax_tree = Parser().parse(tokens)
-        bats_body = Interpreter().interpret(abstract_syntax_tree)
+        root_required, bats_body = Interpreter().interpret(abstract_syntax_tree)
 
         # Check for bats_body content
         if not bats_body:
@@ -127,19 +127,13 @@ class Batspp(Main):
         gh.write_file(self.save_path, bats_content)
         gh.run(f'chmod +x {self.save_path}')
 
-        ## TODO: check if some test command need sudo need sudo privileges
-        root_privileges_needed = False
-
         # Print direct generated Bats file
         if self.output:
             print(bats_content)
 
         # Run generated Bats file
         else:
-            sudo = ''
-            if root_privileges_needed:
-                print('Some founded test commands needs root privileges')
-                sudo = 'sudo'
+            sudo = 'sudo' if root_required else ''
             debug.trace(7, f'batspp - running test {self.save_path}')
             print(gh.run(f'{sudo} bats {self.save_path}'))
 

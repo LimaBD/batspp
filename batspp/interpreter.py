@@ -54,6 +54,7 @@ class Interpreter(NodeVisitor):
     """
 
     def __init__(self):
+        self.root_required = False
         self.stack_functions = []
         self.test_title = self.unspaced_test_title = ''
 
@@ -79,16 +80,25 @@ class Interpreter(NodeVisitor):
 
         is_global_setup = node.pointer in ['', None]
 
+        # Check indentation and header
         result = '# Setup\n' if is_global_setup else ''
         indent = '\t' if not is_global_setup else ''
 
+        # Append commands
         for command in node.commands:
             result += f'{indent}{command.strip()}\n'
+
+        self.check_root(result)
 
         result += '\n\n' if is_global_setup else ''
 
         debug.trace(7, f'interpreter.visit_Setup(node={node}) => {result}')
         return result
+
+    def check_root(self, commands):
+        """Check if command need root permissions"""
+        if not self.root_required:
+            self.root_required = 'sudo' in commands
 
     # pylint: disable=invalid-name
     def visit_Test(self, node: Test) -> str:
@@ -142,6 +152,8 @@ class Interpreter(NodeVisitor):
                   '\techo "============================"\n'
                   f'\t[ "$actual" == "$expected" ]\n')
 
+        self.check_root(node.actual)
+
         # NOTE: we use functions to avoid sanitization poblems with '(' and ')'
 
         # Append actual function
@@ -162,9 +174,11 @@ class Interpreter(NodeVisitor):
     def interpret(self, tree: AST) -> str:
         """Interpret and visit bats-core tests"""
 
+        self.root_required = False
+
         # Interpret
         assert tree, 'Invalid tree node'
         result = self.visit(tree)
 
-        debug.trace(7, f'Interpreter.interpret() => {result}')
-        return result
+        debug.trace(7, f'Interpreter.interpret() => root={self.root_required} result={result}')
+        return self.root_required, result
