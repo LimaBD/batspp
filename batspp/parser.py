@@ -55,12 +55,12 @@ class Assertion(AST):
     """
 
     def __init__(self,
-                 setup: list = None,
+                 setup: Setup = None,
                  actual: str = '',
                  expected: str = '',
                  data: Data = Data()) -> None:
         super().__init__(data)
-        self.setup = setup if setup else []
+        self.setup = setup
         self.actual = actual
         self.expected = expected
 
@@ -85,7 +85,7 @@ class TestsSuite(AST):
     """
 
     def __init__(self,
-                 setup: list,
+                 setup: Setup,
                  tests: list,
                  data: Data = Data()) -> None:
         super().__init__(data)
@@ -296,7 +296,7 @@ class Parser:
                              column=data.column)
 
         # Add new setup node
-        node = Setup(pointer, commands, data=data)
+        node = Setup(pointer=pointer, commands=commands, data=data)
         self.setup_stack.append(node)
 
     def build_assertion(self, pointer:str='') -> None:
@@ -328,17 +328,10 @@ class Parser:
 
         # Check for setups on setup stack
         #
-        # Every time that a new assertion is added, we check if we can assign
-        # setups to the current assertion and then we clean that setup from
-        # the stack, that is how we ensure that the previus setups corresponds
-        # to the last assertion
-        temp_setups = []
-        for setup in self.setup_stack:
-            if setup.pointer == pointer:
-                node.setup.append(setup)
-            else:
-                temp_setups.append(setup)
-        self.setup_stack = temp_setups # Clean setup stack from assigned setups
+        # Every time that a new assertion is added, check if there are in the setup stack 
+        # setups with same pointer, when we assign the setup to the assertion and clean the
+        # stack to avoid duplicated setups
+        node.setup = self.pop_setup(pointer=pointer)
 
         # Add assertion node to test suite
         #
@@ -405,14 +398,38 @@ class Parser:
         self.eat(TokenType.EOF)
 
         # Check global setup commands
-        setup = None
-        if self.setup_stack and not self.setup_stack[0].pointer:
-            setup = self.setup_stack[0]
-        ## TODO: check that setup stack is empty
+        setup = self.pop_setup(pointer='')
+        if self.setup_stack:
+            first_invalid = self.setup_stack[0]
+            exceptions.error(message=(f'Setup "{first_invalid.pointer}"'
+                                      ' referenced before assignment.'),
+                             text_line=first_invalid.data.text_line,
+                             line=first_invalid.data.line,
+                             column=None)
 
         result = TestsSuite(setup, self.test_nodes)
         debug.trace(7, f'parser.build_tests_suite() => {result}')
         return result
+
+    def pop_setup(self, pointer: str) -> Setup:
+        """
+        Pop setups nodes from stack,
+        also unifies all that match with POINTER into one
+        """
+        commands = []
+        temp = []
+
+        # Search setups with same pointer and extract commands
+        for setup in self.setup_stack:
+            if setup.pointer == pointer:
+                commands += setup.commands
+            else:
+                temp.append(setup)
+
+        # Clean setup stack from poped setup nodes
+        self.setup_stack = temp
+
+        return Setup(pointer=pointer, commands=commands, data=Data()) if commands else None
 
     def parse(self, tokens: list) -> AST:
         """

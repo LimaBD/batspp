@@ -250,7 +250,7 @@ class TestParser(TestWrapper):
         parser.test_nodes.append(Test(pointer='important test'))
         parser.test_nodes.append(Test(pointer='another test'))
         parser.setup_stack.append(Setup(pointer='some test'))
-        parser.setup_stack.append(Setup(pointer='important test'))
+        parser.setup_stack.append(Setup(pointer='important test', commands=['some command']))
         parser.setup_stack.append(Setup(pointer='another test'))
         parser.tokens = [Token(TokenType.PESO, '$'),
                          Token(TokenType.TEXT, 'some command'),
@@ -275,8 +275,22 @@ class TestParser(TestWrapper):
         self.assertEqual(len(parser.setup_stack), 2)
         self.assertEqual(parser.setup_stack[0].pointer, 'some test')
         self.assertEqual(parser.setup_stack[1].pointer, 'another test')
-        self.assertEqual(len(parser.test_nodes[1].assertions[0].setup), 1)
-        self.assertEqual(parser.test_nodes[1].assertions[0].setup[0].pointer, 'important test')
+        self.assertEqual(parser.test_nodes[1].assertions[0].setup.pointer, 'important test')
+
+    def test_pop_setup(self):
+        """Test for pop_setup()"""
+        debug.trace(7, f'TestParser.test_pop_setup({self})')
+        parser = Parser()
+
+        parser.setup_stack = [Setup(pointer='some test', commands=['some command']),
+                              Setup(pointer='important test', commands=['some important command']),
+                              Setup(pointer='another test', commands=['some command']),
+                              Setup(pointer='important test', commands=['another important command'])]
+        result = parser.pop_setup(pointer='important test')
+
+        self.assertTrue(isinstance(result, Setup))
+        self.assertEqual(result.commands, ['some important command', 'another important command'])
+        self.assertEqual(len(parser.setup_stack), 2)
 
     def test_build_tests_suite(self):
         """Test for build_tests_suite()"""
@@ -314,7 +328,7 @@ class TestParser(TestWrapper):
 
         # Check tests
         self.assertEqual(len(tree.tests), 1)
-        self.assertEqual(tree.tests[0].assertions[0].setup[0].commands, ['local setup command'])
+        self.assertEqual(tree.tests[0].assertions[0].setup.commands, ['local setup command'])
         self.assertEqual(tree.tests[0].assertions[0].actual, 'some assertion command')
         self.assertEqual(tree.tests[0].assertions[0].expected, 'expected text line 1\nexpected text line 2\nexpected text line 3')
 

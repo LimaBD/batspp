@@ -136,9 +136,7 @@ class Interpreter(NodeVisitor):
         expected_function = f'{self.unspaced_test_title}-line{node.data.line}-expected'
 
         # Format setup nodes
-        setup = ''
-        for setup_node in node.setup:
-            setup += self.visit(setup_node)
+        setup = self.visit(node.setup) if node.setup else ''
 
         # Format assertion
         result = (f'\n\t# Assertion of line {node.data.line}\n'
