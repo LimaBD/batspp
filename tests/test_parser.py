@@ -191,6 +191,22 @@ class TestParser(TestWrapper):
         # NOTE: about the assetion content, it
         # is the responsibility of another test
 
+        # If continuation has empty pointer, this should be setted to last test
+        parser = Parser()
+        parser.last_pointer = 'important test'
+        parser.test_nodes = [Test(pointer='important test', assertions=None)]
+        parser.tokens = [Token(TokenType.CONTINUATION, '# Continuation'),
+                         Token(TokenType.PESO, '$'),
+                         Token(TokenType.TEXT, 'some command'),
+                         Token(TokenType.TEXT, 'some text'),
+                         Token(TokenType.EMPTY, '')]
+        self.assertEqual(len(parser.test_nodes[0].assertions), 0)
+        parser.break_continuation()
+        self.assertEqual(len(parser.test_nodes[0].assertions), 1)
+
+        ## TODO: test exception
+
+
     def test_break_setup_assertion(self):
         """Test for break_setup_assertion()"""
         debug.trace(7, f'TestParser.test_break_setup_assertion({self})')
@@ -214,7 +230,7 @@ class TestParser(TestWrapper):
         self.assertEqual(parser.setup_stack[0].pointer, '')
         self.assertNotEqual(parser.setup_stack[0].pointer, 'wrong pointer!')
 
-        # Check commands
+        # Check setup commands
         self.assertEqual(parser.setup_stack[0].commands, ['some command', 'another command'])
         self.assertNotEqual(parser.setup_stack[0].commands, ['new wrong command'])
 
@@ -240,6 +256,17 @@ class TestParser(TestWrapper):
         parser.build_setup(pointer='some lonely setup')
         self.assertEqual(len(parser.setup_stack), 1)
         self.assertEqual(parser.setup_stack[0].pointer, 'some lonely setup')
+
+        # Check for setup without pointer (should be setted to last test)
+        parser = Parser()
+        parser.last_pointer = 'important test'
+        parser.tokens = [Token(TokenType.SETUP, '# Setup'),
+                         Token(TokenType.PESO, '$'),
+                         Token(TokenType.TEXT, 'some command'),
+                         Token(TokenType.EOF, None)]
+        parser.build_setup()
+        self.assertEqual(len(parser.setup_stack), 1)
+        self.assertEqual(parser.setup_stack[0].pointer, 'important test')
 
     def test_build_assertion(self):
         """Test for build_assertion()"""

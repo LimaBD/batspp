@@ -8,7 +8,6 @@
 ## TODO: parse teardown blocks
 ## TODO: solve: Setup and Continue referenced before assignment should print the correct line, not the next.
 ## TODO: retain support for => and =\>
-## TODO: Setup and Continuation test name default to the last named test
 
 
 """
@@ -102,6 +101,7 @@ class Parser:
     def __init__(self) -> None:
         self.tokens = []
         self.index = 0
+        self.last_pointer = ''
         self.test_nodes = []
         self.setup_stack = []
 
@@ -215,6 +215,7 @@ class Parser:
         if not pointer:
             self.eat(TokenType.TEST)
             pointer = self.get_current_token().value.strip()
+            self.last_pointer = pointer
             self.eat(TokenType.TEXT)
 
         # Add new test node
@@ -227,7 +228,7 @@ class Parser:
         """
         Process and break continuation block tokens
         """
-        debug.trace(7, f'parser.break_continuation()')
+        debug.trace(7, 'parser.break_continuation()')
 
         # Continuation blocks e.g.
         #
@@ -238,11 +239,31 @@ class Parser:
         #   expected-output
         #
         # Are break into setup and assertion nodes
+        #
+        # If continuation has no pointer token, set pointer to the last test
+
+        data = self.get_current_token().data
 
         self.eat(TokenType.CONTINUATION)
-        self.eat(TokenType.POINTER)
-        pointer = self.get_current_token().value.strip()
-        self.eat(TokenType.TEXT)
+
+        pointer = ''
+
+        # Check for pointer
+        if self.get_current_token().type is TokenType.POINTER:
+            self.eat(TokenType.POINTER)
+            pointer = self.get_current_token().value.strip()
+            self.eat(TokenType.TEXT)
+
+        # Assign continuation to last test
+        elif self.last_pointer:
+            pointer = self.last_pointer
+
+        # Otherwise the continuation is invalid
+        else:
+            exceptions.error(message='Continuation without test assigned',
+                             text_line=data.text_line,
+                             line=data.line,
+                             column=data.column)
 
         self.break_setup_assertion(pointer)
 
@@ -275,13 +296,23 @@ class Parser:
         data = self.get_current_token().data
 
         # Check pointer
-        # Remember: global setup has empty pointer
         if not pointer:
             self.eat(TokenType.SETUP)
+
+            # Local setups contains pointer
             if self.get_current_token().type is TokenType.POINTER:
                 self.eat(TokenType.POINTER)
                 pointer = self.get_current_token().value.strip()
                 self.eat(TokenType.TEXT)
+
+            # If there are a previus test to the setup,
+            # we assign the setup to that test
+            elif self.last_pointer:
+                pointer = self.last_pointer
+
+            # Otherwise we treat the setup as a global setup (empty pointer)
+            else:
+                pass
 
         # Check commands
         commands = []
@@ -328,7 +359,7 @@ class Parser:
 
         # Check for setups on setup stack
         #
-        # Every time that a new assertion is added, check if there are in the setup stack 
+        # Every time that a new assertion is added, check if there are in the setup stack
         # setups with same pointer, when we assign the setup to the assertion and clean the
         # stack to avoid duplicated setups
         node.setup = self.pop_setup(pointer=pointer)
@@ -440,6 +471,7 @@ class Parser:
         assert tokens, 'Tokens list cannot be empty'
         self.tokens = tokens
         self.index = 0
+        self.last_pointer = ''
         self.test_nodes = []
         self.setup_stack = []
 
