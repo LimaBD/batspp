@@ -25,6 +25,8 @@ jobs:
         git submodule update --init
         pip install -r ./submodules/mezcla/requirements.txt
         pip install .
+
+        npm install -g bats
     - name: Test with unittest
       run: |
         coverage run -m unittest discover ./tests/
