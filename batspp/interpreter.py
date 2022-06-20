@@ -5,9 +5,7 @@
 # This module is responsible for interpret and build
 # bats-core tests from Abstract Syntax Trees (AST) for Batspp
 #
-## TODO: debug - add pipe to "hexview.perl" to debug and submodule
 ## TODO: make setups commands output nothing
-## TODO: some assertion commands (e.g. tee) that prints to stdout brokes the debug actual-expected text
 
 
 """
@@ -167,25 +165,30 @@ class Interpreter(NodeVisitor):
         debug.trace(7, f'interpreter.visit_Assertion(node={node}) => {result}')
         return result
 
-    def implement_debug(self):
+    def implement_debug(self, verbose:bool=False):
         """Return debug code"""
+        ## TODO: Implement hexview to print detailed debug data
+
+        hexview = '' if verbose else ''
+
         result = ('# This prints debug data when an assertion fail\n'
                   '# $1 -> actual\n'
                   '# $2 -> expected\n'
                   'function print_debug() {\n'
                   '\techo "========== actual =========="\n'
-                  '\techo "$1"\n'
+                  f'\techo "$1"{hexview}\n'
                   '\techo "========= expected ========="\n'
-                  '\techo "$2"\n'
+                  f'\techo "$2"{hexview}\n'
                   '\techo "============================"\n'
                   '}\n\n')
-        debug.trace(7,'Interpreter.implement_debug()')
+
+        debug.trace(7,f'Interpreter.implement_debug(verbose={verbose}) => {result}')
         return result
 
-    def interpret(self, tree: AST) -> str:
+    def interpret(self, tree: AST, verbose:bool = False) -> str:
         """Interpret and visit bats-core tests"""
 
-        # Clean values
+        # Clean global class values
         self.root_required = False
         self.stack_functions = []
         self.test_title = ''
@@ -197,7 +200,7 @@ class Interpreter(NodeVisitor):
         result = self.visit(tree)
 
         # Aditional
-        result += self.implement_debug() if self.implemented_debug else ''
+        result += self.implement_debug(verbose) if self.implemented_debug else ''
 
         debug.trace(7, f'Interpreter.interpret() => root={self.root_required} result={result}')
         return self.root_required, result

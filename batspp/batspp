@@ -59,6 +59,7 @@ FILE = 'file'
 SAVE = 'save'
 SOURCE = 'source'
 OUTPUT = 'output'
+VERBOSE = 'verbose'
 
 
 # Some constants
@@ -75,6 +76,7 @@ class Batspp(Main):
     save_path = ''
     source = ''
     output = False
+    verbose = False
 
     def setup(self):
         """Process arguments"""
@@ -84,10 +86,14 @@ class Batspp(Main):
         self.save_path = self.get_parsed_argument(SAVE, self.save_path)
         self.source = self.get_parsed_argument(SOURCE, self.source)
         self.output = self.has_parsed_option(OUTPUT)
+        self.verbose = self.has_parsed_option(VERBOSE)
 
-        debug.trace(7, (f'batspp - file: {self.file}, '
-                        f'save_path: {self.save_path}, '
-                        f'output: {self.output}'))
+        debug.trace(7, (f'batspp.setup({self}) - \n'
+                        f'\t{FILE}: {self.file},\n'
+                        f'\t{SAVE}: {self.save_path},\n'
+                        f'\t{SOURCE}: {self.source},\n'
+                        f'\t{OUTPUT}: {self.output},\n'
+                        f'\t{VERBOSE}: {self.verbose}'))
 
     def run_main_step(self):
         """Process main script"""
@@ -110,7 +116,7 @@ class Batspp(Main):
         text = TextHandler(file_content)
         tokens = Lexer().tokenize(text)
         abstract_syntax_tree = Parser().parse(tokens)
-        root_required, bats_body = Interpreter().interpret(abstract_syntax_tree)
+        root_required, bats_body = Interpreter().interpret(abstract_syntax_tree, verbose=self.verbose)
 
         # Check for bats_body content
         if not bats_body:
@@ -141,7 +147,8 @@ class Batspp(Main):
 if __name__ == '__main__':
     app = Batspp(description = __doc__,
                  positional_arguments = [(FILE, 'filename')],
-                 boolean_options = [(OUTPUT, 'print output test')],
+                 boolean_options = [(OUTPUT, 'print output test'),
+                                    (VERBOSE, 'print verbose debug')],
                  text_options = [(SAVE, 'specifies path to save the generated bats file'),
                                  (SOURCE, 'specifies file to be sourced')],
                  manual_input = True)
