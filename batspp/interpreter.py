@@ -5,8 +5,6 @@
 # This module is responsible for interpret and build
 # bats-core tests from Abstract Syntax Trees (AST) for Batspp
 #
-## TODO: debug - pretty print '='
-## TODO: debug - bash debug print function to avoid repeated debug code
 ## TODO: debug - add pipe to "hexview.perl" to debug and submodule
 ## TODO: make setups commands output nothing
 ## TODO: some assertion commands (e.g. tee) that prints to stdout brokes the debug actual-expected text
@@ -56,7 +54,9 @@ class Interpreter(NodeVisitor):
     def __init__(self):
         self.root_required = False
         self.stack_functions = []
-        self.test_title = self.unspaced_test_title = ''
+        self.test_title = ''
+        self.unspaced_test_title = ''
+        self.implemented_debug = False
 
     # pylint: disable=invalid-name
     def visit_TestsSuite(self, node: TestsSuite) -> str:
@@ -143,13 +143,11 @@ class Interpreter(NodeVisitor):
                   f'{setup}'
                   f'\tactual=$({actual_function})\n'
                   f'\texpected=$({expected_function})\n'
-                  f'\techo "========== actual =========="\n'
-                  f'\techo "$actual"\n'
-                  f'\techo "========= expected ========="\n'
-                  f'\techo "$expected"\n'
-                  '\techo "============================"\n'
-                  f'\t[ "$actual" == "$expected" ]\n')
+                  '\tprint_debug "$actual" "$expected"\n'
+                  '\t[ "$actual" == "$expected" ]\n')
 
+        # Check class globals
+        self.implemented_debug = True
         self.check_root(node.actual)
 
         # NOTE: we use functions to avoid sanitization poblems with '(' and ')'
@@ -169,14 +167,37 @@ class Interpreter(NodeVisitor):
         debug.trace(7, f'interpreter.visit_Assertion(node={node}) => {result}')
         return result
 
+    def implement_debug(self):
+        """Return debug code"""
+        result = ('# This prints debug data when an assertion fail\n'
+                  '# $1 -> actual\n'
+                  '# $2 -> expected\n'
+                  'function print_debug() {\n'
+                  '\techo "========== actual =========="\n'
+                  '\techo "$1"\n'
+                  '\techo "========= expected ========="\n'
+                  '\techo "$2"\n'
+                  '\techo "============================"\n'
+                  '}\n\n')
+        debug.trace(7,'Interpreter.implement_debug()')
+        return result
+
     def interpret(self, tree: AST) -> str:
         """Interpret and visit bats-core tests"""
 
+        # Clean values
         self.root_required = False
+        self.stack_functions = []
+        self.test_title = ''
+        self.unspaced_test_title = ''
+        self.implemented_debug = False
 
         # Interpret
         assert tree, 'Invalid tree node'
         result = self.visit(tree)
+
+        # Aditional
+        result += self.implement_debug() if self.implemented_debug else ''
 
         debug.trace(7, f'Interpreter.interpret() => root={self.root_required} result={result}')
         return self.root_required, result
