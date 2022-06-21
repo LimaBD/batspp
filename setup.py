@@ -13,9 +13,9 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setuptools.setup(
     name="batspp",
     version="1.2.0",
-    author="Tom O\'Hara, Bruno Daniel Lima",
-    author_email="tomasohara@gmail.com, bdl1998@hotmail.com",
-    description="This process and run shell style tests using bats-core",
+    author="Bruno Daniel Lima",
+    author_email="bdl1998@hotmail.com",
+    description="Shell style tests using bats-core",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/LimaBD/batspp",
