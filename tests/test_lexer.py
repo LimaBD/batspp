@@ -246,6 +246,28 @@ class TestLexer(TestWrapper):
         self.assertEqual(types[:2], [TokenType.CONTINUATION, TokenType.POINTER])
         self.assert_token(TokenType.POINTER, invalids=['# of foobar'])
 
+    def test_assert_eq(self):
+        """Test for ASSERT_EQ token type"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestLexer.test_assert_eq(); self={self}")
+
+        types = self.tokenize_types('somefunction arg1 arg2 => expected result')
+        self.assertEqual(types, [TokenType.TEXT,
+                                 TokenType.ASSERT_EQ,
+                                 TokenType.TEXT,
+                                 TokenType.EOF])
+
+    def test_assert_ne(self):
+        """Test for ASSERT_NE token type"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestLexer.test_assert_ne(); self={self}")
+
+        types = self.tokenize_types('somefunction arg1 arg2 =/> not expected result')
+        self.assertEqual(types, [TokenType.TEXT,
+                                 TokenType.ASSERT_NE,
+                                 TokenType.TEXT,
+                                 TokenType.EOF])
+
     def test_text(self):
         """Test for TEXT token type"""
         ## TODO: WORK-IN-PROGRESS

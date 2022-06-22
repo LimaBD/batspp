@@ -50,6 +50,8 @@ class TokenType(Enum):
     TEST = 'test'
     POINTER = ' of '
     CONTINUATION = 'continuation'
+    ASSERT_EQ = '=>'
+    ASSERT_NE = '=/>'
     # Misc
     TEXT = 'TEXT'
     EMPTY = 'EMPTY'
@@ -199,8 +201,22 @@ class Lexer:
                 result.append(Token(TokenType.POINTER, match.group(), data))
                 continue
 
+            # Tokenize assert equal
+            match = re.match(r' *=> *', text.get_rest_line())
+            if match:
+                text.advance_column(match.span()[1])
+                result.append(Token(TokenType.ASSERT_EQ, match.group(), data))
+                continue
+
+            # Tokenize assert not equal
+            match = re.match(r' *=/> *', text.get_rest_line())
+            if match:
+                text.advance_column(match.span()[1])
+                result.append(Token(TokenType.ASSERT_NE, match.group(), data))
+                continue
+
             # Tokenize text
-            match = re.match(r'^[^#]+$', text.get_rest_line())
+            match = re.match(r'^[^#]+?(?==>|=/>|$)', text.get_rest_line())
             if match:
                 text.advance_column(match.span()[1])
                 result.append(Token(TokenType.TEXT, match.group(), data))
@@ -211,7 +227,7 @@ class Lexer:
                 text.advance_line()
                 continue
 
-            exceptions.error(message='Invalid syntax',
+            exceptions.error(message='invalid syntax',
                              text_line=data.text_line,
                              line=data.line,
                              column=data.column)
