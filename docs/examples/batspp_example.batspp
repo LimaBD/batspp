@@ -25,6 +25,15 @@ The Fibonacci series is:
 0 1 1 2 3 5 8 13 21 34
 
 
+# Also you can test functions:
+#
+# This test should work fine:
+fibonacci 9 => 0 1 1 2 3 5 8 13 21 34
+
+# This is a negative test:
+fibonacci 3 =/> 8 2 45 34 3 5
+
+
 # Local setups for specific test can be done with
 # command lines too and you can also add optional titles:
 #
