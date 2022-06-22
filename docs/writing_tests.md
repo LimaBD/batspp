@@ -85,8 +85,19 @@ $ echo -n " and continue directives" >> $filepath
 $ cat $filepath
 this is a file content to run an example test using setup and continue directives
 ```
+
 ```
 1..1
 ok 1 multiple setups and assertions
 ```
+
 Continuation directives without specific title assigned, for example `# Continue` are assigned to the lastest founded test directive, if there are no previus test, throws exception
+
+Also you can write assertions with `=>` (assert equals) and `=/>` (assert not equals)
+``` bash
+# This test should work fine:
+fibonacci 9 => 0 1 1 2 3 5 8 13 21 34
+
+# This is a negative test:
+fibonacci 3 =/> 8 2 45 34 3 5
+```
