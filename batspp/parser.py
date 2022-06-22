@@ -6,8 +6,8 @@
 # an abstract syntax tree (AST) for Batspp
 #
 ## TODO: parse teardown blocks
-## TODO: solve: Setup and Continue referenced before assignment should print the correct line, not the next.
-## TODO: retain support for => and =\>
+## TODO: solve: Setup and Continue referenced before
+##       assignment should print the correct line, not the next.
 
 
 """
@@ -16,6 +16,10 @@ Parser module
 This module is responsible for building
 an Abstract Syntax Tree (AST) for Batspp
 """
+
+
+# Standard packages
+from enum import Enum
 
 
 # Installed packages
@@ -48,20 +52,29 @@ class Setup(AST):
         self.commands = commands if commands else []
 
 
+class AssertionType(Enum):
+    """Assertion type enum"""
+    OUTPUT = 'output'
+    EQUAL = 'equal'
+    NOT_EQUAL = 'not_equal'
+
+
 class Assertion(AST):
     """
     AST node for assertion
     """
 
     def __init__(self,
+                 atype: AssertionType,
                  setup: Setup = None,
-                 actual: str = '',
-                 expected: str = '',
+                 first: str = '',
+                 second: str = '',
                  data: Data = Data()) -> None:
         super().__init__(data)
+        self.atype = atype
         self.setup = setup
-        self.actual = actual
-        self.expected = expected
+        self.first = first
+        self.second = second
 
 
 class Test(AST):
@@ -152,7 +165,7 @@ class Parser:
         command : PESO TEXT
         """
 
-        result = None
+        result = False
         first = self.get_current_token()
         second = self.peek_token(1)
 
@@ -170,7 +183,7 @@ class Parser:
         Check if setup tokens pattern is next
         """
 
-        result = None
+        result = False
         is_command = self.is_command_next()
         third_token = self.peek_token(2)
 
@@ -188,16 +201,26 @@ class Parser:
         Check if a assertion tokens pattern is next
         """
 
-        result = None
-        is_command = self.is_command_next()
+        result = False
+
+        first_token = self.get_current_token()
+        second_token = self.peek_token(1)
         third_token = self.peek_token(2)
 
-        if third_token is not None:
-            result = (is_command and
-                      third_token.type is TokenType.TEXT)
+        if first_token and second_token and third_token:
+
+            # Check for command assertion
+            if first_token.type is TokenType.PESO:
+                result = (second_token.type is TokenType.TEXT and
+                          third_token.type is TokenType.TEXT)
+
+            # Check for assert eq or ne
+            elif first_token.type is TokenType.TEXT:
+                result = (second_token.type in [TokenType.ASSERT_EQ, TokenType.ASSERT_NE] and
+                          third_token.type is TokenType.TEXT)
 
         debug.trace(7, ('parser.is_assertion_next() => '
-                        f'command:{is_command} {third_token}'
+                        f'command:{first_token} {second_token} {third_token}'
                         f' => {result}'))
         return result
 
@@ -240,7 +263,8 @@ class Parser:
         #
         # Are break into setup and assertion nodes
         #
-        # If continuation has no pointer token, set pointer to the last test
+        # If continuation has no pointer token,
+        # set pointer to the last test
 
         data = self.get_current_token().data
 
@@ -269,7 +293,8 @@ class Parser:
 
     def break_setup_assertion(self, pointer:int = '') -> None:
         """
-        Process and break block test into setup and assertion AST nodes
+        Process and break block test
+        into setup and assertion AST nodes
         """
         debug.trace(7, f'parser.break_setup_assertion(pointer={pointer})')
 
@@ -336,32 +361,56 @@ class Parser:
         """
         debug.trace(7, f'parser.build_assertion(pointer={pointer})')
 
-        # Set debug data
-        data = self.get_current_token().data
-
         # Check pointer
         assert pointer, 'Invalid empty pointer'
 
-        # Check actual text tokens
-        self.eat(TokenType.PESO)
-        actual = self.get_current_token().value
-        self.eat(TokenType.TEXT)
+        # Set data
+        data = self.get_current_token().data
+
+        atype = None
+        first = ''
+
+        # Check for command assertion
+        if self.get_current_token().type is TokenType.PESO:
+            atype = AssertionType.OUTPUT
+            self.eat(TokenType.PESO)
+            first = self.get_current_token().value
+            self.eat(TokenType.TEXT)
+
+        # Check for assertion
+        elif self.get_current_token().type is TokenType.TEXT:
+            first = self.get_current_token().value
+            self.eat(TokenType.TEXT)
+
+            # Check for assertion type
+            if self.get_current_token().type is TokenType.ASSERT_EQ:
+                atype = AssertionType.EQUAL
+                self.eat(TokenType.ASSERT_EQ)
+            elif self.get_current_token().type is TokenType.ASSERT_NE:
+                atype = AssertionType.NOT_EQUAL
+                self.eat(TokenType.ASSERT_NE)
 
         # Check expected text tokens
-        expected = ''
+        second = ''
         while self.get_current_token().type is TokenType.TEXT:
-            expected += f'{self.get_current_token().value}\n'
+            second += f'{self.get_current_token().value}\n'
             self.eat(TokenType.TEXT)
-        expected = expected[:-1] # Remove last newline
+        second = second[:-1] # Remove last newline
 
         # New assertion node
-        node = Assertion(setup=None, actual=actual, expected=expected, data=data)
+        node = Assertion(atype=atype,
+                         setup=None,
+                         first=first,
+                         second=second,
+                         data=data)
 
         # Check for setups on setup stack
         #
-        # Every time that a new assertion is added, check if there are in the setup stack
-        # setups with same pointer, when we assign the setup to the assertion and clean the
-        # stack to avoid duplicated setups
+        # Every time that a new assertion is added,
+        # check if there are in the setup stack setups
+        # with same pointer, when we assign the setup
+        # to the assertion and clean the stack to avoid
+        # duplicated setups
         node.setup = self.pop_setup(pointer=pointer)
 
         # Add assertion node to test suite
@@ -416,9 +465,8 @@ class Parser:
             elif token_type is TokenType.SETUP:
                 self.build_setup()
 
-            # Create new test node for standlone commands
-            # Remember, commands token patterns are PESO TEXT
-            elif token_type is TokenType.PESO:
+            # Create new test node for standlone commands and assertions
+            elif self.is_command_next() or self.is_assertion_next():
                 self.build_test(f'test of line {current_token.data.line}')
 
             # Finish

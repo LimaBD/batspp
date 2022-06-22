@@ -22,7 +22,7 @@ from mezcla import debug
 # to avoid import errors, must install package with '$ pip install .'
 sys.path.insert(0, './../batspp')
 from lexer import Token, TokenType
-from parser import Parser, TestsSuite, Test, Setup
+from parser import AssertionType, Parser, TestsSuite, Test, Setup
 
 
 class TestParser(TestWrapper):
@@ -140,6 +140,19 @@ class TestParser(TestWrapper):
                          Token(TokenType.TEXT, 'some text'),
                          Token(TokenType.PESO, '$'),
                          Token(TokenType.TEXT, 'some text'),
+                         Token(TokenType.EOF, None)]
+        self.assertFalse(parser.is_assertion_next())
+
+        # Valid assert eq patterns (assert ne should work same)
+        parser.tokens = [Token(TokenType.TEXT, 'function arg1 arg2'),
+                         Token(TokenType.ASSERT_EQ, '=>'),
+                         Token(TokenType.TEXT, 'some expected text'),
+                         Token(TokenType.EOF, None)]
+        self.assertTrue(parser.is_assertion_next())
+
+        # Invalid assert eq pattern
+        parser.tokens = [Token(TokenType.TEXT, 'function arg1 arg2'),
+                         Token(TokenType.ASSERT_EQ, '=>'),
                          Token(TokenType.EOF, None)]
         self.assertFalse(parser.is_assertion_next())
 
@@ -293,16 +306,29 @@ class TestParser(TestWrapper):
         self.assertEqual(len(parser.test_nodes[1].assertions), 1)
         self.assertEqual(len(parser.test_nodes[2].assertions), 0)
 
-        # Check actual and expected
-        self.assertEqual(parser.test_nodes[1].assertions[0].actual, 'some command')
-        self.assertEqual(parser.test_nodes[1].assertions[0].expected, 'some text')
-        self.assertNotEqual(parser.test_nodes[1].assertions[0].expected, 'wrong text!')
+        # Check first and second values
+        self.assertEqual(parser.test_nodes[1].assertions[0].first, 'some command')
+        self.assertEqual(parser.test_nodes[1].assertions[0].second, 'some text')
+        self.assertNotEqual(parser.test_nodes[1].assertions[0].second, 'wrong text!')
 
         # Check setup stack and assertion
         self.assertEqual(len(parser.setup_stack), 2)
         self.assertEqual(parser.setup_stack[0].pointer, 'some test')
         self.assertEqual(parser.setup_stack[1].pointer, 'another test')
         self.assertEqual(parser.test_nodes[1].assertions[0].setup.pointer, 'important test')
+
+        # Check for assertion eq
+        parser = Parser()
+        parser.tokens = [Token(TokenType.TEXT, 'function arg1 arg2'),
+                         Token(TokenType.ASSERT_NE, ' =/> '),
+                         Token(TokenType.TEXT, 'not expected text'),
+                         Token(TokenType.EOF, None)]
+        parser.test_nodes.append(Test(pointer='important test'))
+        parser.build_assertion(pointer='important test')
+        assertion = parser.test_nodes[0].assertions[0]
+        self.assertEqual(assertion.atype, AssertionType.NOT_EQUAL)
+        self.assertEqual(assertion.first, 'function arg1 arg2')
+        self.assertEqual(assertion.second, 'not expected text')
 
     def test_pop_setup(self):
         """Test for pop_setup()"""
@@ -356,8 +382,8 @@ class TestParser(TestWrapper):
         # Check tests
         self.assertEqual(len(tree.tests), 1)
         self.assertEqual(tree.tests[0].assertions[0].setup.commands, ['local setup command'])
-        self.assertEqual(tree.tests[0].assertions[0].actual, 'some assertion command')
-        self.assertEqual(tree.tests[0].assertions[0].expected, 'expected text line 1\nexpected text line 2\nexpected text line 3')
+        self.assertEqual(tree.tests[0].assertions[0].first, 'some assertion command')
+        self.assertEqual(tree.tests[0].assertions[0].second, 'expected text line 1\nexpected text line 2\nexpected text line 3')
 
 if __name__ == '__main__':
     unittest.main()
