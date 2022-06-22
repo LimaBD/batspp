@@ -25,7 +25,8 @@ from mezcla import debug
 
 
 # Local modules
-from parser import AST, TestsSuite, Test, Setup, Assertion
+from parser import AST, TestsSuite, Test, Setup, \
+                   Assertion, AssertionType
 
 
 class NodeVisitor:
@@ -88,7 +89,7 @@ class Interpreter(NodeVisitor):
 
         self.check_root(result)
 
-        result += '\n\n' if is_global_setup else ''
+        result += '\n' if is_global_setup else ''
 
         debug.trace(7, f'interpreter.visit_Setup(node={node}) => {result}')
         return result
@@ -129,36 +130,39 @@ class Interpreter(NodeVisitor):
     def visit_Assertion(self, node: Assertion) -> str:
         """Visit Assertion node"""
 
-        # Set actual and expected function names
-        actual_function = f'{self.unspaced_test_title}-line{node.data.line}-actual'
-        expected_function = f'{self.unspaced_test_title}-line{node.data.line}-expected'
+        # Set first and second function names
+        first_function = f'{self.unspaced_test_title}-line{node.data.line}-first'
+        second_function = f'{self.unspaced_test_title}-line{node.data.line}-second'
 
         # Format setup nodes
         setup = self.visit(node.setup) if node.setup else ''
 
-        # Format assertion
+        # Check assertion type
+        assertion = '==' if node.atype in [AssertionType.OUTPUT, AssertionType.EQUAL] else '!='
+
+        # Unify everything
         result = (f'\n\t# Assertion of line {node.data.line}\n'
                   f'{setup}'
-                  f'\tactual=$({actual_function})\n'
-                  f'\texpected=$({expected_function})\n'
-                  '\tprint_debug "$actual" "$expected"\n'
-                  '\t[ "$actual" == "$expected" ]\n')
+                  f'\tfirst=$({first_function})\n'
+                  f'\tsecond=$({second_function})\n'
+                  '\tprint_debug "$first" "$second"\n'
+                  f'\t[ "$first" {assertion} "$second" ]\n')
 
         # Check class globals
         self.implemented_debug = True
-        self.check_root(node.actual)
+        self.check_root(node.first)
 
         # NOTE: we use functions to avoid sanitization poblems with '(' and ')'
 
-        # Append actual function
-        function = (f'function {actual_function} () {{\n'
-                    f'\t{node.actual.strip()}\n'
+        # Append first function
+        function = (f'function {first_function} () {{\n'
+                    f'\t{node.first.strip()}\n'
                     '}\n\n')
         self.stack_functions.append(function)
 
-        # Append expected function
-        function = (f'function {expected_function} () {{\n'
-                    f'\techo -e {repr(node.expected)}\n'
+        # Append second function
+        function = (f'function {second_function} () {{\n'
+                    f'\techo -e {repr(node.second)}\n'
                     '}\n\n')
         self.stack_functions.append(function)
 
@@ -172,12 +176,12 @@ class Interpreter(NodeVisitor):
         hexview = '' if verbose else ''
 
         result = ('# This prints debug data when an assertion fail\n'
-                  '# $1 -> actual\n'
-                  '# $2 -> expected\n'
+                  '# $1 -> first value\n'
+                  '# $2 -> second value\n'
                   'function print_debug() {\n'
-                  '\techo "========== actual =========="\n'
+                  '\techo "======= first value  ======="\n'
                   f'\techo "$1"{hexview}\n'
-                  '\techo "========= expected ========="\n'
+                  '\techo "======= second value ======="\n'
                   f'\techo "$2"{hexview}\n'
                   '\techo "============================"\n'
                   '}\n\n')
