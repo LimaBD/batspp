@@ -212,7 +212,7 @@ class TestParser(TestWrapper):
                          Token(TokenType.PESO, '$'),
                          Token(TokenType.TEXT, 'some command'),
                          Token(TokenType.TEXT, 'some text'),
-                         Token(TokenType.EMPTY, '')]
+                         Token(TokenType.MINOR, '')]
         self.assertEqual(len(parser.test_nodes[0].assertions), 0)
         parser.break_continuation()
         self.assertEqual(len(parser.test_nodes[0].assertions), 1)
@@ -360,7 +360,7 @@ class TestParser(TestWrapper):
                   Token(TokenType.TEXT, 'some global command'),
                   Token(TokenType.PESO, '$'),
                   Token(TokenType.TEXT, 'another global command'),
-                  Token(TokenType.EMPTY, ''),
+                  Token(TokenType.MINOR, ''),
                   Token(TokenType.TEST, '# Test '),
                   Token(TokenType.TEXT, 'testing parser'),
                   Token(TokenType.PESO, '$'),
@@ -370,7 +370,7 @@ class TestParser(TestWrapper):
                   Token(TokenType.TEXT, 'expected text line 1'),
                   Token(TokenType.TEXT, 'expected text line 2'),
                   Token(TokenType.TEXT, 'expected text line 3'),
-                  Token(TokenType.EMPTY, ''),
+                  Token(TokenType.MINOR, ''),
                   Token(TokenType.EOF, None)]
         tree = parser.parse(tokens)
         self.assertTrue(isinstance(tree, TestsSuite))

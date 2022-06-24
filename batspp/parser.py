@@ -445,9 +445,9 @@ class Parser:
             current_token = self.get_current_token()
             token_type = current_token.type
 
-            # Skip empty tokens
-            if token_type is TokenType.EMPTY:
-                self.eat(TokenType.EMPTY)
+            # Skip minor tokens
+            if token_type is TokenType.MINOR:
+                self.eat(TokenType.MINOR)
                 continue
 
             # Process next tokens as a test directive pattern
