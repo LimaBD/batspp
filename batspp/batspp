@@ -49,7 +49,7 @@ from mezcla import glue_helpers as gh
 
 
 # Local modules
-from lexer import TextHandler, Lexer
+from lexer import Lexer
 from parser import Parser
 from interpreter import Interpreter
 
@@ -114,8 +114,7 @@ class Batspp(Main):
         # Process file content
         is_test_file = self.file.endswith(f'.{BATSPP_EXTENSION}')
         file_content = system.read_file(self.file)
-        text = TextHandler(file_content)
-        tokens = Lexer().tokenize(text)
+        tokens = Lexer().tokenize(file_content, embedded_tests=not is_test_file)
         abstract_syntax_tree = Parser().parse(tokens)
         root_required, bats_body = Interpreter().interpret(abstract_syntax_tree, verbose=self.verbose)
 
