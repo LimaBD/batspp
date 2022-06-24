@@ -160,9 +160,9 @@ function test-of-line-59-line63-second () {
 # $1 -> first value
 # $2 -> second value
 function print_debug() {
-	echo "========== first value =========="
+	echo "======= first value  ======="
 	echo "$1"
-	echo "========== second value =========="
+	echo "======= second value ======="
 	echo "$2"
-	echo "==========++++++=================="
+	echo "============================"
 }
