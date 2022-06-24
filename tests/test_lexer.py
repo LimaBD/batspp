@@ -21,10 +21,10 @@ from mezcla import debug
 #
 # to avoid import errors, must install package with '$ pip install .'
 sys.path.insert(0, './../batspp')
-from lexer import TextHandler, Lexer, Token, TokenType
+from lexer import TextLiner, Lexer, Token, TokenType
 
 
-class TestTextHandler(TestWrapper):
+class TestTextLiner(TestWrapper):
     """Class for testcase definition"""
     script_module = TestWrapper.derive_tested_module_name(__file__)
     maxDiff       = None
@@ -32,9 +32,9 @@ class TestTextHandler(TestWrapper):
     def test_is_column_safe(self):
         """Test for is_column_safe()"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestTextHandler.test_is_column_safe(); self={self}")
+                    f"TestTextLiner.test_is_column_safe(); self={self}")
 
-        text = TextHandler('some text line')
+        text = TextLiner('some text line')
         text.column = 3
         self.assertTrue(text.is_column_safe())
         text.column = 13
@@ -47,9 +47,9 @@ class TestTextHandler(TestWrapper):
     def test_is_line_safe(self):
         """Test for is_line_safe()"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestTextHandler.test_is_line_safe(); self={self}")
+                    f"TestTextLiner.test_is_line_safe(); self={self}")
 
-        text = TextHandler('some text\nwith\nmultiple\nlines')
+        text = TextLiner('some text\nwith\nmultiple\nlines')
         self.assertEqual(text.lines, ['some text', 'with', 'multiple', 'lines'])
         self.assertTrue(text.is_line_safe())
         text.line = 3
@@ -62,9 +62,9 @@ class TestTextHandler(TestWrapper):
     def test_get_rest_line(self):
         """Test for get_rest_line()"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestTextHandler.test_get_rest_line(); self={self}")
+                    f"TestTextLiner.test_get_rest_line(); self={self}")
 
-        text = TextHandler('this is an line to do tests')
+        text = TextLiner('this is an line to do tests')
         text.column = 0
         self.assertEqual(text.get_rest_line(), 'this is an line to do tests')
         text.column = 13
@@ -81,9 +81,9 @@ class TestTextHandler(TestWrapper):
     def test_get_current_line(self):
         """Test for get_current_line()"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestTextHandler.test_get_current_line(); self={self}")
+                    f"TestTextLiner.test_get_current_line(); self={self}")
 
-        text = TextHandler('some text\nwith\nmultiple\nlines')
+        text = TextLiner('some text\nwith\nmultiple\nlines')
         text.line = 0
         self.assertEqual(text.get_current_line(), 'some text')
         text.line = 2
@@ -94,9 +94,9 @@ class TestTextHandler(TestWrapper):
     def test_advance_column(self):
         """Test for advance_column()"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestTextHandler.test_advance_column(); self={self}")
+                    f"TestTextLiner.test_advance_column(); self={self}")
 
-        text = TextHandler('some text')
+        text = TextLiner('some text')
         self.assertEqual(text.column, 0)
 
         # Advance normal
@@ -116,9 +116,9 @@ class TestTextHandler(TestWrapper):
     def test_advance_line(self):
         """Test for advance_line()"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestTextHandler.test_advance_line(); self={self}")
+                    f"TestTextLiner.test_advance_line(); self={self}")
 
-        text = TextHandler('some text\nwith\nmultiple\nlines')
+        text = TextLiner('some text\nwith\nmultiple\nlines')
         self.assertEqual(text.line, 0)
         text.column = 3
         text.advance_line()
@@ -133,12 +133,12 @@ class TestLexer(TestWrapper):
     script_module = TestWrapper.derive_tested_module_name(__file__)
     maxDiff       = None
 
-    def tokenize(self, string: str) -> list:
+    def tokenize(self, string: str, embedded_tests:bool = False) -> list:
         """
         Tokenize STRING, verify tokens and returned types
         """
 
-        tokens = Lexer().tokenize(TextHandler(string))
+        tokens = Lexer().tokenize(string, embedded_tests=embedded_tests)
         self.assertTrue(tokens)
         self.assertTrue(isinstance(tokens, list))
 
@@ -167,10 +167,10 @@ class TestLexer(TestWrapper):
                 tokens = self.tokenize(invalid)
                 self.assertNotEqual(tokens[0].type, expected_type)
 
-    def tokenize_types(self, string:str) -> list:
+    def tokenize_types(self, string:str, embedded_tests:bool = False) -> list:
         """Tokenize STRING and map by types"""
 
-        tokens = self.tokenize(string)
+        tokens = self.tokenize(string, embedded_tests=embedded_tests)
 
         types = []
         for token in tokens:
@@ -178,19 +178,19 @@ class TestLexer(TestWrapper):
 
         return types
 
-    def test_empty(self):
-        """Test for EMPTY token type"""
+    def test_minor(self):
+        """Test for MINOR token type"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestLexer.test_empty(); self={self}")
+                    f"TestLexer.test_minor(); self={self}")
 
         tokens = self.tokenize('\n')
-        self.assertEqual(len(tokens), 2) # two tokens: EMPTY and EOF
-        self.assertEqual(tokens[0].type, TokenType.EMPTY)
+        self.assertEqual(len(tokens), 2) # two tokens: MINOR and EOF
+        self.assertEqual(tokens[0].type, TokenType.MINOR)
 
-        # N empty lines should be treat as one empty token
+        # N minor lines should be treat as one minor token
         tokens = self.tokenize('\n\n\n\n\n')
         self.assertEqual(len(tokens), 2)
-        self.assertEqual(tokens[0].type, TokenType.EMPTY)
+        self.assertEqual(tokens[0].type, TokenType.MINOR)
 
     def test_peso(self):
         """Test for PESO token type"""

@@ -39,6 +39,11 @@ class Data:
         self.line = line
         self.column = column
 
+    def __str__(self):
+        return (f'Data(text_line={self.text_line},\n'
+                f'\t     line={self.line},\n'
+                f'\t     column={self.column})')
+
 
 class TokenType(Enum):
     """Token types enum"""
@@ -54,7 +59,7 @@ class TokenType(Enum):
     ASSERT_NE = '=/>'
     # Misc
     TEXT = 'TEXT'
-    EMPTY = 'EMPTY'
+    MINOR = 'MINOR'
     EOF = 'EOF' # end of file
 
 
@@ -73,10 +78,15 @@ class Token:
         self.value = tvalue
         self.data = data
 
+    def __str__(self):
+        return (f'Token(type={self.type},\n'
+                f'      value={self.value},\n'
+                f'      data={self.data})')
 
-class TextHandler:
+
+class TextLiner:
     """
-    This is used to handle text
+    This provides functionality to process text line per line
     """
 
     def __init__(self, content:str):
@@ -124,107 +134,123 @@ class Lexer:
     a sentence/text apart into tokens for Batspp
     """
 
-    def __init__(self, embedded_tests=False):
-        self.embedded_tests = embedded_tests
+    def __init__(self) -> None:
+        self.extra_indent = ''
+        self.text = None
+        self.tokens = []
 
-    def tokenize(self, text: TextHandler) -> list:
-        """Tokenize text"""
+    def append_token(self, token: Token) -> None:
+        """
+        Appends TOKEN, this provides debug trace, also if
+        last and current TOKEN types are MINOR, TOKEN is not appended
+        """
+
+        if token.type is TokenType.MINOR:
+            if self.tokens and self.tokens[-1].type is TokenType.MINOR:
+                return
+
+        debug.trace(7, f'Lexer.append_token(\ntoken={token}\n)')
+        self.tokens.append(token)
+
+    def extract_tokens(self):
+        """Extract all tokens from text"""
         ## TODO: refactor this copypaste caos
         ## TODO: analyze how much execution time takes regex
+        ## TODO; implement usage of extra_indent to comments embedded tests
 
-        assert isinstance(text, TextHandler), 'Invalid text; must be a TextHandler'
+        # For convention each token is responsible
+        # (at least) for the space that precedes it
+        #
+        # NOTE: we dont use full regex to have more
+        #       control and handle exceptions better
+        while self.text.is_line_safe():
 
-        # Set comments delimiter for embedded tests
-        indent = r'^# *' if self.embedded_tests else r'^ *'
+            data = Data(text_line=self.text.get_current_line(),
+                        line = self.text.line + 1,
+                        column = self.text.column + 1)
 
-        # Tokenize
-        # For convention each token is responsible for the space that precedes it
-        # NOTE: we dont use full regex to have more control and handle exceptions better
-        result = []
-        while text.is_line_safe():
-
-            data = Data(text_line=text.get_current_line(),
-                        line = text.line + 1,
-                        column = text.column + 1)
-
-            # Tokenize empty lines
-            if text.get_current_line() == '':
-                while text.get_current_line() == '':
-                    text.advance_line()
-                result.append(Token(TokenType.EMPTY, None, data))
+            # Tokenize lines with double comments as minor token
+            match = re.match(r'^##', self.text.get_current_line())
+            if match:
+                self.text.advance_line()
+                self.append_token(Token(TokenType.MINOR, match.group(), data))
                 continue
 
-            # Skip double comment delimiter
-            if re.match(r'^##', text.get_rest_line()):
-                text.advance_line()
+            # Tokenize empty lines
+            match = re.match('^ *$', self.text.get_current_line())
+            if match:
+                self.text.advance_line()
+                self.append_token(Token(TokenType.MINOR, match.group(), data))
                 continue
 
             # Tokenize peso
-            match = re.match(fr'{indent}\$', text.get_rest_line())
+            match = re.match(' *\$', self.text.get_rest_line())
             if match:
-                text.advance_column(match.span()[1])
-                result.append(Token(TokenType.PESO, match.group(), data))
+                self.text.advance_column(match.span()[1])
+                self.append_token(Token(TokenType.PESO, match.group(), data))
                 continue
 
             # Tokenize test
-            match = re.match(r'^# *[Tt]est(?: +|$)', text.get_rest_line())
+            match = re.match(r'^# *[Tt]est(?: +|$)', self.text.get_rest_line())
             if match:
-                text.advance_column(match.span()[1])
-                result.append(Token(TokenType.TEST, match.group(), data))
+                self.text.advance_column(match.span()[1])
+                self.append_token(Token(TokenType.TEST, match.group(), data))
                 continue
 
             # Tokenize setup
-            match = re.match(r'^# *[Ss]etup(?: +|$)', text.get_rest_line())
+            match = re.match(r'^# *[Ss]etup(?: +|$)', self.text.get_rest_line())
             if match:
-                text.advance_column(match.span()[1])
-                result.append(Token(TokenType.SETUP, match.group(), data))
+                self.text.advance_column(match.span()[1])
+                self.append_token(Token(TokenType.SETUP, match.group(), data))
                 continue
 
             # Tokenize teardown
-            match = re.match(r'^# *[Tt]eardown(?: +|$)', text.get_rest_line())
+            match = re.match(r'^# *[Tt]eardown(?: +|$)', self.text.get_rest_line())
             if match:
-                text.advance_column(match.span()[1])
-                result.append(Token(TokenType.TEARDOWN, match.group(), data))
+                self.text.advance_column(match.span()[1])
+                self.append_token(Token(TokenType.TEARDOWN, match.group(), data))
                 continue
 
             # Tokenize continuation
-            match = re.match(r'^# *(?:[Cc]ontinue|[Cc]ontinuation)(?: +|$)', text.get_rest_line())
+            match = re.match(r'^# *(?:[Cc]ontinue|[Cc]ontinuation)(?: +|$)', self.text.get_rest_line())
             if match:
-                text.advance_column(match.span()[1])
-                result.append(Token(TokenType.CONTINUATION, match.group(), data))
+                self.text.advance_column(match.span()[1])
+                self.append_token(Token(TokenType.CONTINUATION, match.group(), data))
                 continue
 
             # Tokenize pointer
-            match = re.match(r'^ *of', text.get_rest_line())
+            match = re.match(r'^ *of', self.text.get_rest_line())
             if match:
-                text.advance_column(match.span()[1])
-                result.append(Token(TokenType.POINTER, match.group(), data))
+                self.text.advance_column(match.span()[1])
+                self.append_token(Token(TokenType.POINTER, match.group(), data))
                 continue
 
             # Tokenize assert equal
-            match = re.match(r' *=> *', text.get_rest_line())
+            match = re.match(r' *=> *', self.text.get_rest_line())
             if match:
-                text.advance_column(match.span()[1])
-                result.append(Token(TokenType.ASSERT_EQ, match.group(), data))
+                self.text.advance_column(match.span()[1])
+                self.append_token(Token(TokenType.ASSERT_EQ, match.group(), data))
                 continue
 
             # Tokenize assert not equal
-            match = re.match(r' *=/> *', text.get_rest_line())
+            match = re.match(r' *=/> *', self.text.get_rest_line())
             if match:
-                text.advance_column(match.span()[1])
-                result.append(Token(TokenType.ASSERT_NE, match.group(), data))
+                self.text.advance_column(match.span()[1])
+                self.append_token(Token(TokenType.ASSERT_NE, match.group(), data))
                 continue
 
             # Tokenize text
-            match = re.match(r'^[^#]+?(?==>|=/>|$)', text.get_rest_line())
+            match = re.match(r'^[^#]+?(?==>|=/>|$)', self.text.get_rest_line())
             if match:
-                text.advance_column(match.span()[1])
-                result.append(Token(TokenType.TEXT, match.group(), data))
+                self.text.advance_column(match.span()[1])
+                self.append_token(Token(TokenType.TEXT, match.group(), data))
                 continue
 
-            # Skip comment delimiter
-            if re.match(r'^ *#', text.get_current_line()):
-                text.advance_line()
+            # Tokenize comments as minor token
+            match = re.match(r'^ *#.*?$', self.text.get_current_line())
+            if match:
+                self.text.advance_line()
+                self.append_token(Token(TokenType.MINOR, None, data))
                 continue
 
             exceptions.error(message='invalid syntax',
@@ -233,14 +259,24 @@ class Lexer:
                              column=data.column)
 
         # Tokenize End of file
-        result.append(Token(TokenType.EOF, None, None))
+        self.append_token(Token(TokenType.EOF, None, None))
 
-        debug.trace(7, 'lexer.tokenize() =>')
-        for token in result:
-            if token:
-                debug.trace(7, (f'token: type={token.type}, '
-                                f'line={token.data.line if token.data else None}, '
-                                f'column={token.data.column if token.data else None}, '
-                                f'value={token.value}'))
+    def tokenize(self, text: str, embedded_tests:bool=False) -> list:
+        """Tokenize text"""
 
-        return result
+        self.extra_indent = ''
+
+        if embedded_tests:
+            self.extra_indent = r'#'
+
+            # Remove not commented lines
+            text = re.sub(r'^[^#\n]+?$', '\n', text)
+
+        self.text = TextLiner(text)
+        self.tokens = []
+
+        # Tokenization
+        self.extract_tokens()
+
+        debug.trace(7, f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests})')
+        return self.tokens
