@@ -54,7 +54,7 @@ class Interpreter(NodeVisitor):
         self.root_required = False
         self.stack_functions = []
         self.last_title = ''
-        self.implemented_debug = False
+        self.debug_required = False
 
     def get_unspaced_title(self) -> str:
         """Get unspaced title"""
@@ -66,10 +66,10 @@ class Interpreter(NodeVisitor):
 
         result = ''
 
-        # Interpret global setup node
-        result += '' if node.setup is None else self.visit(node.setup)
+        # Visit (global) setup node
+        result += self.visit(node.setup) if node.setup else ''
 
-        # Process tests nodes
+        # Visit tests nodes
         for test in node.tests:
             result += self.visit(test)
 
@@ -80,11 +80,9 @@ class Interpreter(NodeVisitor):
     def visit_Setup(self, node: Setup) -> str:
         """Visit Setup node"""
 
-        is_global_setup = node.pointer in ['', None]
-
-        # Check indentation and header
-        result = '# Setup\n' if is_global_setup else ''
-        indent = '\t' if not is_global_setup else ''
+        # Check header comment and commands indentation
+        result = '# Setup\n' if not self.last_title else ''
+        indent = '\t' if self.last_title else ''
 
         # Append commands
         for command in node.commands:
@@ -92,7 +90,7 @@ class Interpreter(NodeVisitor):
 
         self.check_root(result)
 
-        result += '\n' if is_global_setup else ''
+        result += '\n' if not self.last_title else ''
 
         debug.trace(7, f'interpreter.visit_Setup(node={node}) => {result}')
         return result
@@ -159,7 +157,7 @@ class Interpreter(NodeVisitor):
         # Check global class flags to
         # later implement a debug function
         # and return if root is needed
-        self.implemented_debug = True
+        self.debug_required = True
         self.check_root(node.actual)
 
         # NOTE: we use functions to avoid sanitization
@@ -207,14 +205,14 @@ class Interpreter(NodeVisitor):
         self.root_required = False
         self.stack_functions = []
         self.last_title = ''
-        self.implemented_debug = False
+        self.debug_required = False
 
         # Interpret
         assert tree, 'Invalid tree node'
         result = self.visit(tree)
 
         # Aditional
-        result += self.implement_debug(verbose) if self.implemented_debug else ''
+        result += self.implement_debug(verbose) if self.debug_required else ''
 
         debug.trace(7, f'Interpreter.interpret() => root={self.root_required} result={result}')
         return self.root_required, result
