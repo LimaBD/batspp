@@ -306,10 +306,10 @@ class TestParser(TestWrapper):
         self.assertEqual(len(parser.test_nodes[1].assertions), 1)
         self.assertEqual(len(parser.test_nodes[2].assertions), 0)
 
-        # Check first and second values
-        self.assertEqual(parser.test_nodes[1].assertions[0].first, 'some command')
-        self.assertEqual(parser.test_nodes[1].assertions[0].second, 'some text')
-        self.assertNotEqual(parser.test_nodes[1].assertions[0].second, 'wrong text!')
+        # Check actual and expected values
+        self.assertEqual(parser.test_nodes[1].assertions[0].actual, 'some command')
+        self.assertEqual(parser.test_nodes[1].assertions[0].expected, 'some text')
+        self.assertNotEqual(parser.test_nodes[1].assertions[0].expected, 'wrong text!')
 
         # Check setup stack and assertion
         self.assertEqual(len(parser.setup_stack), 2)
@@ -327,8 +327,8 @@ class TestParser(TestWrapper):
         parser.build_assertion(pointer='important test')
         assertion = parser.test_nodes[0].assertions[0]
         self.assertEqual(assertion.atype, AssertionType.NOT_EQUAL)
-        self.assertEqual(assertion.first, 'function arg1 arg2')
-        self.assertEqual(assertion.second, 'not expected text')
+        self.assertEqual(assertion.actual, 'function arg1 arg2')
+        self.assertEqual(assertion.expected, 'not expected text')
 
     def test_pop_setup(self):
         """Test for pop_setup()"""
@@ -382,8 +382,8 @@ class TestParser(TestWrapper):
         # Check tests
         self.assertEqual(len(tree.tests), 1)
         self.assertEqual(tree.tests[0].assertions[0].setup.commands, ['local setup command'])
-        self.assertEqual(tree.tests[0].assertions[0].first, 'some assertion command')
-        self.assertEqual(tree.tests[0].assertions[0].second, 'expected text line 1\nexpected text line 2\nexpected text line 3')
+        self.assertEqual(tree.tests[0].assertions[0].actual, 'some assertion command')
+        self.assertEqual(tree.tests[0].assertions[0].expected, 'expected text line 1\nexpected text line 2\nexpected text line 3')
 
 if __name__ == '__main__':
     unittest.main()

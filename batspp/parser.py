@@ -67,14 +67,14 @@ class Assertion(AST):
     def __init__(self,
                  atype: AssertionType,
                  setup: Setup = None,
-                 first: str = '',
-                 second: str = '',
+                 actual: str = '',
+                 expected: str = '',
                  data: Data = Data()) -> None:
         super().__init__(data)
         self.atype = atype
         self.setup = setup
-        self.first = first
-        self.second = second
+        self.actual = actual
+        self.expected = expected
 
 
 class Test(AST):
@@ -368,18 +368,18 @@ class Parser:
         data = self.get_current_token().data
 
         atype = None
-        first = ''
+        actual = ''
 
         # Check for command assertion
         if self.get_current_token().type is TokenType.PESO:
             atype = AssertionType.OUTPUT
             self.eat(TokenType.PESO)
-            first = self.get_current_token().value
+            actual = self.get_current_token().value
             self.eat(TokenType.TEXT)
 
         # Check for assertion
         elif self.get_current_token().type is TokenType.TEXT:
-            first = self.get_current_token().value
+            actual = self.get_current_token().value
             self.eat(TokenType.TEXT)
 
             # Check for assertion type
@@ -391,17 +391,17 @@ class Parser:
                 self.eat(TokenType.ASSERT_NE)
 
         # Check expected text tokens
-        second = ''
+        expected = ''
         while self.get_current_token().type is TokenType.TEXT:
-            second += f'{self.get_current_token().value}\n'
+            expected += f'{self.get_current_token().value}\n'
             self.eat(TokenType.TEXT)
-        second = second[:-1] # Remove last newline
+        expected = expected[:-1] # Remove last newline
 
         # New assertion node
         node = Assertion(atype=atype,
                          setup=None,
-                         first=first,
-                         second=second,
+                         actual=actual,
+                         expected=expected,
                          data=data)
 
         # Check for setups on setup stack
