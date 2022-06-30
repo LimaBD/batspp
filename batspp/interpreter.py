@@ -39,7 +39,7 @@ class NodeVisitor:
         debug.trace(7, f'NodeVisitor.visitor({node}) => {method_name}({node})')
         return visitor(node)
 
-    def generic_visitor(self, node):
+    def generic_visitor(self, node) -> None:
         """Raise exception if the visit method not exist"""
         raise Exception(f'No visit_{type(node).__name__} method founded')
 
@@ -50,13 +50,13 @@ class Interpreter(NodeVisitor):
     bats-core tests from abstract syntax trees for Batspp
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.root_required = False
         self.stack_functions = []
         self.last_title = ''
         self.implemented_debug = False
 
-    def get_unspaced_title(self):
+    def get_unspaced_title(self) -> str:
         """Get unspaced title"""
         return re.sub(r' +', '-', self.last_title.lower())
 
@@ -97,7 +97,7 @@ class Interpreter(NodeVisitor):
         debug.trace(7, f'interpreter.visit_Setup(node={node}) => {result}')
         return result
 
-    def check_root(self, commands):
+    def check_root(self, commands: str) -> None:
         """Check if command need root permissions"""
         if not self.root_required:
             self.root_required = 'sudo' in commands
@@ -180,7 +180,7 @@ class Interpreter(NodeVisitor):
         debug.trace(7, f'interpreter.visit_Assertion(node={node}) => {result}')
         return result
 
-    def implement_debug(self, verbose:bool=False):
+    def implement_debug(self, verbose:bool=False) -> str:
         """Return debug code"""
 
         ## TODO: Implement hexview to print detailed debug data
@@ -194,7 +194,7 @@ class Interpreter(NodeVisitor):
                   f'\techo "$1"{hexview}\n'
                   '\techo "======= expected ======="\n'
                   f'\techo "$2"{hexview}\n'
-                  '\techo "============================"\n'
+                  '\techo "========================"\n'
                   '}\n\n')
 
         debug.trace(7,f'Interpreter.implement_debug(verbose={verbose}) => {result}')
