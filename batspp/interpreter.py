@@ -25,9 +25,9 @@ from mezcla import debug
 
 
 # Local modules
-from parser import AST, TestsSuite, Test, Setup, \
-                   Assertion, AssertionType
-
+from parser import (
+    AST, TestsSuite, Test, Setup, Assertion, AssertionType
+)
 
 class NodeVisitor:
     """Implements a generic method visit"""
@@ -53,9 +53,12 @@ class Interpreter(NodeVisitor):
     def __init__(self):
         self.root_required = False
         self.stack_functions = []
-        self.test_title = ''
-        self.unspaced_test_title = ''
+        self.last_title = ''
         self.implemented_debug = False
+
+    def get_unspaced_title(self):
+        """Get unspaced title"""
+        return re.sub(r' +', '-', self.last_title.lower())
 
     # pylint: disable=invalid-name
     def visit_TestsSuite(self, node: TestsSuite) -> str:
@@ -101,15 +104,16 @@ class Interpreter(NodeVisitor):
 
     # pylint: disable=invalid-name
     def visit_Test(self, node: Test) -> str:
-        """Visit Test node"""
+        """
+        Visit Test node, updates global class test title
+        """
 
         # Process title
-        self.test_title = node.pointer
-        self.unspaced_test_title = re.sub(r' +', '-', self.test_title.lower())
+        self.last_title = node.pointer
 
         # Test with default local setup
-        result = (f'@test "{self.test_title}" {{\n'
-                  f'\ttest_folder=$(echo /tmp/{self.unspaced_test_title}-$$)\n'
+        result = (f'@test "{self.last_title}" {{\n'
+                  f'\ttest_folder=$(echo /tmp/{self.get_unspaced_title()}-$$)\n'
                   f'\tmkdir $test_folder && cd $test_folder\n')
 
         # Visit assertions
@@ -128,41 +132,48 @@ class Interpreter(NodeVisitor):
 
     # pylint: disable=invalid-name
     def visit_Assertion(self, node: Assertion) -> str:
-        """Visit Assertion node"""
+        """
+        Visit Assertion node, also push functions
+        to stack for actual and expected values
+        """
 
-        # Set first and second function names
-        first_function = f'{self.unspaced_test_title}-line{node.data.line}-first'
-        second_function = f'{self.unspaced_test_title}-line{node.data.line}-second'
+        # Set function names for
+        # actual and expected values
+        actual_function = f'{self.get_unspaced_title()}-line{node.data.line}-actual'
+        expected_function = f'{self.get_unspaced_title()}-line{node.data.line}-expected'
 
-        # Format setup nodes
+        # Visit setup nodes
         setup = self.visit(node.setup) if node.setup else ''
 
-        # Check assertion type
-        assertion = '==' if node.atype in [AssertionType.OUTPUT, AssertionType.EQUAL] else '!='
+        # Set assertion operator
+        operator = '==' if node.atype in [AssertionType.OUTPUT, AssertionType.EQUAL] else '!='
 
         # Unify everything
         result = (f'\n\t# Assertion of line {node.data.line}\n'
                   f'{setup}'
-                  f'\tfirst=$({first_function})\n'
-                  f'\tsecond=$({second_function})\n'
-                  '\tprint_debug "$first" "$second"\n'
-                  f'\t[ "$first" {assertion} "$second" ]\n')
+                  f'\tactual=$({actual_function})\n'
+                  f'\texpected=$({expected_function})\n'
+                  '\tprint_debug "$actual" "$expected"\n'
+                  f'\t[ "$actual" {operator} "$expected" ]\n')
 
-        # Check class globals
+        # Check global class flags to
+        # later implement a debug function
+        # and return if root is needed
         self.implemented_debug = True
-        self.check_root(node.first)
+        self.check_root(node.actual)
 
-        # NOTE: we use functions to avoid sanitization poblems with '(' and ')'
+        # NOTE: we use functions to avoid sanitization
+        #       poblems with '(' and ')'
 
-        # Append first function
-        function = (f'function {first_function} () {{\n'
-                    f'\t{node.first.strip()}\n'
+        # Push to stack function for the actual value
+        function = (f'function {actual_function} () {{\n'
+                    f'\t{node.actual.strip()}\n'
                     '}\n\n')
         self.stack_functions.append(function)
 
-        # Append second function
-        function = (f'function {second_function} () {{\n'
-                    f'\techo -e {repr(node.second)}\n'
+        # Push to stack function for the expected value
+        function = (f'function {expected_function} () {{\n'
+                    f'\techo -e {repr(node.expected)}\n'
                     '}\n\n')
         self.stack_functions.append(function)
 
@@ -171,17 +182,17 @@ class Interpreter(NodeVisitor):
 
     def implement_debug(self, verbose:bool=False):
         """Return debug code"""
-        ## TODO: Implement hexview to print detailed debug data
 
+        ## TODO: Implement hexview to print detailed debug data
         hexview = '' if verbose else ''
 
         result = ('# This prints debug data when an assertion fail\n'
-                  '# $1 -> first value\n'
-                  '# $2 -> second value\n'
+                  '# $1 -> actual value\n'
+                  '# $2 -> expected value\n'
                   'function print_debug() {\n'
-                  '\techo "======= first value  ======="\n'
+                  '\techo "=======  actual  ======="\n'
                   f'\techo "$1"{hexview}\n'
-                  '\techo "======= second value ======="\n'
+                  '\techo "======= expected ======="\n'
                   f'\techo "$2"{hexview}\n'
                   '\techo "============================"\n'
                   '}\n\n')
@@ -195,8 +206,7 @@ class Interpreter(NodeVisitor):
         # Clean global class values
         self.root_required = False
         self.stack_functions = []
-        self.test_title = ''
-        self.unspaced_test_title = ''
+        self.last_title = ''
         self.implemented_debug = False
 
         # Interpret
