@@ -164,5 +164,5 @@ function print_debug() {
 	echo "$1"
 	echo "======= expected ======="
 	echo "$2"
-	echo "============================"
+	echo "========================"
 }
