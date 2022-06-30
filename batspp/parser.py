@@ -44,11 +44,9 @@ class Setup(AST):
     """
 
     def __init__(self,
-                 pointer:str = '',
                  commands:list = None,
                  data: Data = Data()) -> None:
         super().__init__(data)
-        self.pointer = pointer
         self.commands = commands if commands else []
 
 
@@ -352,7 +350,7 @@ class Parser:
                              column=data.column)
 
         # Add new setup node
-        node = Setup(pointer=pointer, commands=commands, data=data)
+        node = [pointer, Setup(commands=commands, data=data)]
         self.setup_stack.append(node)
 
     def build_assertion(self, pointer:str='') -> None:
@@ -500,15 +498,15 @@ class Parser:
 
         # Search setups with same pointer and extract commands
         for setup in self.setup_stack:
-            if setup.pointer == pointer:
-                commands += setup.commands
+            if setup[0] == pointer:
+                commands += setup[1].commands
             else:
                 temp.append(setup)
 
         # Clean setup stack from poped setup nodes
         self.setup_stack = temp
 
-        return Setup(pointer=pointer, commands=commands, data=Data()) if commands else None
+        return Setup(commands=commands, data=Data()) if commands else None
 
     def parse(self, tokens: list) -> AST:
         """

@@ -240,12 +240,12 @@ class TestParser(TestWrapper):
                          Token(TokenType.EOF, None)]
         parser.build_setup()
         self.assertEqual(len(parser.setup_stack), 1)
-        self.assertEqual(parser.setup_stack[0].pointer, '')
-        self.assertNotEqual(parser.setup_stack[0].pointer, 'wrong pointer!')
+        self.assertEqual(parser.setup_stack[0][0], '')
+        self.assertNotEqual(parser.setup_stack[0][0], 'wrong pointer!')
 
         # Check setup commands
-        self.assertEqual(parser.setup_stack[0].commands, ['some command', 'another command'])
-        self.assertNotEqual(parser.setup_stack[0].commands, ['new wrong command'])
+        self.assertEqual(parser.setup_stack[0][1].commands, ['some command', 'another command'])
+        self.assertNotEqual(parser.setup_stack[0][1].commands, ['new wrong command'])
 
         # Check for local setup pattern
         parser = Parser()
@@ -257,8 +257,8 @@ class TestParser(TestWrapper):
                          Token(TokenType.EOF, None)]
         parser.build_setup()
         self.assertEqual(len(parser.setup_stack), 1)
-        self.assertEqual(parser.setup_stack[0].pointer, 'important test')
-        self.assertNotEqual(parser.setup_stack[0].pointer, 'wrong pointer!')
+        self.assertEqual(parser.setup_stack[0][0], 'important test')
+        self.assertNotEqual(parser.setup_stack[0][0], 'wrong pointer!')
 
         # Check setup pattern without commands
         parser = Parser()
@@ -268,7 +268,7 @@ class TestParser(TestWrapper):
         self.assertFalse(parser.setup_stack)
         parser.build_setup(pointer='some lonely setup')
         self.assertEqual(len(parser.setup_stack), 1)
-        self.assertEqual(parser.setup_stack[0].pointer, 'some lonely setup')
+        self.assertEqual(parser.setup_stack[0][0], 'some lonely setup')
 
         # Check for setup without pointer (should be setted to last test)
         parser = Parser()
@@ -279,7 +279,7 @@ class TestParser(TestWrapper):
                          Token(TokenType.EOF, None)]
         parser.build_setup()
         self.assertEqual(len(parser.setup_stack), 1)
-        self.assertEqual(parser.setup_stack[0].pointer, 'important test')
+        self.assertEqual(parser.setup_stack[0][0], 'important test')
 
     def test_build_assertion(self):
         """Test for build_assertion()"""
@@ -289,9 +289,9 @@ class TestParser(TestWrapper):
         parser.test_nodes.append(Test(pointer='first test'))
         parser.test_nodes.append(Test(pointer='important test'))
         parser.test_nodes.append(Test(pointer='another test'))
-        parser.setup_stack.append(Setup(pointer='some test'))
-        parser.setup_stack.append(Setup(pointer='important test', commands=['some command']))
-        parser.setup_stack.append(Setup(pointer='another test'))
+        parser.setup_stack.append(['some test', Setup()])
+        parser.setup_stack.append(['important test', Setup(commands=['some command'])])
+        parser.setup_stack.append(['another test', Setup()])
         parser.tokens = [Token(TokenType.PESO, '$'),
                          Token(TokenType.TEXT, 'some command'),
                          Token(TokenType.TEXT, 'some text'),
@@ -313,9 +313,9 @@ class TestParser(TestWrapper):
 
         # Check setup stack and assertion
         self.assertEqual(len(parser.setup_stack), 2)
-        self.assertEqual(parser.setup_stack[0].pointer, 'some test')
-        self.assertEqual(parser.setup_stack[1].pointer, 'another test')
-        self.assertEqual(parser.test_nodes[1].assertions[0].setup.pointer, 'important test')
+        self.assertEqual(parser.setup_stack[0][0], 'some test')
+        self.assertEqual(parser.setup_stack[1][0], 'another test')
+        self.assertEqual(parser.test_nodes[1].assertions[0].setup.commands[0], 'some command')
 
         # Check for assertion eq
         parser = Parser()
@@ -335,10 +335,10 @@ class TestParser(TestWrapper):
         debug.trace(7, f'TestParser.test_pop_setup({self})')
         parser = Parser()
 
-        parser.setup_stack = [Setup(pointer='some test', commands=['some command']),
-                              Setup(pointer='important test', commands=['some important command']),
-                              Setup(pointer='another test', commands=['some command']),
-                              Setup(pointer='important test', commands=['another important command'])]
+        parser.setup_stack = [['some test', Setup(commands=['some command'])],
+                              ['important test', Setup(commands=['some important command'])],
+                              ['another test', Setup(commands=['some command'])],
+                              ['important test', Setup(commands=['another important command'])]]
         result = parser.pop_setup(pointer='important test')
 
         self.assertTrue(isinstance(result, Setup))
