@@ -59,7 +59,7 @@ class TokenType(Enum):
     ASSERT_NE = '=/>'
     # Misc
     TEXT = 'TEXT'
-    MINOR = 'MINOR'
+    MINOR = 'MINOR' # unimportant tokens that cannot be ignored
     EOF = 'EOF' # end of file
 
 
@@ -113,17 +113,17 @@ class TextLiner:
         return result
 
     def get_current_line(self):
-        """Returns line"""
+        """Returns full current line"""
         return self.lines[self.line] if self.is_line_safe() else None
 
     def advance_column(self, step:int=1) -> None:
-        """Advance text column"""
+        """Advance column N STEP columns on text"""
         self.column += step
         if not self.is_column_safe():
             self.advance_line()
 
     def advance_line(self) -> None:
-        """Advance text line"""
+        """Advance to the next text line"""
         self.line += 1
         self.column = 0
 
@@ -141,16 +141,24 @@ class Lexer:
 
     def append_token(self, token: Token) -> None:
         """
-        Appends TOKEN, this provides debug trace, also if
-        last and current TOKEN types are MINOR, TOKEN is not appended
+        Appends TOKEN, this provides a debug trace
         """
-
-        if token.type is TokenType.MINOR:
-            if self.tokens and self.tokens[-1].type is TokenType.MINOR:
-                return
-
         debug.trace(7, f'Lexer.append_token(\ntoken={token}\n)')
         self.tokens.append(token)
+
+    def append_minor_token(self, token: Token) -> None:
+        """
+        appends minor TOKEN only if these are not a previus MINOR token.
+        this avoids have N unnecesary MINOR tokens.
+        """
+
+        assert token.type is TokenType.MINOR, 'wrong token type, must be a MINOR'
+
+        if self.tokens and self.tokens[-1].type is TokenType.MINOR:
+            debug.trace(7, f'Lexer.append_minor_token(token={token}) -> kicked!')
+            return
+
+        self.append_token(token)
 
     def extract_tokens(self):
         """Extract all tokens from text"""
@@ -173,18 +181,18 @@ class Lexer:
             match = re.match(r'^##', self.text.get_current_line())
             if match:
                 self.text.advance_line()
-                self.append_token(Token(TokenType.MINOR, match.group(), data))
+                self.append_minor_token(Token(TokenType.MINOR, match.group(), data))
                 continue
 
             # Tokenize empty lines
-            match = re.match('^ *$', self.text.get_current_line())
+            match = re.match(r'^ *$', self.text.get_current_line())
             if match:
                 self.text.advance_line()
-                self.append_token(Token(TokenType.MINOR, match.group(), data))
+                self.append_minor_token(Token(TokenType.MINOR, match.group(), data))
                 continue
 
             # Tokenize peso
-            match = re.match(' *\$', self.text.get_rest_line())
+            match = re.match(r' *\$', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.append_token(Token(TokenType.PESO, match.group(), data))
@@ -250,7 +258,7 @@ class Lexer:
             match = re.match(r'^ *#.*?$', self.text.get_current_line())
             if match:
                 self.text.advance_line()
-                self.append_token(Token(TokenType.MINOR, None, data))
+                self.append_minor_token(Token(TokenType.MINOR, None, data))
                 continue
 
             exceptions.error(message='invalid syntax',
@@ -264,18 +272,19 @@ class Lexer:
     def tokenize(self, text: str, embedded_tests:bool=False) -> list:
         """Tokenize text"""
 
+        # Set another global class
         self.extra_indent = ''
-
-        if embedded_tests:
-            self.extra_indent = r'#'
-
-            # Remove not commented lines
-            text = re.sub(r'^[^#\n]+?$', '\n', text)
-
         self.text = TextLiner(text)
         self.tokens = []
 
-        # Tokenization
+        # Set extra indent and remove not commented
+        # lines because we only focus on the
+        # commented lines if there are embedded tests
+        if embedded_tests:
+            self.extra_indent = r'#'
+            text = re.sub(r'^[^#\n]+?$', '\n', text)
+
+        # Tokenize text
         self.extract_tokens()
 
         debug.trace(7, f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests})')
