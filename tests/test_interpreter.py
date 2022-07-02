@@ -150,7 +150,7 @@ class TestInterpreter(TestWrapper):
                                      tests=[test],
                                      data=data)
 
-        _, actual = Interpreter().interpret(test_suite_node, verbose=False)
+        _, actual = Interpreter().interpret(test_suite_node)
 
         expected = ('# Setup\n'
                     'echo "hello world" > file.txt\n'
