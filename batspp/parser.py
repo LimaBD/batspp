@@ -333,11 +333,14 @@ class Parser:
             elif self.last_pointer:
                 pointer = self.last_pointer
 
-            # Otherwise we treat the setup as a global setup (empty pointer)
+            # Otherwise we treat the setup as a
+            # global setup (empty pointer)
             else:
                 pass
 
-        # Check commands
+        # Check for commands
+        #
+        # Setups directives must contains at least one command
         commands = []
         while self.is_setup_next():
             self.eat(TokenType.PESO)
@@ -349,7 +352,9 @@ class Parser:
                              line=data.line,
                              column=data.column)
 
-        # Add new setup node
+        # Push new setup node to the stack,
+        # this must contains an pointer to later
+        # assign this to an assertion
         node = [pointer, Setup(commands=commands, data=data)]
         self.setup_stack.append(node)
 
@@ -368,14 +373,21 @@ class Parser:
         atype = None
         actual = ''
 
-        # Check for command assertion
+        # Check for command style assertion
+        #
+        # These could be:
+        # PESO TEXT
         if self.get_current_token().type is TokenType.PESO:
             atype = AssertionType.OUTPUT
             self.eat(TokenType.PESO)
             actual = self.get_current_token().value
             self.eat(TokenType.TEXT)
 
-        # Check for assertion
+        # Check for arrow assertion
+        #
+        # These could be:
+        # assertion: TEXT ASSERT_EQ TEXT
+        # assertion: TEXT ASSERT_NE TEXT
         elif self.get_current_token().type is TokenType.TEXT:
             actual = self.get_current_token().value
             self.eat(TokenType.TEXT)
@@ -402,29 +414,25 @@ class Parser:
                          expected=expected,
                          data=data)
 
-        # Check for setups on setup stack
-        #
-        # Every time that a new assertion is added,
-        # check if there are in the setup stack setups
-        # with same pointer, when we assign the setup
-        # to the assertion and clean the stack to avoid
-        # duplicated setups
+        # Assign setups from the stack with
+        # the same pointer as the assertion
         node.setup = self.pop_setup(pointer=pointer)
 
-        # Add assertion node to test suite
+        # Assign assertion node to test suite
         #
         # Note that a previus test node should
         # exist to append the new assertion.
         #
         # We loop in reverse because is more probably
-        # that the assertion is from the last test so
+        # that the assertion is from the last test,
         # this reduce the number of needed iterations.
         for test in reversed(self.test_nodes):
             if test.pointer == pointer:
                 test.assertions.append(node)
                 node = None
                 break
-        # Check that assertion was added to a test
+
+        # The node cannot remain alone without being assigned to a test
         if node is not None:
             exceptions.error(message=(f'Assertion "{pointer}"'
                                       ' referenced before assignment.'),
@@ -471,11 +479,13 @@ class Parser:
             else:
                 break
 
-        # Check last token
+        # The last token always should be an EOF
         self.eat(TokenType.EOF)
 
-        # Check global setup commands
+        # Set global global setup for test suite
         setup = self.pop_setup(pointer='')
+
+        # Finishing the parsing, cannot be remaining setups on stack
         if self.setup_stack:
             first_invalid = self.setup_stack[0]
             exceptions.error(message=(f'Setup "{first_invalid.pointer}"'
@@ -490,21 +500,20 @@ class Parser:
 
     def pop_setup(self, pointer: str) -> Setup:
         """
-        Pop setups nodes from stack,
-        also unifies all that match with POINTER into one
+        Pop setups nodes from stack with same POINTER,
+        if several setups are founded, unify all into one
         """
-        commands = []
-        temp = []
+        commands, temp_stack = [], []
 
-        # Search setups with same pointer and extract commands
+        # Get commands from setups with same pointer
         for setup in self.setup_stack:
             if setup[0] == pointer:
                 commands += setup[1].commands
             else:
-                temp.append(setup)
+                temp_stack.append(setup)
 
-        # Clean setup stack from poped setup nodes
-        self.setup_stack = temp
+        # Set setup stack with the remaining setups
+        self.setup_stack = temp_stack
 
         return Setup(commands=commands, data=Data()) if commands else None
 
