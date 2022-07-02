@@ -28,6 +28,13 @@ from mezcla import debug
 import exceptions
 
 
+class Tags(Enum):
+    """Tags enum"""
+    EOF = '<EOF>' # expected output EOF
+    END = '<END>' # end of assertion
+    BLANK = '<BLANK>' # blank line
+
+
 class Data:
     """Data class"""
 
@@ -224,6 +231,18 @@ class Lexer:
             if match:
                 self.text.advance_column(match.span()[1])
                 self.append_token(Token(TokenType.CONTINUATION, match.group(), data))
+                continue
+
+            # Tokenize tags EOF and END
+            if self.text.get_rest_line().startswith((Tags.END.value, Tags.EOF.value)):
+                self.text.advance_column(5)
+                self.append_token(Token(TokenType.MINOR, None, data))
+                continue
+
+            # Tokenize BLANK tag
+            if self.text.get_rest_line().startswith(Tags.BLANK.value):
+                self.text.advance_column(len(Tags.BLANK.value))
+                self.append_token(Token(TokenType.TEXT, '\n', data))
                 continue
 
             # Tokenize pointer

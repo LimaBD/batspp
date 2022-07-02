@@ -268,6 +268,26 @@ class TestLexer(TestWrapper):
                                  TokenType.TEXT,
                                  TokenType.EOF])
 
+    def test_end_eof_tags(self):
+        """Test for END and EOF tags"""
+        types = self.tokenize_types('$ some command\nexpected text\n<EOF>\n<END>')
+        self.assertEqual(types, [TokenType.PESO,
+                                 TokenType.TEXT,
+                                 TokenType.TEXT,
+                                 TokenType.MINOR,
+                                 TokenType.MINOR,
+                                 TokenType.EOF])
+
+    def test_blank(self):
+        """Test for BLANK tag"""
+        types = self.tokenize_types('$ some command\nexpected text\n<BLANK>\nwith an blank line')
+        self.assertEqual(types, [TokenType.PESO,
+                                 TokenType.TEXT,
+                                 TokenType.TEXT,
+                                 TokenType.TEXT,
+                                 TokenType.TEXT,
+                                 TokenType.EOF])
+
     def test_text(self):
         """Test for TEXT token type"""
         ## TODO: WORK-IN-PROGRESS

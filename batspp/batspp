@@ -10,7 +10,6 @@
 ## TODO: upgrade docstring
 ## TODO: add timer and print execution time
 ## TODO: set soft/hard interpretation with is_test_file to comment tests
-## TODO: implement tags e.g. <blank>
 ## TODO: use a separate pass of the test source to fill in the missing test names.
 ## TODO: implement --discover flag to discover all tests file in a folder.
 
