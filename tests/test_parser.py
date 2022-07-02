@@ -289,9 +289,9 @@ class TestParser(TestWrapper):
         parser.test_nodes.append(Test(pointer='first test'))
         parser.test_nodes.append(Test(pointer='important test'))
         parser.test_nodes.append(Test(pointer='another test'))
-        parser.setup_stack.append(['some test', Setup()])
-        parser.setup_stack.append(['important test', Setup(commands=['some command'])])
-        parser.setup_stack.append(['another test', Setup()])
+        parser.setup_stack.append(('some test', Setup()))
+        parser.setup_stack.append(('important test', Setup(commands=['some command'])))
+        parser.setup_stack.append(('another test', Setup()))
         parser.tokens = [Token(TokenType.PESO, '$'),
                          Token(TokenType.TEXT, 'some command'),
                          Token(TokenType.TEXT, 'some text'),
@@ -335,10 +335,10 @@ class TestParser(TestWrapper):
         debug.trace(7, f'TestParser.test_pop_setup({self})')
         parser = Parser()
 
-        parser.setup_stack = [['some test', Setup(commands=['some command'])],
-                              ['important test', Setup(commands=['some important command'])],
-                              ['another test', Setup(commands=['some command'])],
-                              ['important test', Setup(commands=['another important command'])]]
+        parser.setup_stack = [('some test', Setup(commands=['some command'])),
+                              ('important test', Setup(commands=['some important command'])),
+                              ('another test', Setup(commands=['some command'])),
+                              ('important test', Setup(commands=['another important command']))]
         result = parser.pop_setup(pointer='important test')
 
         self.assertTrue(isinstance(result, Setup))

@@ -355,7 +355,7 @@ class Parser:
         # Push new setup node to the stack,
         # this must contains an pointer to later
         # assign this to an assertion
-        node = [pointer, Setup(commands=commands, data=data)]
+        node = (pointer, Setup(commands=commands, data=data))
         self.setup_stack.append(node)
 
     def build_assertion(self, pointer:str='') -> None:
@@ -503,17 +503,13 @@ class Parser:
         Pop setups nodes from stack with same POINTER,
         if several setups are founded, unify all into one
         """
-        commands, temp_stack = [], []
+        commands = []
 
         # Get commands from setups with same pointer
-        for setup in self.setup_stack:
-            if setup[0] == pointer:
-                commands += setup[1].commands
-            else:
-                temp_stack.append(setup)
-
-        # Set setup stack with the remaining setups
-        self.setup_stack = temp_stack
+        for stack_pointer, setup in self.setup_stack:
+            if stack_pointer == pointer:
+                commands += setup.commands
+                self.setup_stack.remove((stack_pointer, setup))
 
         return Setup(commands=commands, data=Data()) if commands else None
 
