@@ -12,6 +12,7 @@
 ## TODO: set soft/hard interpretation with is_test_file to comment tests
 ## TODO: use a separate pass of the test source to fill in the missing test names.
 ## TODO: implement --discover flag to discover all tests file in a folder.
+## TODO: implement Tom enviroment vars and args
 
 
 """
@@ -58,7 +59,7 @@ FILE = 'file'
 SAVE = 'save'
 SOURCE = 'source'
 OUTPUT = 'output'
-VERBOSE = 'verbose'
+HEXVIEW = 'hexview'
 
 
 # Some constants
@@ -75,79 +76,134 @@ class Batspp(Main):
     save_path = ''
     source = ''
     output = False
-    verbose = False
+    debug_hexview = False
 
     def setup(self):
         """Process arguments"""
 
         # Check the command-line options
         self.file = self.get_parsed_argument(FILE, self.file)
-        self.save_path = self.get_parsed_argument(SAVE, self.save_path)
+        self.save_path = self.get_parsed_argument(SAVE, self.temp_file)
         self.source = self.get_parsed_argument(SOURCE, self.source)
         self.output = self.has_parsed_option(OUTPUT)
-        self.verbose = self.has_parsed_option(VERBOSE)
+        self.debug_hexview = self.has_parsed_option(HEXVIEW)
 
         debug.trace(7, (f'batspp.setup({self}) - \n'
                         f'\t{FILE}: {self.file},\n'
                         f'\t{SAVE}: {self.save_path},\n'
                         f'\t{SOURCE}: {self.source},\n'
                         f'\t{OUTPUT}: {self.output},\n'
-                        f'\t{VERBOSE}: {self.verbose}'))
+                        f'\t{HEXVIEW}: {self.debug_hexview}'))
 
     def run_main_step(self):
         """Process main script"""
 
-        # Append bats file header
-        bats_content = ('#!/usr/bin/env bats\n'
+        is_test_file = self.file.endswith(f'.{BATSPP_EXTENSION}')
+        file_content = system.read_file(self.file)
+
+        tests = Test(debug_hexview=self.debug_hexview)
+
+        try:
+            tests.build(file_content,
+                        source=self.source,
+                        embedded_tests=is_test_file)
+        except: # pylint: disable=bare-except
+            print(f'Not founded tests on file {self.file}')
+            return
+
+        # Build a filename to save the tests
+        # if the entered path only contains a dir path
+        if self.save_path.endswith('/'):
+            filename = re.search(r"\/(\w+)\.", self.file).group(0)
+            self.save_path += f'generated_{filename}.{BATS_EXTENSION}'
+
+        tests.save(self.save_path)
+
+        # STDOUT
+        if self.output:
+            print(tests.get_tests())
+        else:
+            print(tests.run())
+
+
+class Test:
+    """
+    This is responsible to build and run test
+    """
+
+    def __init__(self,
+                 debug_hexview:bool = False) -> None:
+        self.debug_hexview = debug_hexview
+
+        # Global states
+        self.root_required = False
+        self.content = ''
+        self.path = ''
+
+    def build(self,
+              text: str,
+              source:str = '',
+              embedded_tests:bool = False) -> None:
+        """
+        Build tests from TEXT,
+        scripts files can be sourced with SOURCE,
+        with DEBUG_HEXVIEW, hexview of actual and expeted
+        values on assertions are printed
+        """
+
+        # Process tests
+        tokens = Lexer().tokenize(text, embedded_tests=embedded_tests)
+        tree = Parser().parse(tokens)
+        self.root_required, body = Interpreter().interpret(tree, debug_hexview=self.debug_hexview)
+
+        if not body:
+            raise Exception('No tests founded')
+
+        # Append test parts
+        self.content = ('#!/usr/bin/env bats\n'
                         '#\n'
                         '# This test file was generated using Batspp\n'
                         '# https://github.com/LimaBD/batspp\n'
                         '#\n\n')
-
-        # Append files to be sourced/load (using args)
-        if self.source:
-            bats_content += ('# Load sources\n'
+        if source:
+            self.content += ('# Load sources\n'
                              'shopt -s expand_aliases\n'
-                             f'source {self.source}\n\n')
+                             f'source {source}\n')
+        self.content += body
 
-        # Process file content
-        is_test_file = self.file.endswith(f'.{BATSPP_EXTENSION}')
-        file_content = system.read_file(self.file)
-        tokens = Lexer().tokenize(file_content, embedded_tests=not is_test_file)
-        abstract_syntax_tree = Parser().parse(tokens)
-        root_required, bats_body = Interpreter().interpret(abstract_syntax_tree, verbose=self.verbose)
+    def get_tests(self) -> str:
+        """Return tests"""
+        debug.trace(7, 'Test.get_tests()')
+        return self.content
 
-        # Check for bats_body content
-        if not bats_body:
-            print(f'Not founded tests on file {self.file}')
-            return
-        bats_content += bats_body
+    def save(self, path: str) -> None:
+        """Save tests on PATH"""
+        debug.trace(7, f'Test.save({path})')
 
-        # Set Bats filename to save
-        self.save_path = self.save_path if self.save_path else self.temp_file
-        if self.save_path.endswith('/'):
-            filename = re.search(r"\/(\w+)\.", self.file).group(0)
-            self.save_path += f'{filename}.{BATS_EXTENSION}'
+        assert path, 'PATH string cannot be empty'
+        assert self.content, 'Tests must be builded, try build() method'
 
-        gh.write_file(self.save_path, bats_content)
-        gh.run(f'chmod +x {self.save_path}')
+        self.path = path
 
-        # Print direct generated Bats file
-        if self.output:
-            print(bats_content)
+        gh.write_file(path, self.content)
+        gh.run(f'chmod +x {path}')
 
-        # Run generated Bats file
-        else:
-            sudo = 'sudo' if root_required else ''
-            debug.trace(7, f'batspp - running test {self.save_path}')
-            print(gh.run(f'{sudo} bats {self.save_path}'))
+    def run(self) -> str:
+        """Return stdout from runned tests"""
+        debug.trace(7, f'Test.run() on path={self.path}')
+
+        assert self.path, 'Tests must be saved, try save() method'
+
+        sudo = 'sudo' if self.root_required else ''
+
+        return gh.run(f'{sudo} bats {self.path}')
 
 
 if __name__ == '__main__':
     app = Batspp(description = __doc__,
                  positional_arguments = [(FILE, 'filename')],
                  boolean_options = [(OUTPUT, 'print output test'),
-                                    (VERBOSE, 'print verbose debug')],
+                                    (HEXVIEW, 'print hexview debug when an assertion fail')],
                  text_options = [(SAVE, 'specifies path to save the generated bats file'),
                                  (SOURCE, 'specifies file to be sourced')],
                  manual_input = True)
