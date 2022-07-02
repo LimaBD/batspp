@@ -33,14 +33,14 @@ class NodeVisitor:
     """Implements a generic method visit"""
 
     def visit(self, node):
-        """Generic method to visit nodes"""
+        """Generic method to visit NODE"""
         method_name = f'visit_{type(node).__name__}'
         visitor = getattr(self, method_name, self.generic_visitor)
         debug.trace(7, f'NodeVisitor.visitor({node}) => {method_name}({node})')
         return visitor(node)
 
     def generic_visitor(self, node) -> None:
-        """Raise exception if the visit method not exist"""
+        """Raise exception if the visit method to NODE not exist"""
         raise Exception(f'No visit_{type(node).__name__} method founded')
 
 
@@ -62,7 +62,7 @@ class Interpreter(NodeVisitor):
 
     # pylint: disable=invalid-name
     def visit_TestsSuite(self, node: TestsSuite) -> str:
-        """Visit TestsSuite node"""
+        """Visit TestsSuite NODE"""
 
         result = ''
 
@@ -78,7 +78,7 @@ class Interpreter(NodeVisitor):
 
     # pylint: disable=invalid-name
     def visit_Setup(self, node: Setup) -> str:
-        """Visit Setup node"""
+        """Visit Setup NODE"""
 
         # Check header comment and commands indentation
         result = '# Setup\n' if not self.last_title else ''
@@ -96,14 +96,14 @@ class Interpreter(NodeVisitor):
         return result
 
     def check_root(self, commands: str) -> None:
-        """Check if command need root permissions"""
+        """Check if COMMANDS need root permissions"""
         if not self.root_required:
             self.root_required = 'sudo' in commands
 
     # pylint: disable=invalid-name
     def visit_Test(self, node: Test) -> str:
         """
-        Visit Test node, updates global class test title
+        Visit Test NODE, also updates global class test title
         """
 
         # Process title
@@ -131,7 +131,7 @@ class Interpreter(NodeVisitor):
     # pylint: disable=invalid-name
     def visit_Assertion(self, node: Assertion) -> str:
         """
-        Visit Assertion node, also push functions
+        Visit Assertion NODE, also push functions
         to stack for actual and expected values
         """
 
@@ -178,11 +178,15 @@ class Interpreter(NodeVisitor):
         debug.trace(7, f'interpreter.visit_Assertion(node={node}) => {result}')
         return result
 
-    def implement_debug(self, verbose:bool=False) -> str:
-        """Return debug code"""
+    def implement_debug(self, hexview:bool=False) -> str:
+        """
+        Return debug code,
+        with HEXVIEW true, adds pipe to print 
+        hewview of actual and expected values
+        """
 
         ## TODO: Implement hexview to print detailed debug data
-        hexview = '' if verbose else ''
+        hexview = '' if hexview else ''
 
         result = ('# This prints debug data when an assertion fail\n'
                   '# $1 -> actual value\n'
@@ -195,13 +199,19 @@ class Interpreter(NodeVisitor):
                   '\techo "========================"\n'
                   '}\n\n')
 
-        debug.trace(7,f'Interpreter.implement_debug(verbose={verbose}) => {result}')
+        debug.trace(7,f'Interpreter.implement_debug(hexview={hexview}) => {result}')
         return result
 
-    def interpret(self, tree: AST, verbose:bool = False) -> str:
-        """Interpret and visit bats-core tests"""
+    def interpret(self, tree: AST, debug_hexview:bool = False) -> str:
+        """
+        Interpret Batspp abstract syntax tree,
+        if DEBUG_HEXVIEW is true, adds pipe to print hexview of actual and expected
+        """
 
         # Clean global class values
+        #
+        # This is useful if is needed to reuse
+        # the same instance of this class
         self.root_required = False
         self.stack_functions = []
         self.last_title = ''
@@ -212,7 +222,7 @@ class Interpreter(NodeVisitor):
         result = self.visit(tree)
 
         # Aditional
-        result += self.implement_debug(verbose) if self.debug_required else ''
+        result += self.implement_debug(debug_hexview) if self.debug_required else ''
 
         debug.trace(7, f'Interpreter.interpret() => root={self.root_required} result={result}')
         return self.root_required, result

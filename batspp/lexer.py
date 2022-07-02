@@ -291,7 +291,10 @@ class Lexer:
     def tokenize(self, text: str, embedded_tests:bool=False) -> list:
         """Tokenize text"""
 
-        # Set another global class
+        # Clean global class values
+        #
+        # This is useful if is needed to reuse
+        # the same instance of this class
         self.extra_indent = ''
         self.text = TextLiner(text)
         self.tokens = []

@@ -125,7 +125,7 @@ class Parser:
         return result
 
     def peek_token(self, number:int =1) -> Token:
-        """Peek next N tokens ahead"""
+        """Peek next NUMBER of tokens ahead"""
 
         moved_index = self.index + number
 
@@ -225,7 +225,7 @@ class Parser:
     def build_test(self, pointer:str='') -> None:
         """
         Build and append Test AST node,
-        when POINTER is assigned, avoids check for TEST and TEXT tokens
+        Set POINTER as pointer, otherwise (if empty), search for TEST TEXT tokens
         """
         debug.trace(7, f'parser.build_test(pointer={pointer})')
 
@@ -292,7 +292,7 @@ class Parser:
     def break_setup_assertion(self, pointer:int = '') -> None:
         """
         Process and break block test
-        into setup and assertion AST nodes
+        into setup and assertion AST nodes and set POINTER as pointer
         """
         debug.trace(7, f'parser.break_setup_assertion(pointer={pointer})')
 
@@ -311,7 +311,7 @@ class Parser:
 
     def build_setup(self, pointer:str='') -> None:
         """
-        Build and append Setup AST node
+        Build and append Setup AST node and set POINTER as pointer
         """
         debug.trace(7, f'parser.build_setup(pointer={pointer})')
 
@@ -360,7 +360,7 @@ class Parser:
 
     def build_assertion(self, pointer:str='') -> None:
         """
-        Build and append Assertion AST node
+        Build and append Assertion AST node and set POINTER as pointer
         """
         debug.trace(7, f'parser.build_assertion(pointer={pointer})')
 
@@ -519,10 +519,13 @@ class Parser:
 
     def parse(self, tokens: list) -> AST:
         """
-        Builds an Abstract Syntax Tree (AST)
+        Builds an Abstract Syntax Tree (AST) from TOKENS list
         """
 
-        # Set global state
+        # Clean global class values
+        #
+        # This is useful if is needed to reuse
+        # the same instance of this class
         assert tokens, 'Tokens list cannot be empty'
         self.tokens = tokens
         self.index = 0
