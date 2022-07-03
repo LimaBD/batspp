@@ -117,16 +117,7 @@ class TestInterpreter(TestWrapper):
         self.assertTrue('echo "some text"' in interpreter.stack_functions[0])
         self.assertTrue('some text' in interpreter.stack_functions[1])
         self.assertTrue('[ "$actual" == "$expected" ]' in actual)
-        self.assertFalse(interpreter.root_required)
         self.assertTrue(interpreter.debug_required)
-
-        # Test for root required (sudo in actual command)
-        node = Assertion(atype=AssertionType.EQUAL,
-                         actual='sudo echo "some text"',
-                         expected='some text',
-                         data=data)
-        _ = interpreter.visit_Assertion(node)
-        self.assertTrue(interpreter.root_required)
 
     def test_interpret(self):
         """Test for interpret()"""
@@ -150,9 +141,18 @@ class TestInterpreter(TestWrapper):
                                      tests=[test],
                                      data=data)
 
-        _, actual = Interpreter().interpret(test_suite_node)
+        actual = Interpreter().interpret(test_suite_node)
 
-        expected = ('# Setup\n'
+        expected = ('#!/usr/bin/env bats\n'
+                    '#\n'
+                    '# This test file was generated using Batspp\n'
+                    '# https://github.com/LimaBD/batspp\n'
+                    '#\n'
+                    '\n'
+                    '# Constants\n'
+                    'VERBOSE_DEBUG=""\n'
+                    '\n'
+                    '# Setup\n'
                     'echo "hello world" > file.txt\n'
                     '\n'
                     '@test "important test" {\n'
@@ -192,9 +192,9 @@ class TestInterpreter(TestWrapper):
                     '# $1 -> actual value\n'
                     '# $2 -> expected value\nfunction print_debug() {\n'
                     '\techo "=======  actual  ======="\n'
-                    '\techo "$1"\n'
+                    '\tbash -c "echo "$1" $VERBOSE_DEBUG"\n'
                     '\techo "======= expected ======="\n'
-                    '\techo "$2"\n'
+                    '\tbash -c "echo "$2" $VERBOSE_DEBUG"\n'
                     '\techo "========================"\n'
                     '}\n'
                     '\n')

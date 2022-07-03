@@ -4,6 +4,9 @@
 # https://github.com/LimaBD/batspp
 #
 
+# Constants
+VERBOSE_DEBUG=""
+
 # Setup
 shopt -s expand_aliases
 source ./bash_example.bash
@@ -161,8 +164,8 @@ function test-of-line-59-line63-expected () {
 # $2 -> expected value
 function print_debug() {
 	echo "=======  actual  ======="
-	echo "$1"
+	bash -c "echo "$1" $VERBOSE_DEBUG"
 	echo "======= expected ======="
-	echo "$2"
+	bash -c "echo "$2" $VERBOSE_DEBUG"
 	echo "========================"
 }

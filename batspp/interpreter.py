@@ -29,6 +29,23 @@ from parser import (
     AST, TestsSuite, Test, Setup, Assertion, AssertionType
 )
 
+
+# Constants
+VERBOSE_DEBUG = 'VERBOSE_DEBUG'
+
+
+class TestData:
+    """Data class for tests related data"""
+
+    def __init__(self,
+                 source: str = '',
+                 embedded_tests:bool = False,
+                 debug_hexview:bool = False) -> None:
+        self.source = source
+        self.embedded_tests = embedded_tests
+        self.debug_hexview = debug_hexview
+
+
 class NodeVisitor:
     """Implements a generic method visit"""
 
@@ -49,9 +66,10 @@ class Interpreter(NodeVisitor):
     This is responsible for interpret and builds
     bats-core tests from abstract syntax trees for Batspp
     """
+    ## TODO: this bad smells, inteprets an AST and
+    ##       also builds a full tests content.
 
     def __init__(self) -> None:
-        self.root_required = False
         self.stack_functions = []
         self.last_title = ''
         self.debug_required = False
@@ -88,17 +106,10 @@ class Interpreter(NodeVisitor):
         for command in node.commands:
             result += f'{indent}{command.strip()}\n'
 
-        self.check_root(result)
-
         result += '\n' if not self.last_title else ''
 
         debug.trace(7, f'interpreter.visit_Setup(node={node}) => {result}')
         return result
-
-    def check_root(self, commands: str) -> None:
-        """Check if COMMANDS need root permissions"""
-        if not self.root_required:
-            self.root_required = 'sudo' in commands
 
     # pylint: disable=invalid-name
     def visit_Test(self, node: Test) -> str:
@@ -156,9 +167,7 @@ class Interpreter(NodeVisitor):
 
         # Check global class flags to
         # later implement a debug function
-        # and return if root is needed
         self.debug_required = True
-        self.check_root(node.actual)
 
         # NOTE: we use functions to avoid sanitization
         #       poblems with '(' and ')'
@@ -178,51 +187,94 @@ class Interpreter(NodeVisitor):
         debug.trace(7, f'interpreter.visit_Assertion(node={node}) => {result}')
         return result
 
-    def implement_debug(self, hexview:bool=False) -> str:
+    def implement_debug(self) -> str:
         """
         Return debug code,
         with HEXVIEW true, adds pipe to print 
         hewview of actual and expected values
         """
 
-        ## TODO: Implement hexview to print detailed debug data
-        hexview = '' if hexview else ''
-
         result = ('# This prints debug data when an assertion fail\n'
                   '# $1 -> actual value\n'
                   '# $2 -> expected value\n'
                   'function print_debug() {\n'
                   '\techo "=======  actual  ======="\n'
-                  f'\techo "$1"{hexview}\n'
+                  f'\tbash -c "echo \"$1\" ${VERBOSE_DEBUG}"\n'
                   '\techo "======= expected ======="\n'
-                  f'\techo "$2"{hexview}\n'
+                  f'\tbash -c "echo \"$2\" ${VERBOSE_DEBUG}"\n'
                   '\techo "========================"\n'
                   '}\n\n')
 
-        debug.trace(7,f'Interpreter.implement_debug(hexview={hexview}) => {result}')
+        debug.trace(7,f'Interpreter.implement_debug() => {result}')
         return result
 
-    def interpret(self, tree: AST, debug_hexview:bool = False) -> str:
+    def implement_constants(self, data: TestData):
+        """Implement settings constants from DATA"""
+
+        # This appends all constants that will be
+        # used in the tests file, for example
+        #
+        # # Constants
+        # VERBOSE_DEBUG="| hexview"
+        # .
+        # .
+        # .
+        # TEMP_DIR="/tmp"
+
+        result, constants = '', ''
+
+        if self.debug_required:
+            ## TODO: implement hexview
+            hexview = '' if data and data.debug_hexview else ''
+            constants += f'{VERBOSE_DEBUG}="{hexview}"\n'
+
+        # Add header comment
+        result = f'# Constants\n{constants}\n' if constants else ''
+
+        debug.trace(7, f'Interpreter.implement_constants() => "{result}"')
+        return result
+
+    def interpret(self,
+                  tree: AST,
+                  data: TestData = None) -> str:
         """
-        Interpret Batspp abstract syntax tree,
-        if DEBUG_HEXVIEW is true, adds pipe to print hexview of actual and expected
+        Interpret Batspp abstract syntax tree and build tests
         """
 
         # Clean global class values
         #
         # This is useful if is needed to reuse
         # the same instance of this class
-        self.root_required = False
         self.stack_functions = []
         self.last_title = ''
         self.debug_required = False
 
-        # Interpret
+        # Interpret abstract syntax tree tests
         assert tree, 'Invalid tree node'
-        result = self.visit(tree)
+        tests = self.visit(tree)
 
-        # Aditional
-        result += self.implement_debug(debug_hexview) if self.debug_required else ''
+        # Add aditional content
+        result = ''
 
-        debug.trace(7, f'Interpreter.interpret() => root={self.root_required} result={result}')
-        return self.root_required, result
+        if tests:
+            # Add tests header
+            result += ('#!/usr/bin/env bats\n'
+                       '#\n'
+                       '# This test file was generated using Batspp\n'
+                       '# https://github.com/LimaBD/batspp\n'
+                       '#\n\n')
+
+            result += self.implement_constants(data)
+
+            if data and data.source:
+                result += ('# Load sources\n'
+                            'shopt -s expand_aliases\n'
+                            f'source {data.source}\n')
+
+            result += tests
+
+            # Add implement debug
+            result += self.implement_debug() if self.debug_required else ''
+
+        debug.trace(7, f'Interpreter.interpret() => "{result}"')
+        return result

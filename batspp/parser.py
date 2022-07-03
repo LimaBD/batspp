@@ -28,13 +28,13 @@ from mezcla import debug
 
 # Local modules
 import exceptions
-from lexer import Data, TokenType, Token
+from lexer import TokenData, TokenType, Token
 
 
 class AST:
     """Abstract Syntax Tree interface for Batspp"""
 
-    def __init__(self, data: Data = Data()) -> None:
+    def __init__(self, data: TokenData = TokenData()) -> None:
         self.data = data
 
 
@@ -45,7 +45,7 @@ class Setup(AST):
 
     def __init__(self,
                  commands:list = None,
-                 data: Data = Data()) -> None:
+                 data: TokenData = TokenData()) -> None:
         super().__init__(data)
         self.commands = commands if commands else []
 
@@ -67,7 +67,7 @@ class Assertion(AST):
                  setup: Setup = None,
                  actual: str = '',
                  expected: str = '',
-                 data: Data = Data()) -> None:
+                 data: TokenData = TokenData()) -> None:
         super().__init__(data)
         self.atype = atype
         self.setup = setup
@@ -83,7 +83,7 @@ class Test(AST):
     def __init__(self,
                  pointer: str = '',
                  assertions: list = None,
-                 data: Data = Data()) -> None:
+                 data: TokenData = TokenData()) -> None:
         super().__init__(data)
         self.pointer = pointer
         self.assertions = assertions if assertions else []
@@ -97,7 +97,7 @@ class TestsSuite(AST):
     def __init__(self,
                  setup: Setup,
                  tests: list,
-                 data: Data = Data()) -> None:
+                 data: TokenData = TokenData()) -> None:
         super().__init__(data)
         self.setup = setup
         self.tests = tests
@@ -511,7 +511,7 @@ class Parser:
                 commands += setup.commands
                 self.setup_stack.remove((stack_pointer, setup))
 
-        return Setup(commands=commands, data=Data()) if commands else None
+        return Setup(commands=commands, data=TokenData()) if commands else None
 
     def parse(self, tokens: list) -> AST:
         """

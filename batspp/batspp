@@ -12,7 +12,6 @@
 ## TODO: set soft/hard interpretation with is_test_file to comment tests
 ## TODO: use a separate pass of the test source to fill in the missing test names.
 ## TODO: implement --discover flag to discover all tests file in a folder.
-## TODO: implement Tom enviroment vars and args
 
 
 """
@@ -51,7 +50,7 @@ from mezcla import glue_helpers as gh
 # Local modules
 from lexer import Lexer
 from parser import Parser
-from interpreter import Interpreter
+from interpreter import Interpreter, TestData
 
 
 # Command-line labels constants
@@ -98,15 +97,13 @@ class Batspp(Main):
     def run_main_step(self):
         """Process main script"""
 
-        is_test_file = self.file.endswith(f'.{BATSPP_EXTENSION}')
-        file_content = system.read_file(self.file)
-
-        tests = Test(debug_hexview=self.debug_hexview)
+        tests = Test()
+        data = TestData(source = self.source,
+                        embedded_tests = not self.file.endswith(f'.{BATSPP_EXTENSION}'),
+                        debug_hexview = self.debug_hexview)
 
         try:
-            tests.build(file_content,
-                        source=self.source,
-                        embedded_tests=is_test_file)
+            tests.build(system.read_file(self.file), data=data)
         except: # pylint: disable=bare-except
             print(f'Not founded tests on file {self.file}')
             return
@@ -131,9 +128,7 @@ class Test:
     This is responsible to build and run test
     """
 
-    def __init__(self,
-                 debug_hexview:bool = False) -> None:
-        self.debug_hexview = debug_hexview
+    def __init__(self) -> None:
 
         # Global states
         self.root_required = False
@@ -142,8 +137,7 @@ class Test:
 
     def build(self,
               text: str,
-              source:str = '',
-              embedded_tests:bool = False) -> None:
+              data: TestData = None) -> None:
         """
         Build tests from TEXT,
         scripts files can be sourced with SOURCE,
@@ -152,24 +146,13 @@ class Test:
         """
 
         # Process tests
-        tokens = Lexer().tokenize(text, embedded_tests=embedded_tests)
+        tokens = Lexer().tokenize(text, data.embedded_tests)
         tree = Parser().parse(tokens)
-        self.root_required, body = Interpreter().interpret(tree, debug_hexview=self.debug_hexview)
+        self.content = Interpreter().interpret(tree, data)
 
-        if not body:
-            raise Exception('No tests founded')
+        assert self.content, 'No tests founded'
 
-        # Append test parts
-        self.content = ('#!/usr/bin/env bats\n'
-                        '#\n'
-                        '# This test file was generated using Batspp\n'
-                        '# https://github.com/LimaBD/batspp\n'
-                        '#\n\n')
-        if source:
-            self.content += ('# Load sources\n'
-                             'shopt -s expand_aliases\n'
-                             f'source {source}\n')
-        self.content += body
+        self.root_required = 'sudo' in self.content
 
     def get_tests(self) -> str:
         """Return tests"""

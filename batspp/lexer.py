@@ -35,8 +35,8 @@ class Tags(Enum):
     BLANK = '<BLANK>' # blank line
 
 
-class Data:
-    """Data class"""
+class TokenData:
+    """Data class for token"""
 
     def __init__(self,
                  text_line:str = '',
@@ -47,9 +47,9 @@ class Data:
         self.column = column
 
     def __str__(self):
-        return (f'Data(text_line={self.text_line},\n'
-                f'\t     line={self.line},\n'
-                f'\t     column={self.column})')
+        return (f'TokenData(text_line={self.text_line},\n'
+                f'\t          line={self.line},\n'
+                f'\t          column={self.column})')
 
 
 class TokenType(Enum):
@@ -78,7 +78,7 @@ class Token:
     def __init__(self,
                  ttype:str,
                  tvalue:any,
-                 data: Data = Data()):
+                 data: TokenData = TokenData()):
         # NOTE: extra "t" in ttype and tvalue
         #       avoids redefine the built-in 'type'
         self.type = ttype
@@ -180,9 +180,9 @@ class Lexer:
         #       control and handle exceptions better
         while self.text.is_line_safe():
 
-            data = Data(text_line=self.text.get_current_line(),
-                        line = self.text.line + 1,
-                        column = self.text.column + 1)
+            data = TokenData(text_line=self.text.get_current_line(),
+                             line = self.text.line + 1,
+                             column = self.text.column + 1)
 
             # Tokenize lines with double comments as minor token
             match = re.match(r'^##', self.text.get_current_line())
