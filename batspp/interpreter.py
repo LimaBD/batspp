@@ -30,7 +30,10 @@ from parser import (
 )
 
 
-# Constants
+# Test file constants names
+#
+# NOTE: these can be diferent from the
+#       Batspp command-line labels
 VERBOSE_DEBUG = 'VERBOSE_DEBUG'
 
 
@@ -40,10 +43,10 @@ class TestData:
     def __init__(self,
                  source: str = '',
                  embedded_tests:bool = False,
-                 debug_hexview:bool = False) -> None:
+                 verbose_debug:bool = False) -> None:
         self.source = source
         self.embedded_tests = embedded_tests
-        self.debug_hexview = debug_hexview
+        self.verbose_debug = verbose_debug
 
 
 class NodeVisitor:
@@ -225,7 +228,7 @@ class Interpreter(NodeVisitor):
 
         if self.debug_required:
             ## TODO: implement hexview
-            hexview = '' if data and data.debug_hexview else ''
+            hexview = '' if data and data.verbose_debug else ''
             constants += f'{VERBOSE_DEBUG}="{hexview}"\n'
 
         # Add header comment

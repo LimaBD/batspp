@@ -58,7 +58,7 @@ FILE = 'file'
 SAVE = 'save'
 SOURCE = 'source'
 OUTPUT = 'output'
-HEXVIEW = 'hexview'
+VERBOSE_DEBUG = 'verbose_debug'
 
 
 # Some constants
@@ -75,7 +75,7 @@ class Batspp(Main):
     save_path = ''
     source = ''
     output = False
-    debug_hexview = False
+    verbose_debug = False
 
     def setup(self):
         """Process arguments"""
@@ -85,14 +85,14 @@ class Batspp(Main):
         self.save_path = self.get_parsed_argument(SAVE, self.temp_file)
         self.source = self.get_parsed_argument(SOURCE, self.source)
         self.output = self.has_parsed_option(OUTPUT)
-        self.debug_hexview = self.has_parsed_option(HEXVIEW)
+        self.verbose_debug = self.has_parsed_option(VERBOSE_DEBUG)
 
         debug.trace(7, (f'batspp.setup({self}) - \n'
                         f'\t{FILE}: {self.file},\n'
                         f'\t{SAVE}: {self.save_path},\n'
                         f'\t{SOURCE}: {self.source},\n'
                         f'\t{OUTPUT}: {self.output},\n'
-                        f'\t{HEXVIEW}: {self.debug_hexview}'))
+                        f'\t{VERBOSE_DEBUG}: {self.verbose_debug}'))
 
     def run_main_step(self):
         """Process main script"""
@@ -100,7 +100,7 @@ class Batspp(Main):
         tests = Test()
         data = TestData(source = self.source,
                         embedded_tests = not self.file.endswith(f'.{BATSPP_EXTENSION}'),
-                        debug_hexview = self.debug_hexview)
+                        verbose_debug = self.verbose_debug)
 
         try:
             tests.build(system.read_file(self.file), data=data)
@@ -186,7 +186,7 @@ if __name__ == '__main__':
     app = Batspp(description = __doc__,
                  positional_arguments = [(FILE, 'filename')],
                  boolean_options = [(OUTPUT, 'print output test'),
-                                    (HEXVIEW, 'print hexview debug when an assertion fail')],
+                                    (VERBOSE_DEBUG, 'print debug verbose when an assertion fail')],
                  text_options = [(SAVE, 'specifies path to save the generated bats file'),
                                  (SOURCE, 'specifies file to be sourced')],
                  manual_input = True)
