@@ -22,7 +22,7 @@ from mezcla import debug
 # to avoid import errors, must install
 # package with '$ pip install .'
 sys.path.insert(0, './../batspp')
-from lexer import Data
+from lexer import TokenData
 from parser import (
     Setup, AssertionType, Assertion, Test, TestsSuite
 )
@@ -60,7 +60,7 @@ class TestInterpreter(TestWrapper):
         """Test for visit_Setup()"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestInterpreter.test_visit_Setup(); self={self}")
-        data = Data(text_line='some line', line=3, column=3)
+        data = TokenData(text_line='some line', line=3, column=3)
         interpreter = Interpreter()
 
         # NOTE: the extra spaces on commands are used
@@ -83,7 +83,7 @@ class TestInterpreter(TestWrapper):
         """Test for visit_Test()"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestInterpreter.test_visit_Test(); self={self}")
-        data = Data(text_line='some line', line=3, column=3)
+        data = TokenData(text_line='some line', line=3, column=3)
         interpreter = Interpreter()
 
         interpreter.stack_functions = ['function some_function() ...',
@@ -103,7 +103,7 @@ class TestInterpreter(TestWrapper):
         """Test for visit_Assertion()"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestInterpreter.test_visit_Assertion(); self={self}")
-        data = Data(text_line='some line', line=3, column=3)
+        data = TokenData(text_line='some line', line=3, column=3)
         interpreter = Interpreter()
 
         interpreter.last_title = 'important test'
@@ -123,7 +123,7 @@ class TestInterpreter(TestWrapper):
         """Test for interpret()"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestInterpreter.test_interpret(); self={self}")
-        data = Data(text_line='some line', line=3, column=3)
+        data = TokenData(text_line='some line', line=3, column=3)
 
         local_setup = Setup(commands=['echo "hello world" > file.txt'], data=data)
         first_assertion = Assertion(atype=AssertionType.EQUAL,
