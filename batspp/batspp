@@ -4,8 +4,6 @@
 #
 # Shell style tests using bats-core
 #
-## TODO: implement setup and teardown bats functions
-## TODO: solve: tests can fail if they are saved with --output and dependency is not found
 ## TODO: implement -v and --version flags
 ## TODO: upgrade docstring
 ## TODO: add timer and print execution time
@@ -38,6 +36,7 @@ Also you can test bash functions:
 
 # Standard packages
 import re
+import os
 
 
 # Installed packages
@@ -50,15 +49,26 @@ from mezcla import glue_helpers as gh
 # Local modules
 from lexer import Lexer
 from parser import Parser
-from interpreter import Interpreter, TestData
+from interpreter import (
+    Interpreter, TestOpts, TestArgs
+)
 
 
-# Command-line labels constants
+# Command-line labels and
+# enviroment variables constants
 FILE = 'file'
 SAVE = 'save'
-SOURCE = 'source'
+SOURCES = 'sources'
 OUTPUT = 'output'
 VERBOSE_DEBUG = 'verbose_debug'
+TMP = 'TMP'
+TEMP_DIR = 'temp_dir'
+COPY_DIR = 'copy_dir'
+VISIBLE_PATH = 'visible_path'
+RUN_OPTS = 'run_options'
+SKIP_RUN = 'skip_run'
+OMIT_TRACE = 'omit_trace'
+DISABLE_ALIASES = 'disable_aliases'
 
 
 # Some constants
@@ -73,37 +83,57 @@ class Batspp(Main):
     # (avoids need for class constructor)
     file = ''
     save_path = ''
-    source = ''
+    sources = []
     output = False
     verbose_debug = False
+    temp_dir = ''
+    copy_dir = ''
+    visible_paths = ''
+    run_opts = ''
+    skip_run = False
+    omit_trace = False
+    disable_aliases = False
 
-    def setup(self):
+    def setup(self) -> None:
         """Process arguments"""
+        debug.trace(7, f'batspp.setup() self={self}')
 
-        # Check the command-line options
+        tmp = system.getenv_text(TMP, "/tmp", "Temporary directory")
+
+        # Check the command-line/enviroment vars options
         self.file = self.get_parsed_argument(FILE, self.file)
-        self.save_path = self.get_parsed_argument(SAVE, self.temp_file)
-        self.source = self.get_parsed_argument(SOURCE, self.source)
-        self.output = self.has_parsed_option(OUTPUT)
-        self.verbose_debug = self.has_parsed_option(VERBOSE_DEBUG)
+        self.save_path = self.get_entered_text(SAVE, self.temp_file)
+        self.sources = self.get_entered_text(SOURCES, '').split(' ' or ',' or ';')
+        self.output = self.get_entered_bool(OUTPUT, self.output)
+        self.verbose_debug = self.get_entered_bool(VERBOSE_DEBUG, self.verbose_debug)
+        self.temp_dir = self.get_entered_text(TEMP_DIR, gh.form_path(tmp, f"batspp-{os.getpid()}"))
+        self.copy_dir = self.get_entered_text(COPY_DIR, self.copy_dir)
+        self.visible_paths = self.get_entered_text(VISIBLE_PATH, self.visible_paths).split(' ' or ',' or ';')
+        self.run_opts = self.get_entered_text(RUN_OPTS, self.run_opts)
+        self.skip_run = self.get_entered_bool(SKIP_RUN, self.skip_run)
+        self.omit_trace = self.get_entered_bool(OMIT_TRACE,  self.omit_trace)
+        self.disable_aliases = self.get_entered_bool(DISABLE_ALIASES,  self.disable_aliases)
 
-        debug.trace(7, (f'batspp.setup({self}) - \n'
-                        f'\t{FILE}: {self.file},\n'
-                        f'\t{SAVE}: {self.save_path},\n'
-                        f'\t{SOURCE}: {self.source},\n'
-                        f'\t{OUTPUT}: {self.output},\n'
-                        f'\t{VERBOSE_DEBUG}: {self.verbose_debug}'))
-
-    def run_main_step(self):
+    def run_main_step(self) -> None:
         """Process main script"""
 
         tests = Test()
-        data = TestData(source = self.source,
-                        embedded_tests = not self.file.endswith(f'.{BATSPP_EXTENSION}'),
-                        verbose_debug = self.verbose_debug)
+
+        opts = TestOpts(embedded_tests = not self.file.endswith(f'.{BATSPP_EXTENSION}'),
+                        verbose_debug = self.verbose_debug,
+                        omit_trace = self.omit_trace,
+                        disable_aliases = self.disable_aliases)
+
+        args = TestArgs(sources = self.sources,
+                        temp_dir = self.temp_dir,
+                        visible_paths = self.visible_paths,
+                        run_opts = self.run_opts,
+                        copy_dir = self.copy_dir)
 
         try:
-            tests.build(system.read_file(self.file), data=data)
+            tests.build(system.read_file(self.file),
+                        opts = opts,
+                        args = args)
         except: # pylint: disable=bare-except
             print(f'Not founded tests on file {self.file}')
             return
@@ -119,8 +149,26 @@ class Batspp(Main):
         # STDOUT
         if self.output:
             print(tests.get_tests())
-        else:
-            print(tests.run())
+        elif not self.skip_run:
+            print(tests.run(self.run_opts))
+
+    def get_entered_bool(self, label:str, default:bool=False) -> bool:
+        """
+        Return entered LABEL var/arg bool by command-line or enviroment variable,
+        also can be specified a DEFAULT value
+        """
+        debug.trace(7, f'batspp.get_entered_bool(label={label})')
+        return (self.has_parsed_option(label.lower()) or
+                system.getenv_bool(var=label.upper(), default=default))
+
+    def get_entered_text(self, label:str, default:str='') -> str:
+        """
+        Return entered LABEL var/arg text by command-line or enviroment variable,
+        also can be specified a DEFAULT value
+        """
+        debug.trace(7, f'batspp.get_entered_text(label={label})')
+        return (self.get_parsed_argument(label=label.lower(), default=default) or
+                system.getenv_text(var=label.upper(), default=default))
 
 
 class Test:
@@ -131,28 +179,25 @@ class Test:
     def __init__(self) -> None:
 
         # Global states
-        self.root_required = False
         self.content = ''
         self.path = ''
 
     def build(self,
               text: str,
-              data: TestData = None) -> None:
+              opts: TestOpts = TestOpts(),
+              args: TestArgs = TestArgs()) -> None:
         """
         Build tests from TEXT,
-        scripts files can be sourced with SOURCE,
-        with DEBUG_HEXVIEW, hexview of actual and expeted
-        values on assertions are printed
+        with OPTS can be setted test options and with
+        ARGS can be setted test arguments
         """
 
         # Process tests
-        tokens = Lexer().tokenize(text, data.embedded_tests)
+        tokens = Lexer().tokenize(text, opts.embedded_tests)
         tree = Parser().parse(tokens)
-        self.content = Interpreter().interpret(tree, data)
+        self.content = Interpreter().interpret(tree, opts=opts, args=args)
 
         assert self.content, 'No tests founded'
-
-        self.root_required = 'sudo' in self.content
 
     def get_tests(self) -> str:
         """Return tests"""
@@ -171,23 +216,34 @@ class Test:
         gh.write_file(path, self.content)
         gh.run(f'chmod +x {path}')
 
-    def run(self) -> str:
-        """Return stdout from runned tests"""
+    def run(self, opts:str='') -> str:
+        """
+        Return stdout from runned tests
+        with OPTS (options) can be used aditional options to run
+        """
         debug.trace(7, f'Test.run() on path={self.path}')
 
         assert self.path, 'Tests must be saved, try save() method'
 
-        sudo = 'sudo' if self.root_required else ''
+        # Check for root permissions
+        sudo = 'sudo' if 'sudo' in self.content else ''
 
-        return gh.run(f'{sudo} bats {self.path}')
+        return gh.run(f'{sudo} bats {opts} {self.path}')
 
 
 if __name__ == '__main__':
     app = Batspp(description = __doc__,
-                 positional_arguments = [(FILE, 'filename')],
-                 boolean_options = [(OUTPUT, 'print output test'),
-                                    (VERBOSE_DEBUG, 'print debug verbose when an assertion fail')],
-                 text_options = [(SAVE, 'specifies path to save the generated bats file'),
-                                 (SOURCE, 'specifies file to be sourced')],
+                 positional_arguments = [(FILE, 'Test filename')],
+                 boolean_options = [(OUTPUT, 'Print generated test'),
+                                    (VERBOSE_DEBUG, 'Print debug verbose when an assertion fail'),
+                                    (SKIP_RUN, 'Do not run the test script'),
+                                    (OMIT_TRACE, 'Omit actual/expected trace from test file'),
+                                    (DISABLE_ALIASES, 'Disable alias expansion')],
+                 text_options = [(SAVE, 'Specify path to save the generated test file'),
+                                 (SOURCES, 'Specify files to be sourced, i.e "file1.bash file2.bash"'),
+                                 (TEMP_DIR, 'Temporary directory to use for tests'),
+                                 (VISIBLE_PATH, 'Make paths visible to tests file'),
+                                 (RUN_OPTS, 'Options for run Bats command'),
+                                 (COPY_DIR, 'Copy directory to temp. dir for input files, etc.')],
                  manual_input = True)
     app.run()

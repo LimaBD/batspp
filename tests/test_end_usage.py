@@ -8,6 +8,7 @@
 
 
 # Standard packages
+import re
 import unittest
 
 
@@ -34,9 +35,7 @@ class TestEndUsage(TestWrapper):
         actual_filename = f'{self.temp_file}.bats'
 
         output = gh.run(f'cd {EXAMPLES_PATH} && {self.script_module} --save {actual_filename} batspp_example.batspp')
-
-        # New line is added to compensate the new line added by gh.read_lines()
-        output += '\n'
+        output += '\n' # Compensate the new line added by gh.read_lines()
 
         # Check output
         expected_output = gh.read_file(f'{EXAMPLES_PATH}/output_batspp_example.txt')
@@ -44,7 +43,14 @@ class TestEndUsage(TestWrapper):
 
         # Check file content
         expected_content = gh.read_file(f'{EXAMPLES_PATH}/generated_batspp_example.bats')
-        self.assertEqual(gh.read_file(actual_filename), expected_content)
+        actual_content = gh.read_file(actual_filename)
+
+        # Manipulate a little the output to make equal the random number
+        pattern = r'TEMP_DIR=\"\/tmp\/batspp-(\d+)\"\n'
+        random_folder = re.search(pattern, actual_content).group(0)
+        expected_content = re.sub(pattern, str(random_folder), expected_content)
+
+        self.assertEqual(actual_content, expected_content)
 
 
 if __name__ == '__main__':

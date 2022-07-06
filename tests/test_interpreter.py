@@ -116,7 +116,12 @@ class TestInterpreter(TestWrapper):
         self.assertEqual(len(interpreter.stack_functions), 2)
         self.assertTrue('echo "some text"' in interpreter.stack_functions[0])
         self.assertTrue('some text' in interpreter.stack_functions[1])
-        self.assertTrue('[ "$actual" == "$expected" ]' in actual)
+
+        actual_assertion = actual.splitlines()[-1]
+        self.assertTrue(actual_assertion.startswith('\t[ '))
+        self.assertTrue(' == ' in actual_assertion)
+        self.assertTrue(actual_assertion.endswith(' ]'))
+
         self.assertTrue(interpreter.debug_required)
 
     def test_interpret(self):
@@ -151,26 +156,25 @@ class TestInterpreter(TestWrapper):
                     '\n'
                     '# Constants\n'
                     'VERBOSE_DEBUG=""\n'
+                    'TEMP_DIR="/tmp"\n'
                     '\n'
                     '# Setup\n'
                     'echo "hello world" > file.txt\n'
                     '\n'
                     '@test "important test" {\n'
-                    '\ttest_folder=$(echo /tmp/important-test-$$)\n'
-                    '\tmkdir $test_folder && cd $test_folder\n'
+                    '\ttest_folder=$(echo $TEMP_DIR/important-test-$$)\n'
+                    '\tmkdir --parents "$test_folder"\n'
+                    '\tcd "$test_folder" || echo Warning: Unable to "cd $test_folder"\n'
                     '\n'
                     '\t# Assertion of line 3\n'
                     '\techo "hello world" > file.txt\n'
-                    '\tactual=$(important-test-line3-actual)\n'
-                    '\texpected=$(important-test-line3-expected)\n'
-                    '\tprint_debug "$actual" "$expected"\n'
-                    '\t[ "$actual" == "$expected" ]\n'
+                    '\tprint_debug "$(important-test-line3-actual)" "$(important-test-line3-expected)"\n'
+                    '\t[ "$(important-test-line3-actual)" == "$(important-test-line3-expected)" ]\n'
                     '\n'
                     '\t# Assertion of line 3\n'
-                    '\tactual=$(important-test-line3-actual)\n'
-                    '\texpected=$(important-test-line3-expected)\n'
-                    '\tprint_debug "$actual" "$expected"\n'
-                    '\t[ "$actual" == "$expected" ]\n}\n'
+                    '\tprint_debug "$(important-test-line3-actual)" "$(important-test-line3-expected)"\n'
+                    '\t[ "$(important-test-line3-actual)" == "$(important-test-line3-expected)" ]\n'
+                    '}\n'
                     '\n'
                     'function important-test-line3-actual () {\n'
                     '\tcat file.txt\n'
@@ -190,7 +194,8 @@ class TestInterpreter(TestWrapper):
                     '\n'
                     '# This prints debug data when an assertion fail\n'
                     '# $1 -> actual value\n'
-                    '# $2 -> expected value\nfunction print_debug() {\n'
+                    '# $2 -> expected value\n'
+                    'function print_debug() {\n'
                     '\techo "=======  actual  ======="\n'
                     '\tbash -c "echo "$1" $VERBOSE_DEBUG"\n'
                     '\techo "======= expected ======="\n'

@@ -6,6 +6,7 @@
 # bats-core tests from Abstract Syntax Trees (AST) for Batspp
 #
 ## TODO: make setups commands output nothing
+## TODO: implement setup and teardown bats functions
 
 
 """
@@ -26,7 +27,8 @@ from mezcla import debug
 
 # Local modules
 from parser import (
-    AST, TestsSuite, Test, Setup, Assertion, AssertionType
+    TestsSuite, Test, Setup,
+    Assertion, AssertionType
 )
 
 
@@ -35,18 +37,49 @@ from parser import (
 # NOTE: these can be diferent from the
 #       Batspp command-line labels
 VERBOSE_DEBUG = 'VERBOSE_DEBUG'
+TEMP_DIR = 'TEMP_DIR'
+COPY_DIR = 'COPY_DIR'
 
 
-class TestData:
-    """Data class for tests related data"""
+class TestOpts:
+    """Test related options"""
 
     def __init__(self,
-                 source: str = '',
-                 embedded_tests:bool = False,
-                 verbose_debug:bool = False) -> None:
-        self.source = source
+                 embedded_tests: bool = False,
+                 verbose_debug: bool = False,
+                 omit_trace: bool = False,
+                 disable_aliases: bool = False) -> None:
+        __error_string = 'invalid type'
+        assert isinstance(embedded_tests, bool), __error_string
         self.embedded_tests = embedded_tests
+        assert isinstance(verbose_debug, bool), __error_string
         self.verbose_debug = verbose_debug
+        assert isinstance(omit_trace, bool), __error_string
+        self.omit_trace = omit_trace
+        assert isinstance(disable_aliases, bool), __error_string
+        self.disable_aliases = disable_aliases
+
+
+class TestArgs:
+    """Test related constants arguments"""
+
+    def __init__(self,
+                 sources: (list|None) = None,
+                 temp_dir: str = '',
+                 visible_paths: (list|None) = None,
+                 run_opts: str = '',
+                 copy_dir: str = '') -> None:
+        __error_string = 'invalid type'
+        assert isinstance(sources, (list|None)), __error_string
+        self.sources = sources if sources else []
+        assert isinstance(temp_dir, str), __error_string
+        self.temp_dir = temp_dir
+        assert isinstance(visible_paths, (list|None)), __error_string
+        self.visible_paths = visible_paths if visible_paths else []
+        assert isinstance(run_opts, str), __error_string
+        self.run_opts = run_opts
+        assert isinstance(copy_dir, str), __error_string
+        self.copy_dir = copy_dir
 
 
 class NodeVisitor:
@@ -73,6 +106,11 @@ class Interpreter(NodeVisitor):
     ##       also builds a full tests content.
 
     def __init__(self) -> None:
+        # Test related options and constants
+        self.opts = TestOpts()
+        self.args = TestArgs()
+
+        # Global state
         self.stack_functions = []
         self.last_title = ''
         self.debug_required = False
@@ -123,10 +161,15 @@ class Interpreter(NodeVisitor):
         # Process title
         self.last_title = node.pointer
 
+        copy_cmd = f'\tcommand cp $COPY_DIR "$test_folder"\n' if self.args.copy_dir else ''
+
         # Test with default local setup
+        # NOTE: warning added on 'cd "$test_folder"' for sake of shellcheck
         result = (f'@test "{self.last_title}" {{\n'
-                  f'\ttest_folder=$(echo /tmp/{self.get_unspaced_title()}-$$)\n'
-                  f'\tmkdir $test_folder && cd $test_folder\n')
+                  f'\ttest_folder=$(echo ${TEMP_DIR}/{self.get_unspaced_title()}-$$)\n'
+                  '\tmkdir --parents "$test_folder"\n'
+                  f'{copy_cmd}'
+                  '\tcd "$test_folder" || echo Warning: Unable to "cd $test_folder"\n')
 
         # Visit assertions
         for assertion in node.assertions:
@@ -160,15 +203,16 @@ class Interpreter(NodeVisitor):
         # Set assertion operator
         operator = '==' if node.atype in [AssertionType.OUTPUT, AssertionType.EQUAL] else '!='
 
+        # Set debug
+        debug_cmd = f'\tprint_debug "$({actual_function})" "$({expected_function})"\n' if not self.opts.omit_trace else ''
+
         # Unify everything
         result = (f'\n\t# Assertion of line {node.data.line}\n'
                   f'{setup}'
-                  f'\tactual=$({actual_function})\n'
-                  f'\texpected=$({expected_function})\n'
-                  '\tprint_debug "$actual" "$expected"\n'
-                  f'\t[ "$actual" {operator} "$expected" ]\n')
+                  f'{debug_cmd}'
+                  f'\t[ "$({actual_function})" {operator} "$({expected_function})" ]\n')
 
-        # Check global class flags to
+        # Check global class option to
         # later implement a debug function
         self.debug_required = True
 
@@ -192,9 +236,7 @@ class Interpreter(NodeVisitor):
 
     def implement_debug(self) -> str:
         """
-        Return debug code,
-        with HEXVIEW true, adds pipe to print 
-        hewview of actual and expected values
+        Return debug code
         """
 
         result = ('# This prints debug data when an assertion fail\n'
@@ -211,8 +253,8 @@ class Interpreter(NodeVisitor):
         debug.trace(7,f'Interpreter.implement_debug() => {result}')
         return result
 
-    def implement_constants(self, data: TestData):
-        """Implement settings constants from DATA"""
+    def implement_constants(self):
+        """Implement test constants from arguments"""
 
         # This appends all constants that will be
         # used in the tests file, for example
@@ -226,10 +268,18 @@ class Interpreter(NodeVisitor):
 
         result, constants = '', ''
 
+        # Append VERBOSE_DEBUG constant
         if self.debug_required:
-            ## TODO: implement hexview
-            hexview = '' if data and data.verbose_debug else ''
-            constants += f'{VERBOSE_DEBUG}="{hexview}"\n'
+            ## TODO: implement hexview.perl
+            value = '' if self.opts.verbose_debug else ''
+            constants += f'{VERBOSE_DEBUG}="{value}"\n'
+
+        # Append TEMP_DIR constant
+        value = self.args.temp_dir if self.args.temp_dir else '/tmp'
+        constants += f'{TEMP_DIR}="{value}"\n'
+
+        # Append COPY_DIR constant
+        constants += f'{COPY_DIR}="{self.args.copy_dir}"\n' if self.args.copy_dir else ''
 
         # Add header comment
         result = f'# Constants\n{constants}\n' if constants else ''
@@ -237,23 +287,62 @@ class Interpreter(NodeVisitor):
         debug.trace(7, f'Interpreter.implement_constants() => "{result}"')
         return result
 
+    def commands_from_args(self):
+        """
+        Return a list of aditional setup commands from arguments
+        """
+        commands = []
+
+        # Check for visible path argument
+        if self.args.visible_paths:
+            paths = ''
+            for path in self.args.visible_paths:
+                paths += f'{path}:' if path else ''
+            if paths:
+                commands.append(f'PATH={paths}$PATH\n')
+
+        # Check for sources files
+        if not self.opts.disable_aliases:
+            source_commands = []
+            for source in self.args.sources:
+                if source:
+                    source_commands.append(f'source {source}')
+            if source_commands:
+                commands.append('shopt -s expand_aliases\n')
+                commands += source_commands
+
+        return commands
+
     def interpret(self,
-                  tree: AST,
-                  data: TestData = None) -> str:
+                  tree: TestsSuite,
+                  opts: TestOpts = TestOpts(),
+                  args: TestArgs = TestArgs()) -> str:
         """
         Interpret Batspp abstract syntax tree and build tests
         """
+
+        assert tree, 'invalid tree node'
 
         # Clean global class values
         #
         # This is useful if is needed to reuse
         # the same instance of this class
+        self.opts = opts
+        self.args = args
         self.stack_functions = []
         self.last_title = ''
         self.debug_required = False
 
-        # Interpret abstract syntax tree tests
-        assert tree, 'Invalid tree node'
+        # Append commands passed by arguments
+        # (not in test file) to a setup global
+        aditional_commands = self.commands_from_args()
+        if aditional_commands:
+            if tree.setup:
+                tree.setup.commands += aditional_commands
+            else:
+                tree.setup = Setup(commands=aditional_commands)
+
+        # Visit abstract syntax tree nodes
         tests = self.visit(tree)
 
         # Add aditional content
@@ -261,23 +350,21 @@ class Interpreter(NodeVisitor):
 
         if tests:
             # Add tests header
-            result += ('#!/usr/bin/env bats\n'
+            result += (f'#!/usr/bin/env bats'
+                       f'{" " if self.args.run_opts else ""}'
+                       f'{self.args.run_opts}\n'
                        '#\n'
                        '# This test file was generated using Batspp\n'
                        '# https://github.com/LimaBD/batspp\n'
                        '#\n\n')
 
-            result += self.implement_constants(data)
+            result += self.implement_constants()
 
-            if data and data.source:
-                result += ('# Load sources\n'
-                            'shopt -s expand_aliases\n'
-                            f'source {data.source}\n')
-
+            # Add tests
             result += tests
 
             # Add implement debug
-            result += self.implement_debug() if self.debug_required else ''
+            result += self.implement_debug() if self.debug_required and not self.opts.omit_trace else ''
 
         debug.trace(7, f'Interpreter.interpret() => "{result}"')
         return result

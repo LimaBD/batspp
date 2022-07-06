@@ -6,20 +6,20 @@
 
 # Constants
 VERBOSE_DEBUG=""
+TEMP_DIR="/tmp/batspp-54128"
 
 # Setup
 shopt -s expand_aliases
 source ./bash_example.bash
 
 @test "test of line 17" {
-	test_folder=$(echo /tmp/test-of-line-17-$$)
-	mkdir $test_folder && cd $test_folder
+	test_folder=$(echo $TEMP_DIR/test-of-line-17-$$)
+	mkdir --parents "$test_folder"
+	cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
 
 	# Assertion of line 17
-	actual=$(test-of-line-17-line17-actual)
-	expected=$(test-of-line-17-line17-expected)
-	print_debug "$actual" "$expected"
-	[ "$actual" == "$expected" ]
+	print_debug "$(test-of-line-17-line17-actual)" "$(test-of-line-17-line17-expected)"
+	[ "$(test-of-line-17-line17-actual)" == "$(test-of-line-17-line17-expected)" ]
 }
 
 function test-of-line-17-line17-actual () {
@@ -31,14 +31,13 @@ function test-of-line-17-line17-expected () {
 }
 
 @test "test of line 23" {
-	test_folder=$(echo /tmp/test-of-line-23-$$)
-	mkdir $test_folder && cd $test_folder
+	test_folder=$(echo $TEMP_DIR/test-of-line-23-$$)
+	mkdir --parents "$test_folder"
+	cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
 
 	# Assertion of line 23
-	actual=$(test-of-line-23-line23-actual)
-	expected=$(test-of-line-23-line23-expected)
-	print_debug "$actual" "$expected"
-	[ "$actual" == "$expected" ]
+	print_debug "$(test-of-line-23-line23-actual)" "$(test-of-line-23-line23-expected)"
+	[ "$(test-of-line-23-line23-actual)" == "$(test-of-line-23-line23-expected)" ]
 }
 
 function test-of-line-23-line23-actual () {
@@ -50,14 +49,13 @@ function test-of-line-23-line23-expected () {
 }
 
 @test "test of line 31" {
-	test_folder=$(echo /tmp/test-of-line-31-$$)
-	mkdir $test_folder && cd $test_folder
+	test_folder=$(echo $TEMP_DIR/test-of-line-31-$$)
+	mkdir --parents "$test_folder"
+	cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
 
 	# Assertion of line 31
-	actual=$(test-of-line-31-line31-actual)
-	expected=$(test-of-line-31-line31-expected)
-	print_debug "$actual" "$expected"
-	[ "$actual" == "$expected" ]
+	print_debug "$(test-of-line-31-line31-actual)" "$(test-of-line-31-line31-expected)"
+	[ "$(test-of-line-31-line31-actual)" == "$(test-of-line-31-line31-expected)" ]
 }
 
 function test-of-line-31-line31-actual () {
@@ -69,14 +67,13 @@ function test-of-line-31-line31-expected () {
 }
 
 @test "test of line 34" {
-	test_folder=$(echo /tmp/test-of-line-34-$$)
-	mkdir $test_folder && cd $test_folder
+	test_folder=$(echo $TEMP_DIR/test-of-line-34-$$)
+	mkdir --parents "$test_folder"
+	cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
 
 	# Assertion of line 34
-	actual=$(test-of-line-34-line34-actual)
-	expected=$(test-of-line-34-line34-expected)
-	print_debug "$actual" "$expected"
-	[ "$actual" != "$expected" ]
+	print_debug "$(test-of-line-34-line34-actual)" "$(test-of-line-34-line34-expected)"
+	[ "$(test-of-line-34-line34-actual)" != "$(test-of-line-34-line34-expected)" ]
 }
 
 function test-of-line-34-line34-actual () {
@@ -88,24 +85,21 @@ function test-of-line-34-line34-expected () {
 }
 
 @test "setup and title" {
-	test_folder=$(echo /tmp/setup-and-title-$$)
-	mkdir $test_folder && cd $test_folder
+	test_folder=$(echo $TEMP_DIR/setup-and-title-$$)
+	mkdir --parents "$test_folder"
+	cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
 
 	# Assertion of line 43
 	filepath=$(echo $TMP/testfile-"$$")
 	echo -n "this is a file content to run an example test" | sudo tee $filepath
-	actual=$(setup-and-title-line43-actual)
-	expected=$(setup-and-title-line43-expected)
-	print_debug "$actual" "$expected"
-	[ "$actual" == "$expected" ]
+	print_debug "$(setup-and-title-line43-actual)" "$(setup-and-title-line43-expected)"
+	[ "$(setup-and-title-line43-actual)" == "$(setup-and-title-line43-expected)" ]
 
 	# Assertion of line 54
 	echo -n " using setup" >> $filepath
 	echo -n " and continue directives" >> $filepath
-	actual=$(setup-and-title-line54-actual)
-	expected=$(setup-and-title-line54-expected)
-	print_debug "$actual" "$expected"
-	[ "$actual" == "$expected" ]
+	print_debug "$(setup-and-title-line54-actual)" "$(setup-and-title-line54-expected)"
+	[ "$(setup-and-title-line54-actual)" == "$(setup-and-title-line54-expected)" ]
 }
 
 function setup-and-title-line43-actual () {
@@ -125,22 +119,19 @@ function setup-and-title-line54-expected () {
 }
 
 @test "test of line 59" {
-	test_folder=$(echo /tmp/test-of-line-59-$$)
-	mkdir $test_folder && cd $test_folder
+	test_folder=$(echo $TEMP_DIR/test-of-line-59-$$)
+	mkdir --parents "$test_folder"
+	cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
 
 	# Assertion of line 61
 	filepath=$(echo $TMP/testfile-"$$")
 	echo -e "in this test\nwe are using\nmultiple assertions" | sudo tee $filepath
-	actual=$(test-of-line-59-line61-actual)
-	expected=$(test-of-line-59-line61-expected)
-	print_debug "$actual" "$expected"
-	[ "$actual" == "$expected" ]
+	print_debug "$(test-of-line-59-line61-actual)" "$(test-of-line-59-line61-expected)"
+	[ "$(test-of-line-59-line61-actual)" == "$(test-of-line-59-line61-expected)" ]
 
 	# Assertion of line 63
-	actual=$(test-of-line-59-line63-actual)
-	expected=$(test-of-line-59-line63-expected)
-	print_debug "$actual" "$expected"
-	[ "$actual" == "$expected" ]
+	print_debug "$(test-of-line-59-line63-actual)" "$(test-of-line-59-line63-expected)"
+	[ "$(test-of-line-59-line63-actual)" == "$(test-of-line-59-line63-expected)" ]
 }
 
 function test-of-line-59-line61-actual () {
