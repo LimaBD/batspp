@@ -4,7 +4,6 @@
 #
 # Shell style tests using bats-core
 #
-## TODO: implement -v and --version flags
 ## TODO: upgrade docstring
 ## TODO: add timer and print execution time
 ## TODO: set soft/hard interpretation with is_test_file to comment tests
@@ -37,6 +36,7 @@ Also you can test bash functions:
 # Standard packages
 import re
 import os
+import sys
 
 
 # Installed packages
@@ -47,6 +47,7 @@ from mezcla import glue_helpers as gh
 
 
 # Local modules
+from version import __version__
 from lexer import Lexer
 from parser import Parser
 from interpreter import (
@@ -69,6 +70,7 @@ RUN_OPTS = 'run_options'
 SKIP_RUN = 'skip_run'
 OMIT_TRACE = 'omit_trace'
 DISABLE_ALIASES = 'disable_aliases'
+VERSION = 'version'
 
 
 # Some constants
@@ -93,6 +95,7 @@ class Batspp(Main):
     skip_run = False
     omit_trace = False
     disable_aliases = False
+    version = False
 
     def setup(self) -> None:
         """Process arguments"""
@@ -113,17 +116,21 @@ class Batspp(Main):
         self.skip_run = self.get_entered_bool(SKIP_RUN, self.skip_run)
         self.omit_trace = self.get_entered_bool(OMIT_TRACE,  self.omit_trace)
         self.disable_aliases = self.get_entered_bool(DISABLE_ALIASES,  self.disable_aliases)
+        self.version = self.has_parsed_option(VERSION)
 
     def run_main_step(self) -> None:
         """Process main script"""
 
-        tests = Test()
+        if self.version:
+            print(f'Batspp version {__version__}')
+            return
 
+        # Build tests
+        tests = Test()
         opts = TestOpts(embedded_tests = not self.file.endswith(f'.{BATSPP_EXTENSION}'),
                         verbose_debug = self.verbose_debug,
                         omit_trace = self.omit_trace,
                         disable_aliases = self.disable_aliases)
-
         args = TestArgs(sources = self.sources,
                         temp_dir = self.temp_dir,
                         visible_paths = self.visible_paths,
@@ -232,9 +239,13 @@ class Test:
 
 
 if __name__ == '__main__':
+
+    print_version = (f"--{VERSION}" in " ".join(sys.argv))
+
     app = Batspp(description = __doc__,
-                 positional_arguments = [(FILE, 'Test filename')],
-                 boolean_options = [(OUTPUT, 'Print generated test'),
+                 positional_arguments = [(FILE, 'Test filename')] if not print_version else None,
+                 boolean_options = [(VERSION, 'Show installed Batspp version'),
+                                    (OUTPUT, 'Print generated test'),
                                     (VERBOSE_DEBUG, 'Print debug verbose when an assertion fail'),
                                     (SKIP_RUN, 'Do not run the test script'),
                                     (OMIT_TRACE, 'Omit actual/expected trace from test file'),
