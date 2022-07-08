@@ -50,12 +50,20 @@ class TestOpts:
                  omit_trace: bool = False,
                  disable_aliases: bool = False) -> None:
         __error_string = 'invalid type'
+
+        # Check for embedded_tests
         assert isinstance(embedded_tests, bool), __error_string
         self.embedded_tests = embedded_tests
+
+        # Check for verbose_debug
         assert isinstance(verbose_debug, bool), __error_string
         self.verbose_debug = verbose_debug
+
+        # Check for omit_trace
         assert isinstance(omit_trace, bool), __error_string
         self.omit_trace = omit_trace
+
+        # Check for disable_aliases
         assert isinstance(disable_aliases, bool), __error_string
         self.disable_aliases = disable_aliases
 
@@ -70,14 +78,28 @@ class TestArgs:
                  run_opts: str = '',
                  copy_dir: str = '') -> None:
         __error_string = 'invalid type'
+
+        # Check for sources, filter empty sources
         assert isinstance(sources, (list|None)), __error_string
-        self.sources = sources if sources else []
+        if sources:
+            sources = [src for src in sources if src]
+        self.sources = sources if sources else None
+
+        # Check for temp_dir
         assert isinstance(temp_dir, str), __error_string
         self.temp_dir = temp_dir
+
+        # Check for visible_path, filter empty paths
         assert isinstance(visible_paths, (list|None)), __error_string
-        self.visible_paths = visible_paths if visible_paths else []
+        if visible_paths:
+            visible_paths = [path for path in visible_paths if path]
+        self.visible_paths = visible_paths if visible_paths else None
+
+        # Check for run_opts
         assert isinstance(run_opts, str), __error_string
         self.run_opts = run_opts
+
+        # Check for copy_dir
         assert isinstance(copy_dir, str), __error_string
         self.copy_dir = copy_dir
 
@@ -177,7 +199,7 @@ class Interpreter(NodeVisitor):
 
         result += '}\n\n'
 
-        # Append functions
+        # Pop functions from stack
         for function in self.stack_functions:
             result += function
         self.stack_functions = []
@@ -295,18 +317,12 @@ class Interpreter(NodeVisitor):
 
         # Check for visible path argument
         if self.args.visible_paths:
-            paths = ''
-            for path in self.args.visible_paths:
-                paths += f'{path}:' if path else ''
-            if paths:
-                commands.append(f'PATH={paths}$PATH\n')
+            commands.append(f'PATH={":".join(self.args.visible_paths)}:$PATH\n')
 
         # Check for sources files
-        if not self.opts.disable_aliases:
-            source_commands = []
-            for source in self.args.sources:
-                if source:
-                    source_commands.append(f'source {source}')
+        if (self.args.sources and 
+            not self.opts.disable_aliases):
+            source_commands = [f'source {src}' for src in self.args.sources]
             if source_commands:
                 commands.append('shopt -s expand_aliases\n')
                 commands += source_commands
