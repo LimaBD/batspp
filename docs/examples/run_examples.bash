@@ -1,11 +1,36 @@
 #!/bin/bash
 #
 # Run Batspp and save examples
+# output and content
 #
 
-ABS_PATH=$(dirname $(realpath -s $0))
+docs=$(dirname $(realpath -s $0))
+base=$docs/../..
 
-cd $ABS_PATH # Avoid problems with tests references to another files
+function run_eg () {
 
-FILE="batspp_example"
-batspp --save $ABS_PATH/generated_$FILE.bats $ABS_PATH/$FILE.batspp > $ABS_PATH/output_$FILE.txt
+    # Args
+    filename=$1
+    extension=$2
+
+    # Set args to run
+    script="python3 $base/batspp/batspp"
+    file=$docs/$filename.$extension
+    content=$docs/generated_$filename.bats
+    output=$docs/output_$1.txt
+
+    # Print trace
+    echo ">>>>>>>>>>>>>>>>>>> RUN"
+    echo -e "script\t$script"
+    echo -e "test file\t$file"
+    echo -e "content path\t$content"
+    echo -e "output path\t$output\n"
+
+    # Run
+    cd $docs
+    $script --save $content $file > $output
+}
+
+# Examples
+run_eg "batspp_example" "batspp"
+run_eg "bash_example" "bash"
