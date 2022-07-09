@@ -48,11 +48,9 @@ from mezcla import glue_helpers as gh
 
 # Local modules
 from version import __version__
-from lexer import Lexer
-from parser import Parser
-from interpreter import (
-    Interpreter, TestOpts, TestArgs
-)
+from batspp_opts import BatsppOpts
+from batspp_args import BatsppArgs
+from batspp_test import BatsppTest
 
 
 # Command-line labels and
@@ -126,21 +124,27 @@ class Batspp(Main):
             return
 
         # Build tests
-        tests = Test()
-        opts = TestOpts(embedded_tests = not self.file.endswith(f'.{BATSPP_EXTENSION}'),
-                        verbose_debug = self.verbose_debug,
-                        omit_trace = self.omit_trace,
-                        disable_aliases = self.disable_aliases)
-        args = TestArgs(sources = self.sources,
-                        temp_dir = self.temp_dir,
-                        visible_paths = self.visible_paths,
-                        run_opts = self.run_opts,
-                        copy_dir = self.copy_dir)
+        test = BatsppTest()
+        opts = BatsppOpts(
+            embedded_tests = not self.file.endswith(f'.{BATSPP_EXTENSION}'),
+            verbose_debug = self.verbose_debug,
+            omit_trace = self.omit_trace,
+            disable_aliases = self.disable_aliases
+        )
+        args = BatsppArgs(
+            sources = self.sources,
+            temp_dir = self.temp_dir,
+            visible_paths = self.visible_paths,
+            run_opts = self.run_opts,
+            copy_dir = self.copy_dir
+        )
 
         try:
-            tests.build(system.read_file(self.file),
-                        opts = opts,
-                        args = args)
+            test.build(
+                system.read_file(self.file),
+                opts = opts,
+                args = args
+            )
         except: # pylint: disable=bare-except
             print(f'Not founded tests on file {self.file}')
             return
@@ -151,13 +155,13 @@ class Batspp(Main):
             filename = re.search(r"\/(\w+)\.", self.file).group(0)
             self.save_path += f'generated_{filename}.{BATS_EXTENSION}'
 
-        tests.save(self.save_path)
+        test.save(self.save_path)
 
         # STDOUT
         if self.output:
-            print(tests.get_tests())
+            print(test.get_tests())
         elif not self.skip_run:
-            print(tests.run(self.run_opts))
+            print(test.run(self.run_opts))
 
     def get_entered_bool(self, label:str, default:bool=False) -> bool:
         """
@@ -176,66 +180,6 @@ class Batspp(Main):
         debug.trace(7, f'batspp.get_entered_text(label={label})')
         return (self.get_parsed_argument(label=label.lower(), default=default) or
                 system.getenv_text(var=label.upper(), default=default))
-
-
-class Test:
-    """
-    This is responsible to build and run test
-    """
-
-    def __init__(self) -> None:
-
-        # Global states
-        self.content = ''
-        self.path = ''
-
-    def build(self,
-              text: str,
-              opts: TestOpts = TestOpts(),
-              args: TestArgs = TestArgs()) -> None:
-        """
-        Build tests from TEXT,
-        with OPTS can be setted test options and with
-        ARGS can be setted test arguments
-        """
-
-        # Process tests
-        tokens = Lexer().tokenize(text, opts.embedded_tests)
-        tree = Parser().parse(tokens)
-        self.content = Interpreter().interpret(tree, opts=opts, args=args)
-
-        assert self.content, 'No tests founded'
-
-    def get_tests(self) -> str:
-        """Return tests"""
-        debug.trace(7, 'Test.get_tests()')
-        return self.content
-
-    def save(self, path: str) -> None:
-        """Save tests on PATH"""
-        debug.trace(7, f'Test.save({path})')
-
-        assert path, 'PATH string cannot be empty'
-        assert self.content, 'Tests must be builded, try build() method'
-
-        self.path = path
-
-        gh.write_file(path, self.content)
-        gh.run(f'chmod +x {path}')
-
-    def run(self, opts:str='') -> str:
-        """
-        Return stdout from runned tests
-        with OPTS (options) can be used aditional options to run
-        """
-        debug.trace(7, f'Test.run() on path={self.path}')
-
-        assert self.path, 'Tests must be saved, try save() method'
-
-        # Check for root permissions
-        sudo = 'sudo' if 'sudo' in self.content else ''
-
-        return gh.run(f'{sudo} bats {opts} {self.path}')
 
 
 if __name__ == '__main__':

@@ -26,6 +26,8 @@ from mezcla import debug
 
 
 # Local modules
+from batspp_opts import BatsppOpts
+from batspp_args import BatsppArgs
 from parser import (
     TestsSuite, Test, Setup,
     Assertion, AssertionType
@@ -39,69 +41,6 @@ from parser import (
 VERBOSE_DEBUG = 'VERBOSE_DEBUG'
 TEMP_DIR = 'TEMP_DIR'
 COPY_DIR = 'COPY_DIR'
-
-
-class TestOpts:
-    """Test related options"""
-
-    def __init__(self,
-                 embedded_tests: bool = False,
-                 verbose_debug: bool = False,
-                 omit_trace: bool = False,
-                 disable_aliases: bool = False) -> None:
-        __error_string = 'invalid type'
-
-        # Check for embedded_tests
-        assert isinstance(embedded_tests, bool), __error_string
-        self.embedded_tests = embedded_tests
-
-        # Check for verbose_debug
-        assert isinstance(verbose_debug, bool), __error_string
-        self.verbose_debug = verbose_debug
-
-        # Check for omit_trace
-        assert isinstance(omit_trace, bool), __error_string
-        self.omit_trace = omit_trace
-
-        # Check for disable_aliases
-        assert isinstance(disable_aliases, bool), __error_string
-        self.disable_aliases = disable_aliases
-
-
-class TestArgs:
-    """Test related constants arguments"""
-
-    def __init__(self,
-                 sources: (list|None) = None,
-                 temp_dir: str = '',
-                 visible_paths: (list|None) = None,
-                 run_opts: str = '',
-                 copy_dir: str = '') -> None:
-        __error_string = 'invalid type'
-
-        # Check for sources, filter empty sources
-        assert isinstance(sources, (list|None)), __error_string
-        if sources:
-            sources = [src for src in sources if src]
-        self.sources = sources if sources else None
-
-        # Check for temp_dir
-        assert isinstance(temp_dir, str), __error_string
-        self.temp_dir = temp_dir
-
-        # Check for visible_path, filter empty paths
-        assert isinstance(visible_paths, (list|None)), __error_string
-        if visible_paths:
-            visible_paths = [path for path in visible_paths if path]
-        self.visible_paths = visible_paths if visible_paths else None
-
-        # Check for run_opts
-        assert isinstance(run_opts, str), __error_string
-        self.run_opts = run_opts
-
-        # Check for copy_dir
-        assert isinstance(copy_dir, str), __error_string
-        self.copy_dir = copy_dir
 
 
 class NodeVisitor:
@@ -129,8 +68,8 @@ class Interpreter(NodeVisitor):
 
     def __init__(self) -> None:
         # Test related options and constants
-        self.opts = TestOpts()
-        self.args = TestArgs()
+        self.opts = BatsppOpts()
+        self.args = BatsppArgs()
 
         # Global state
         self.stack_functions = []
@@ -320,7 +259,7 @@ class Interpreter(NodeVisitor):
             commands.append(f'PATH={":".join(self.args.visible_paths)}:$PATH\n')
 
         # Check for sources files
-        if (self.args.sources and 
+        if (self.args.sources and
             not self.opts.disable_aliases):
             source_commands = [f'source {src}' for src in self.args.sources]
             if source_commands:
@@ -331,8 +270,8 @@ class Interpreter(NodeVisitor):
 
     def interpret(self,
                   tree: TestsSuite,
-                  opts: TestOpts = TestOpts(),
-                  args: TestArgs = TestArgs()) -> str:
+                  opts: BatsppOpts = BatsppOpts(),
+                  args: BatsppArgs = BatsppArgs()) -> str:
         """
         Interpret Batspp abstract syntax tree and build tests
         """
