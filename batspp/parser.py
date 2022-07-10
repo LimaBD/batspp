@@ -115,6 +115,7 @@ class Parser:
         self.last_pointer = ''
         self.test_nodes = []
         self.setup_stack = []
+        self.embedded_tests = False
 
     def get_current_token(self) -> Token:
         """Returns current token"""
@@ -454,10 +455,9 @@ class Parser:
             # Skip minor tokens
             if token_type is TokenType.MINOR:
                 self.eat(TokenType.MINOR)
-                continue
 
             # Process next tokens as a test directive pattern
-            if token_type is TokenType.TEST:
+            elif token_type is TokenType.TEST:
                 self.build_test()
 
             # Process next tokens as a continuation directive pattern
@@ -474,6 +474,10 @@ class Parser:
             # Create new test node for standlone commands and assertions
             elif self.is_command_next() or self.is_assertion_next():
                 self.build_test(f'test of line {current_token.data.line}')
+
+            # (Only when embedded_tests!) skip standlone text tokens
+            elif self.embedded_tests and token_type is TokenType.TEXT:
+                self.eat(TokenType.TEXT)
 
             # Finish
             else:
@@ -513,7 +517,7 @@ class Parser:
 
         return Setup(commands=commands, data=TokenData()) if commands else None
 
-    def parse(self, tokens: list) -> AST:
+    def parse(self, tokens: list, embedded_tests:bool=False) -> AST:
         """
         Builds an Abstract Syntax Tree (AST) from TOKENS list
         """
@@ -528,6 +532,7 @@ class Parser:
         self.last_pointer = ''
         self.test_nodes = []
         self.setup_stack = []
+        self.embedded_tests = embedded_tests
 
         # build AST
         result = self.build_tests_suite()

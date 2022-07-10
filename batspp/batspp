@@ -4,9 +4,7 @@
 #
 # Shell style tests using bats-core
 #
-## TODO: upgrade docstring
 ## TODO: add timer and print execution time
-## TODO: set soft/hard interpretation with is_test_file to comment tests
 ## TODO: use a separate pass of the test source to fill in the missing test names.
 ## TODO: implement --discover flag to discover all tests file in a folder.
 
@@ -123,10 +121,18 @@ class Batspp(Main):
             print(f'Batspp version {__version__}')
             return
 
+        # Check for embedded tests
+        #
+        # Source the test file to load
+        # aliases and functions
+        embedded_tests = not self.file.endswith(f'.{BATSPP_EXTENSION}')
+        if embedded_tests:
+            self.sources.append(self.file)
+
         # Build tests
         test = BatsppTest()
         opts = BatsppOpts(
-            embedded_tests = not self.file.endswith(f'.{BATSPP_EXTENSION}'),
+            embedded_tests = embedded_tests,
             verbose_debug = self.verbose_debug,
             omit_trace = self.omit_trace,
             disable_aliases = self.disable_aliases

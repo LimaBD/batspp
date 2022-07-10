@@ -43,7 +43,7 @@ class BatsppTest:
 
         # Process tests
         tokens = Lexer().tokenize(text, opts.embedded_tests)
-        tree = Parser().parse(tokens)
+        tree = Parser().parse(tokens, opts.embedded_tests)
         self.content = Interpreter().interpret(tree, opts=opts, args=args)
 
         assert self.content, 'No tests founded'

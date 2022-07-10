@@ -142,7 +142,6 @@ class Lexer:
     """
 
     def __init__(self) -> None:
-        self.extra_indent = ''
         self.text = None
         self.tokens = []
 
@@ -260,7 +259,7 @@ class Lexer:
                 continue
 
             # Tokenize assert not equal
-            match = re.match(r' *=/> *', self.text.get_rest_line())
+            match = re.match(r' *=\/> *', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.append_token(Token(TokenType.ASSERT_NE, match.group(), data))
@@ -291,20 +290,20 @@ class Lexer:
     def tokenize(self, text: str, embedded_tests:bool=False) -> list:
         """Tokenize text"""
 
+        # Format embedded comment tests into normal batspp tests
+        if embedded_tests:
+            # 1st remove not commented lines
+            text = re.sub(r'^[^#]+?$', '\n', text, flags=re.MULTILINE)
+            # 2nd remove comment delimiter '#' from commented lines
+            text = re.sub(r'^# *', '', text, flags=re.MULTILINE)
+            debug.trace(7, f'lexer.tokenize() => formated embedded tests to:\n{text}')
+
         # Clean global class values
         #
         # This is useful if is needed to reuse
         # the same instance of this class
-        self.extra_indent = ''
         self.text = TextLiner(text)
         self.tokens = []
-
-        # Set extra indent and remove not commented
-        # lines because we only focus on the
-        # commented lines if there are embedded tests
-        if embedded_tests:
-            self.extra_indent = r'#'
-            text = re.sub(r'^[^#\n]+?$', '\n', text)
 
         # Tokenize text
         self.extract_tokens()
