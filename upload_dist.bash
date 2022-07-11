@@ -1,10 +1,16 @@
 #!/bin/bash
 #
-# TODO: description
+# Script file to:
+# - install and upgrade all required tools
+# - install dependencies
+# - compile and install package
+# - upload dist to PyPi
 #
 
-
 echo "build - checking the required tools..."
+
+# Make sure your build tool is up to date
+python3 -m pip install --upgrade build
 
 # Setuptools is a package development process library designed
 # for creating and distributing Python packages.
@@ -21,34 +27,19 @@ sudo python3 -m pip install --upgrade tqdm
 # and verified connection between your system and PyPi over HTTPS.
 sudo python3 -m pip install --upgrade twine
 
-
 echo "build - checking dependencies..."
 pip install mezcla
 pip install -r ./submodules/mezcla/requirements.txt
-
 
 echo "build - compiling package..."
 # This will create build, dist and project.egg.info folders
 python3 setup.py bdist_wheel
 
-
-## TODO: add args to choose between locally, TestPyPi or PyPi
-
-
 echo "build - installing locally..."
-## TODO: automate version update
-python3 -m pip install dist/batspp-2.0.0-py3-none-any.whl
-
+version=$(python3 -c 'from batspp.version import __version__; print(__version__)' | sed 's/\./-/g')
+python3 -m pip install dist/batspp-$version-py3-none-any.whl
 
 echo "build - uploading dist/* to PyPi..."
-## TODO: add exception if this fails
 python3 -m twine upload dist/* --verbose
-
-
-echo "build - installing from Pypi..."
-
-
-## TODO: clean files after installation
-
 
 echo "build - finish!"
