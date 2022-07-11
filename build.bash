@@ -37,7 +37,7 @@ python3 setup.py bdist_wheel
 
 echo "build - installing locally..."
 ## TODO: automate version update
-python3 -m pip install dist/batspp-1.2.0-py3-none-any.whl
+python3 -m pip install dist/batspp-2.0.0-py3-none-any.whl
 
 
 echo "build - uploading dist/* to PyPi..."
