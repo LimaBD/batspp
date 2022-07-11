@@ -57,6 +57,13 @@ class TestBatspp(TestWrapper):
         self.assertTrue(gh.read_file(save_file)) # File from the last run should keep unmodified
         self.assertFalse(gh.read_file(another_file))
 
+        # Test argument as enviroment variable
+        another_file = f'{self.temp_file}-another1.bats'
+        gh.write_file(test_file, self.simple_test)
+        result = gh.run(f'SAVE={another_file} python3 {self.script_module} {test_file}')
+        self.assertEqual(result, '1..1\nok 1 test of line 3')
+        self.assertTrue(gh.read_file(another_file))
+
     def test_output(self):
         """Test --output argument"""
         debug.trace(debug.DETAILED, f"TestBatspp.test_output({self})")
@@ -73,6 +80,12 @@ class TestBatspp(TestWrapper):
         result = gh.run(f'python3 {self.script_module} --output {test_file}')
         self.assertTrue(result.startswith('#!/usr/bin/env bats'))
 
+        # Test argument as enviroment variable
+        result = gh.run(f'OUTPUT=0 python3 {self.script_module} {test_file}')
+        self.assertFalse(result.startswith('#!/usr/bin/env bats'))
+        result = gh.run(f'OUTPUT=1 python3 {self.script_module} {test_file}')
+        self.assertTrue(result.startswith('#!/usr/bin/env bats'))
+
     def test_sources(self):
         """Test --sources argument"""
         debug.trace(debug.DETAILED, f"TestBatspp.test_sources({self})")
@@ -80,8 +93,17 @@ class TestBatspp(TestWrapper):
         test_file = f'{self.temp_file}.batspp'
         gh.write_file(test_file, self.simple_test)
 
+        expected_source = 'source ./some_file_to_load.bash'
+
+        # Test command-line argument
         result = gh.run(f'python3 {self.script_module} --output --sources ./some_file_to_load.bash {test_file}')
-        self.assertTrue('source ./some_file_to_load.bash' in result)
+        self.assertTrue(expected_source in result)
+
+        # Test argument as enviroment variable
+        result = gh.run(f'SOURCES=./invalid python3 {self.script_module} --output {test_file}')
+        self.assertFalse(expected_source in result)
+        result = gh.run(f'SOURCES=./some_file_to_load.bash python3 {self.script_module} --output {test_file}')
+        self.assertTrue(expected_source in result)
 
     def test_temp_dir(self):
         """Test --temp_dir argument"""
@@ -109,27 +131,43 @@ class TestBatspp(TestWrapper):
         test_file = f'{self.temp_file}.batspp'
         gh.write_file(test_file, self.simple_test)
 
+        expected_constant = 'COPY_DIR="./some/folder/to/copy"'
+        expected_command = 'command cp $COPY_DIR '
+
         # Test command cp on test file
         result = gh.run(f'TMP={self.temp_base}/ python3 {self.script_module} --copy_dir ./some/folder/to/copy --output {test_file}')
-        self.assertTrue('COPY_DIR="./some/folder/to/copy"' in result)
-        self.assertTrue('command cp $COPY_DIR ' in result)
+        self.assertTrue(expected_constant in result)
+        self.assertTrue(expected_command in result)
+
+        # Test env var
+        result = gh.run(f'TMP={self.temp_base}/ COPY_DIR=./some/folder/to/copy python3 {self.script_module} --output {test_file}')
+        self.assertTrue(expected_constant in result)
+        self.assertTrue(expected_command in result)
 
         ## TODO: test copy when running bats
 
-    def test_visible_path(self):
-        """Test --visible_path argument"""
-        debug.trace(debug.DETAILED, f"TestBatspp.test_visible_path({self})")
+    def test_visible_paths(self):
+        """Test --visible_paths argument"""
+        debug.trace(debug.DETAILED, f"TestBatspp.test_visible_paths({self})")
 
         test_file = f'{self.temp_file}.batspp'
         gh.write_file(test_file, self.simple_test)
 
         # A single path
-        result = gh.run(f'python3 {self.script_module} --visible_path ./some/folder/ --output {test_file}')
+        result = gh.run(f'python3 {self.script_module} --visible_paths ./some/folder/ --output {test_file}')
         self.assertTrue('# Setup\nPATH=./some/folder/:$PATH\n' in result)
 
+        expected_setup = '# Setup\nPATH=./some/folder/:./another/folder/:$PATH\n'
+
         # Multiple path
-        result = gh.run(f'python3 {self.script_module} --visible_path "./some/folder/ ./another/folder/" --output {test_file}')
-        self.assertTrue('# Setup\nPATH=./some/folder/:./another/folder/:$PATH\n' in result)
+        result = gh.run(f'python3 {self.script_module} --visible_paths "./some/folder/ ./another/folder/" --output {test_file}')
+        self.assertTrue(expected_setup in result)
+
+        # Test env var
+        result = gh.run(f'VISIBLE_PATHS="./some/folder/ ./another/folder/" python3 {self.script_module} --output {test_file}')
+        self.assertTrue(expected_setup in result)
+        result = gh.run(f'VISIBLE_PATHS="" python3 {self.script_module} --output {test_file}')
+        self.assertFalse(expected_setup in result)
 
     def test_run_options(self):
         """Test --run_options argument"""
@@ -145,6 +183,10 @@ class TestBatspp(TestWrapper):
 
         result = gh.run(f'python3 {self.script_module} --skip_run {test_file}')
         self.assertFalse(result)
+        result = gh.run(f'SKIP_RUN=0 python3 {self.script_module} {test_file}')
+        self.assertTrue(result)
+        result = gh.run(f'SKIP_RUN=1 python3 {self.script_module} {test_file}')
+        self.assertFalse(result)
 
     def test_omit_trace(self):
         """Test --omit_trace argument"""
@@ -153,9 +195,18 @@ class TestBatspp(TestWrapper):
         test_file = f'{self.temp_file}.batspp'
         gh.write_file(test_file, self.simple_test)
 
+        expected_assert = '# Assertion of line 3\n\t[ "$(test-of-line-3-line3-actual)" == "$(test-of-line-3-line3-expected)" ]'
+        expected_function = 'function print_debug() {'
+
+        # Test command-line argument
         result = gh.run(f'python3 {self.script_module} --output --omit_trace {test_file}')
-        self.assertTrue('# Assertion of line 3\n\t[ "$(test-of-line-3-line3-actual)" == "$(test-of-line-3-line3-expected)" ]' in result)
-        self.assertFalse('function print_debug() {' in result)
+        self.assertTrue(expected_assert in result)
+        self.assertFalse(expected_function in result)
+
+        # Test env var
+        result = gh.run(f'OMIT_TRACE=1 python3 {self.script_module} --output {test_file}')
+        self.assertTrue(expected_assert in result)
+        self.assertFalse(expected_function in result)
 
     def test_disable_aliases(self):
         """Test --disable_aliases argument"""
