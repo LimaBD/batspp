@@ -1,4 +1,4 @@
-[![release: 1.1.0](https://img.shields.io/badge/release-1.1.0-blue)](https://github.com/LimaBD/batspp/releases/tag/v1.1.0)
+![https://github.com/LimaBD/batspp/releases/latest](https://img.shields.io/github/v/release/limabd/batspp)
 [![License: LGPLv3](https://img.shields.io/badge/License-LGPLv3-orange)](https://github.com/LimaBD/batspp/blob/main/LICENSE.txt)
 [![Python: >=3.6](https://img.shields.io/badge/Python-%3E%3D3.6-yellow)](https://www.python.org/)
 ![tests](https://github.com/LimaBD/batspp/actions/workflows/tests.yml/badge.svg)
@@ -6,117 +6,36 @@
 
 # BATSPP
 
-This process and run shell style tests using bats-core
+Shell style tests using [bats-core framework](https://github.com/bats-core/bats-core)
+
+Bats is a great [TAP](https://testanything.org/)-compliant testing framework for Bash. It provides a simple way to verify that the UNIX programs you write behave as expected.
+
+The goal of Batspp to allow writing shell style tests with an simple and a less idiosyncratic syntax.
+
 ``` bash
 #!/usr/bin/env batspp
 
-$ echo -e "hello\nworld"
-hello
-world
-
-$ echo "this is a test" | wc -c
-15
+# Test example with multiple assertions
+$ filepath=$(echo $TMP/testfile-"$$")
+$ echo -e "in this test\nwe are using\nmultiple assertions" | sudo tee $filepath
+$ cat $filepath | wc -l
+3
+$ cat $filepath | wc -c
+46
 ```
 
-And Also, you can run embedded tests in bash comments, for example:
-``` bash
-#!/bin/bash
-
-function fibonacci () {
-    result=""
-
-    a=0
-    b=1
-    for (( i=0; i<=$1; i++ ))
-    do
-        result="$result$a "
-        fn=$((a + b))
-        a=$b
-        b=$fn
-    done
-
-    echo $result
-}
-
-# $ run-fibonacci 9
-# The Fibonacci series is:
-# 0 1 1 2 3 5 8 13 21 34
-#
-alias run-fibonacci='echo "The Fibonacci series is:"; fibonacci'
-```
-With: ```$ batspp /path/to/bash/file/with/embedded/tests```
+Batspp grew out of work for [Thomas O'Hara](https://github.com/tomasohara) on [shell-scripts](https://github.com/tomasohara/shell-scripts) and [mezcla](https://github.com/tomasohara/mezcla).
 
 
-## Table of contents
-- [Installation](#installation)
-- [Testing](#usage)
+## Docs
+- [Installation](./docs/installation.md)
+- [Basic usage](./docs/basic_usage.md)
+- [Writing tests](./docs/writing_tests.md)
+- [Writing setups](./docs/writing_setups.md)
+- [Writing teardowns](./docs/writing_teardowns.md)
+- [Tests examples](./docs/tests_examples.md)
 - [Contributing](#contributing)
 
-
-## Installation
-Batspp uses [bats-core](https://github.com/bats-core/bats-core.git) to run tests, you can install it with:
-```
-$ npm install -g bats
-```
-You can install Batspp:
-- from pip
-    ```
-    $ pip install batspp
-    ```
-- from source
-    ```
-    $ git clone https://github.com/LimaBD/batspp
-    $ cd ./batspp
-    $ ./build.bash
-    ```
-
-
-## Testing
-The syntax using for output assertions is the follow:
-``` bash
-$ [command]
-[expected output]
-```
-for example:
-``` bash
-#!/usr/bin/env batspp
-
-$ echo "this is a test" | wc -c
-15
-```
-running it with `$ batspp /path/to/test.batspp`, if the tests pass you should see:
-```
-$ batspp /path/to/test.batspp
-1..1
-ok 1 test id998957
-```
-otherwise you will see the actual and expected outputs:
-```
-$ batspp /path/to/test.batspp
-1..1
-not ok 1 test id998957
-# (in test file /tmp/main-8zolvc_v, line 21)
-#   `[ "$actual" == "$expected" ]' failed
-# ========== actual ==========
-# 15
-# ========= expected =========
-# 23
-# ============================
-```
-You can replace the assigned id to the test with a title
-``` bash
-#!/usr/bin/env batspp
-
-# Test testing batspp titles
-$ echo "here we will use a title for this test" | wc -c
-39
-```
-running it we see "testing batspp titles" instead of an id+number:
-```
-$ batspp /path/to/test.batspp
-1..1
-ok 1 testing batspp titles
-```
 
 ## Contributing
 All contribution is welcome!

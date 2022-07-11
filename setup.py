@@ -1,21 +1,33 @@
+#!/usr/bin/env python3
 #
-# TODO: add description
+# Setup
 #
 
 
+"""Setup"""
+
+
+# Standard packages
 import setuptools
+import os
 
+
+package_root = os.path.abspath(os.path.dirname(__file__))
+
+version = {}
+with open(os.path.join(package_root, "batspp/version.py")) as fp:
+    exec(fp.read(), version)
+version = version["__version__"]
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-
 setuptools.setup(
     name="batspp",
-    version="1.1.0",
-    author="Tom O\'Hara, Bruno Daniel Lima",
-    author_email="tomasohara@gmail.com, bdl1998@hotmail.com",
-    description="This process and run shell style tests using bats-core",
+    version=version,
+    author="Bruno Daniel Lima",
+    author_email="bdl1998@hotmail.com",
+    description="Shell style tests using bats-core",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/LimaBD/batspp",
@@ -31,6 +43,5 @@ setuptools.setup(
     ],
     scripts=['batspp/batspp'],
     package_dir={"": "batspp"},
-    packages=setuptools.find_packages(where="batspp"),
-    python_requires=">=3.6",
+    python_requires=">=3.6"
 )

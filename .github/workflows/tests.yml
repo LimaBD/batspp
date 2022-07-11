@@ -24,6 +24,11 @@ jobs:
         pip install mezcla
         git submodule update --init
         pip install -r ./submodules/mezcla/requirements.txt
+
+        npm install -g bats
+    - name: Install Batspp
+      run: |
+        pip install .
     - name: Test with unittest
       run: |
         coverage run -m unittest discover ./tests/
