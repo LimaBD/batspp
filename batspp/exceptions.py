@@ -22,3 +22,7 @@ def error(message:str='',
     output += f'\n             {" " * column}^' if column else ''
 
     raise Exception(output)
+
+def assert_type(var: any, expected_type: any) -> None:
+    """Assert variable type"""
+    assert isinstance(var, expected_type), f'expected type {expected_type} but founded {type(var)}'

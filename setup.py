@@ -49,6 +49,6 @@ setuptools.setup(
     ],
     scripts=['batspp/batspp'],
     package_dir={"": "batspp"},
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     install_requires=required,
 )
