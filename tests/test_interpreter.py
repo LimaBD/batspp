@@ -18,20 +18,17 @@ from mezcla import debug
 
 
 # Local modules
-#
-# to avoid import errors, must install
-# package with '$ pip install .'
-sys.path.insert(0, './../batspp')
-from lexer import TokenData
-from parser import (
+sys.path.insert(0, './batspp')
+from lexer import TokenData # type: ignore
+from parser import ( # type: ignore
     Setup, AssertionType, Assertion, Test, TestsSuite
 )
-from interpreter import NodeVisitor, Interpreter
+from interpreter import NodeVisitor, Interpreter # type: ignore
 
 
 class TestNodeVisitor(TestWrapper):
     """Class for testcase definition"""
-    script_module = TestWrapper.derive_tested_module_name(__file__)
+    script_module = None
     maxDiff       = None
 
     ## TODO: implement stub classes to test visitors
@@ -47,7 +44,7 @@ class TestNodeVisitor(TestWrapper):
 
 class TestInterpreter(TestWrapper):
     """Class for testcase definition"""
-    script_module = TestWrapper.derive_tested_module_name(__file__)
+    script_module = None
     maxDiff       = None
 
     def test_visit_TestsSuite(self):

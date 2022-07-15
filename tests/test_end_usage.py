@@ -10,6 +10,7 @@
 # Standard packages
 import re
 import unittest
+import os
 
 
 # Installed packages
@@ -20,11 +21,14 @@ from mezcla import debug
 
 # Constants
 EXAMPLES_PATH = './docs/examples'
+# This and "script_module=None" solve problem:
+#     "Assertion failed: "No module named" not in help_usage"
+BATSPP_PATH = os.path.abspath('./batspp/batspp')
 
 
 class TestEndUsage(TestWrapper):
     """Class for testcase definition"""
-    script_module = 'batspp'
+    script_module = None
     maxDiff       = None
 
     def test_batspp_example(self):
@@ -34,7 +38,7 @@ class TestEndUsage(TestWrapper):
 
         actual_filename = f'{self.temp_file}.bats'
 
-        output = gh.run(f'cd {EXAMPLES_PATH} && {self.script_module} --save {actual_filename} batspp_example.batspp')
+        output = gh.run(f'cd {EXAMPLES_PATH} && {BATSPP_PATH} --save {actual_filename} batspp_example.batspp')
         output += '\n' # Compensate the new line added by gh.read_lines()
 
         # Check output

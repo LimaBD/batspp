@@ -18,15 +18,13 @@ from mezcla import debug
 
 
 # Module being tested
-#
-# to avoid import errors, must install package with '$ pip install .'
-sys.path.insert(0, './../batspp')
-import exceptions
+sys.path.insert(0, './batspp')
+import exceptions # type: ignore
 
 
 class TestExceptions(TestWrapper):
     """Class for testcase definition"""
-    script_module = TestWrapper.derive_tested_module_name(__file__)
+    script_module = None
     maxDiff       = None
 
     def test_error(self):
