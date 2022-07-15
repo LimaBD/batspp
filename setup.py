@@ -14,13 +14,19 @@ import os
 
 package_root = os.path.abspath(os.path.dirname(__file__))
 
+# Version
 version = {}
 with open(os.path.join(package_root, "batspp/version.py")) as fp:
     exec(fp.read(), version)
 version = version["__version__"]
 
+# Readme
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
+
+# Requirements
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
 
 setuptools.setup(
     name="batspp",
@@ -43,5 +49,6 @@ setuptools.setup(
     ],
     scripts=['batspp/batspp'],
     package_dir={"": "batspp"},
-    python_requires=">=3.6"
+    python_requires=">=3.8",
+    install_requires=required,
 )

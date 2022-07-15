@@ -18,15 +18,13 @@ from mezcla import debug
 
 
 # Module being tested
-#
-# to avoid import errors, must install package with '$ pip install .'
-sys.path.insert(0, './../batspp')
-from lexer import TextLiner, Lexer, Token, TokenType
+sys.path.insert(0, './batspp')
+from lexer import TextLiner, Lexer, Token, TokenType # type: ignore
 
 
 class TestTextLiner(TestWrapper):
     """Class for testcase definition"""
-    script_module = TestWrapper.derive_tested_module_name(__file__)
+    script_module = None
     maxDiff       = None
 
     def test_is_column_safe(self):
@@ -130,7 +128,7 @@ class TestTextLiner(TestWrapper):
 
 class TestLexer(TestWrapper):
     """Class for testcase definition"""
-    script_module = TestWrapper.derive_tested_module_name(__file__)
+    script_module = None
     maxDiff       = None
 
     def tokenize(self, string: str, embedded_tests:bool = False) -> list:

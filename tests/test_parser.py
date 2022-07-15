@@ -8,6 +8,7 @@
 
 
 # Standard packages
+from configparser import NoSectionError
 import sys
 import unittest
 
@@ -18,16 +19,14 @@ from mezcla import debug
 
 
 # Local modules
-#
-# to avoid import errors, must install package with '$ pip install .'
-sys.path.insert(0, './../batspp')
-from lexer import Token, TokenType
-from parser import AssertionType, Parser, TestsSuite, Test, Setup
+sys.path.insert(0, './batspp')
+from lexer import Token, TokenType # type: ignore
+from parser import AssertionType, Parser, TestsSuite, Test, Setup # type: ignore
 
 
 class TestParser(TestWrapper):
     """Class for testcase definition"""
-    script_module = TestWrapper.derive_tested_module_name(__file__)
+    script_module = None
     maxDiff       = None
 
     def test_get_current_token(self):
