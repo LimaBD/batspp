@@ -4,8 +4,8 @@
 # output and content
 #
 
-docs=$(dirname $(realpath -s $0))
-base=$docs/../..
+examples=$(dirname $(realpath -s $0))
+base=$examples/../..
 
 function run_eg () {
 
@@ -15,9 +15,9 @@ function run_eg () {
 
     # Set args to run
     script="python3 $base/batspp/batspp"
-    file=$docs/$filename.$extension
-    content=$docs/generated_$filename.bats
-    output=$docs/output_$1.txt
+    file=$examples/$filename.$extension
+    content=$examples/generated_$filename.bats
+    output=$examples/output_$1.txt
 
     # Print trace
     echo ">>>>>>>>>>>>>>>>>>> RUN"
@@ -27,7 +27,7 @@ function run_eg () {
     echo -e "output path\t$output\n"
 
     # Run
-    cd $docs
+    cd $examples
     $script --save $content $file > $output
 }
 
