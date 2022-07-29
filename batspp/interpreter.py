@@ -230,8 +230,15 @@ class Interpreter(NodeVisitor):
         result, constants = '', ''
 
         # Append default VERBOSE_DEBUG constant
+        #
+        # NOTE: BatsppOpts.verbose_debug are used to
+        #       default debug, for now is equivalent to hexview_debug.
         if self.debug_required:
-            value = '| python3 -m hexdump -' if self.opts.verbose_debug or self.opts.hexview_debug else ''
+            value = ''
+            if self.args.debug:
+                value = self.args.debug
+            elif self.opts.verbose_debug or self.opts.hexview_debug:
+                value = '| python3 -m hexdump -'
             constants += f'{VERBOSE_DEBUG}="{value}"\n'
 
         # Append TEMP_DIR constant

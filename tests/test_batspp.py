@@ -229,6 +229,16 @@ class TestBatspp(TestWrapper):
         result = gh.run(f'python3 {BATSPP_PATH} --hexview_debug --output {test_file}')
         self.assertTrue('VERBOSE_DEBUG="| python3 -m hexdump -"' in result)
 
+    def test_debug(self):
+        """Test --debug argument"""
+        debug.trace(debug.DETAILED, f"TestBatspp.test_debug({self})")
+
+        test_file = f'{self.temp_file}.batspp'
+        gh.write_file(test_file, self.simple_test)
+
+        result = gh.run(f'python3 {BATSPP_PATH} --debug "| wc -l" --output {test_file}')
+        self.assertTrue('VERBOSE_DEBUG="| wc -l"' in result)
+
 
 if __name__ == '__main__':
     unittest.main()

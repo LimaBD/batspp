@@ -58,6 +58,7 @@ FILE = 'file'
 SAVE = 'save'
 SOURCES = 'sources'
 OUTPUT = 'output'
+DEBUG = 'debug'
 HEXVIEW_DEBUG = 'hexview_debug'
 VERBOSE_DEBUG = 'verbose_debug'
 TMP = 'TMP'
@@ -87,6 +88,7 @@ class Batspp(Main):
     output = False
     hexview_debug = False
     verbose_debug = False
+    debug = ''
     temp_dir = ''
     copy_dir = ''
     visible_paths = []
@@ -109,6 +111,7 @@ class Batspp(Main):
         self.output = self.get_entered_bool(OUTPUT, self.output)
         self.hexview_debug = self.get_entered_bool(HEXVIEW_DEBUG, self.hexview_debug)
         self.verbose_debug = self.get_entered_bool(VERBOSE_DEBUG, self.verbose_debug)
+        self.debug = self.get_entered_text(DEBUG, self.debug)
         self.temp_dir = self.get_entered_text(TEMP_DIR, gh.form_path(tmp, f"batspp-{os.getpid()}"))
         self.copy_dir = self.get_entered_text(COPY_DIR, self.copy_dir)
         self.visible_paths = text_utils.extract_string_list(self.get_entered_text(VISIBLE_PATHS, ''))
@@ -147,7 +150,8 @@ class Batspp(Main):
             temp_dir = self.temp_dir,
             visible_paths = self.visible_paths,
             run_opts = self.run_opts,
-            copy_dir = self.copy_dir
+            copy_dir = self.copy_dir,
+            debug = self.debug
         )
 
         try:
@@ -215,6 +219,7 @@ if __name__ == '__main__':
                                  (TEMP_DIR, 'Temporary directory to use for tests'),
                                  (VISIBLE_PATHS, 'Make paths visible to tests file'),
                                  (RUN_OPTS, 'Options for run Bats command'),
-                                 (COPY_DIR, 'Copy directory to temp. dir for input files, etc.')],
+                                 (COPY_DIR, 'Copy directory to temp. dir for input files, etc.'),
+                                 (DEBUG, 'Add custom debug to actual/expected values')],
                  manual_input = True)
     app.run()
