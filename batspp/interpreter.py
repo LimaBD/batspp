@@ -205,9 +205,9 @@ class Interpreter(NodeVisitor):
                   '# $2 -> expected value\n'
                   'function print_debug() {\n'
                   '\techo "=======  actual  ======="\n'
-                  f'\tbash -c "echo \"$1\" ${VERBOSE_DEBUG}"\n'
+                  f'\tbash -c "echo \\\"$1\\\" ${VERBOSE_DEBUG}"\n'
                   '\techo "======= expected ======="\n'
-                  f'\tbash -c "echo \"$2\" ${VERBOSE_DEBUG}"\n'
+                  f'\tbash -c "echo \\\"$2\\\" ${VERBOSE_DEBUG}"\n'
                   '\techo "========================"\n'
                   '}\n\n')
 
@@ -221,7 +221,7 @@ class Interpreter(NodeVisitor):
         # used in the tests file, for example
         #
         # # Constants
-        # VERBOSE_DEBUG="| hexview"
+        # VERBOSE_DEBUG="| python3 -m hexdump -"
         # .
         # .
         # .
@@ -229,10 +229,9 @@ class Interpreter(NodeVisitor):
 
         result, constants = '', ''
 
-        # Append VERBOSE_DEBUG constant
+        # Append default VERBOSE_DEBUG constant
         if self.debug_required:
-            ## TODO: implement hexview.perl
-            value = '' if self.opts.verbose_debug else ''
+            value = '| python3 -m hexdump -' if self.opts.verbose_debug or self.opts.hexview_debug else ''
             constants += f'{VERBOSE_DEBUG}="{value}"\n'
 
         # Append TEMP_DIR constant

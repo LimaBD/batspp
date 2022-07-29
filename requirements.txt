@@ -4,6 +4,7 @@
 #    pip install -r requirements.txt
 #
 
+hexdump
 setuptools==41.2.0
 mezcla==1.3.0
 six

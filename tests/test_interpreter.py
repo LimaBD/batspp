@@ -194,9 +194,9 @@ class TestInterpreter(TestWrapper):
                     '# $2 -> expected value\n'
                     'function print_debug() {\n'
                     '\techo "=======  actual  ======="\n'
-                    '\tbash -c "echo "$1" $VERBOSE_DEBUG"\n'
+                    '\tbash -c "echo \\"$1\\" $VERBOSE_DEBUG"\n'
                     '\techo "======= expected ======="\n'
-                    '\tbash -c "echo "$2" $VERBOSE_DEBUG"\n'
+                    '\tbash -c "echo \\"$2\\" $VERBOSE_DEBUG"\n'
                     '\techo "========================"\n'
                     '}\n'
                     '\n')
