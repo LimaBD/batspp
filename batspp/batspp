@@ -42,6 +42,7 @@ from mezcla.main import Main
 from mezcla import system
 from mezcla import debug
 from mezcla import glue_helpers as gh
+from mezcla import text_utils
 
 
 # Local modules
@@ -88,7 +89,7 @@ class Batspp(Main):
     verbose_debug = False
     temp_dir = ''
     copy_dir = ''
-    visible_paths = ''
+    visible_paths = []
     run_opts = ''
     skip_run = False
     omit_trace = False
@@ -104,13 +105,13 @@ class Batspp(Main):
         # Check the command-line/enviroment vars options
         self.file = self.get_parsed_argument(FILE, self.file)
         self.save_path = self.get_entered_text(SAVE, self.temp_file)
-        self.sources = self.get_entered_text(SOURCES, '').split(' ' or ',' or ';')
+        self.sources = text_utils.extract_string_list(self.get_entered_text(SOURCES, ''))
         self.output = self.get_entered_bool(OUTPUT, self.output)
         self.hexview_debug = self.get_entered_bool(HEXVIEW_DEBUG, self.hexview_debug)
         self.verbose_debug = self.get_entered_bool(VERBOSE_DEBUG, self.verbose_debug)
         self.temp_dir = self.get_entered_text(TEMP_DIR, gh.form_path(tmp, f"batspp-{os.getpid()}"))
         self.copy_dir = self.get_entered_text(COPY_DIR, self.copy_dir)
-        self.visible_paths = self.get_entered_text(VISIBLE_PATHS, self.visible_paths).split(' ' or ',' or ';')
+        self.visible_paths = text_utils.extract_string_list(self.get_entered_text(VISIBLE_PATHS, ''))
         self.run_opts = self.get_entered_text(RUN_OPTS, self.run_opts)
         self.skip_run = self.get_entered_bool(SKIP_RUN, self.skip_run)
         self.omit_trace = self.get_entered_bool(OMIT_TRACE,  self.omit_trace)
