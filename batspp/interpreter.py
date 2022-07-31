@@ -221,7 +221,7 @@ class Interpreter(NodeVisitor):
         # used in the tests file, for example
         #
         # # Constants
-        # VERBOSE_DEBUG="| python3 -m hexdump -"
+        # VERBOSE_DEBUG="| hexdump -C"
         # .
         # .
         # .
@@ -238,7 +238,9 @@ class Interpreter(NodeVisitor):
             if self.args.debug:
                 value = self.args.debug
             elif self.opts.verbose_debug or self.opts.hexdump_debug:
-                value = '| python3 -m hexdump -'
+                # More information about hexdump command:
+                # - https://linoxide.com/linux-hexdump-command-examples/
+                value = '| hexdump -C'
             constants += f'{VERBOSE_DEBUG}="{value}"\n'
 
         # Append TEMP_DIR constant

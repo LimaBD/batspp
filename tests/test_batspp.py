@@ -227,7 +227,7 @@ class TestBatspp(TestWrapper):
         gh.write_file(test_file, self.simple_test)
 
         result = gh.run(f'python3 {BATSPP_PATH} --hexdump_debug --output {test_file}')
-        self.assertTrue('VERBOSE_DEBUG="| python3 -m hexdump -"' in result)
+        self.assertTrue('VERBOSE_DEBUG="| hexdump -C"' in result)
 
     def test_debug(self):
         """Test --debug argument"""

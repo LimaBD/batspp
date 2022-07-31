@@ -5,7 +5,7 @@
 #
 
 # Constants
-VERBOSE_DEBUG="| python3 -m hexdump -"
+VERBOSE_DEBUG="| hexdump -C"
 TEMP_DIR="/tmp/batspp-134110"
 
 # Setup
