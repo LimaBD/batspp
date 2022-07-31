@@ -219,14 +219,14 @@ class TestBatspp(TestWrapper):
         debug.trace(debug.DETAILED, f"TestBatspp.test_disable_aliases({self})")
         ## TODO: WORK-IN-PROGRESS
 
-    def test_hexview(self):
-        """Test --hexview argument"""
-        debug.trace(debug.DETAILED, f"TestBatspp.test_hexview({self})")
+    def test_hexdump(self):
+        """Test --hexdump argument"""
+        debug.trace(debug.DETAILED, f"TestBatspp.test_hexdump({self})")
 
         test_file = f'{self.temp_file}.batspp'
         gh.write_file(test_file, self.simple_test)
 
-        result = gh.run(f'python3 {BATSPP_PATH} --hexview_debug --output {test_file}')
+        result = gh.run(f'python3 {BATSPP_PATH} --hexdump_debug --output {test_file}')
         self.assertTrue('VERBOSE_DEBUG="| python3 -m hexdump -"' in result)
 
     def test_debug(self):

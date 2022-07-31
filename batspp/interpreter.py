@@ -232,12 +232,12 @@ class Interpreter(NodeVisitor):
         # Append default VERBOSE_DEBUG constant
         #
         # NOTE: BatsppOpts.verbose_debug are used to
-        #       default debug, for now is equivalent to hexview_debug.
+        #       default debug, for now is equivalent to hexdump_debug.
         if self.debug_required:
             value = ''
             if self.args.debug:
                 value = self.args.debug
-            elif self.opts.verbose_debug or self.opts.hexview_debug:
+            elif self.opts.verbose_debug or self.opts.hexdump_debug:
                 value = '| python3 -m hexdump -'
             constants += f'{VERBOSE_DEBUG}="{value}"\n'
 

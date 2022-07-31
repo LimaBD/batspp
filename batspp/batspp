@@ -59,7 +59,7 @@ SAVE = 'save'
 SOURCES = 'sources'
 OUTPUT = 'output'
 DEBUG = 'debug'
-HEXVIEW_DEBUG = 'hexview_debug'
+HEXDUMP_DEBUG = 'hexdump_debug'
 VERBOSE_DEBUG = 'verbose_debug'
 TMP = 'TMP'
 TEMP_DIR = 'temp_dir'
@@ -86,7 +86,7 @@ class Batspp(Main):
     save_path = ''
     sources = []
     output = False
-    hexview_debug = False
+    hexdump_debug = False
     verbose_debug = False
     debug = ''
     temp_dir = ''
@@ -109,7 +109,7 @@ class Batspp(Main):
         self.save_path = self.get_entered_text(SAVE, self.temp_file)
         self.sources = text_utils.extract_string_list(self.get_entered_text(SOURCES, ''))
         self.output = self.get_entered_bool(OUTPUT, self.output)
-        self.hexview_debug = self.get_entered_bool(HEXVIEW_DEBUG, self.hexview_debug)
+        self.hexdump_debug = self.get_entered_bool(HEXDUMP_DEBUG, self.hexdump_debug)
         self.verbose_debug = self.get_entered_bool(VERBOSE_DEBUG, self.verbose_debug)
         self.debug = self.get_entered_text(DEBUG, self.debug)
         self.temp_dir = self.get_entered_text(TEMP_DIR, gh.form_path(tmp, f"batspp-{os.getpid()}"))
@@ -140,7 +140,7 @@ class Batspp(Main):
         test = BatsppTest()
         opts = BatsppOpts(
             embedded_tests = embedded_tests,
-            hexview_debug = self.hexview_debug,
+            hexdump_debug = self.hexdump_debug,
             verbose_debug = self.verbose_debug,
             omit_trace = self.omit_trace,
             disable_aliases = self.disable_aliases
@@ -209,7 +209,7 @@ if __name__ == '__main__':
                  positional_arguments = [(FILE, 'Test filename')] if not print_version else None,
                  boolean_options = [(VERSION, 'Show installed Batspp version'),
                                     (OUTPUT, 'Print generated test'),
-                                    (HEXVIEW_DEBUG, 'Print hexview debug when an assertion fail'),
+                                    (HEXDUMP_DEBUG, 'Print hexdump debug when an assertion fail'),
                                     (VERBOSE_DEBUG, 'Print debug verbose when an assertion fail'),
                                     (SKIP_RUN, 'Do not run the test script'),
                                     (OMIT_TRACE, 'Omit actual/expected trace from test file'),

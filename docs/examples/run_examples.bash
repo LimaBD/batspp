@@ -28,7 +28,7 @@ function run_eg () {
 
     # Run
     cd $examples
-    $script --hexview_debug --save $content $file > $output
+    $script --hexdump_debug --save $content $file > $output
 }
 
 # Examples

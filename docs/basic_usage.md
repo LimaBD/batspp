@@ -27,7 +27,7 @@ You can output the resulting generated file and avoid executing it with the `--o
 You can skip running the tests with the `--skip_run` option.
 
 ## Debugging assertions
-Verbose debug and hexview can be printed when a test fail with the flag `--hexview_debug` or `--verbose_debug`, this verbose debug can be modified manually in the generated Bats file (with `--save` argument) editing this line:
+Verbose debug and hexdump can be printed when a test fail with the flag `--hexdump_debug` or `--verbose_debug`, this verbose debug can be modified manually in the generated Bats file (with `--save` argument) editing this line:
 ``` bash
 VERBOSE_DEBUG="| python3 -m hexdump -"
 ```

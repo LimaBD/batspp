@@ -17,7 +17,7 @@ class BatsppOpts:
     def __init__(self,
                  embedded_tests: bool = False,
                  verbose_debug: bool = False,
-                 hexview_debug: bool = False,
+                 hexdump_debug: bool = False,
                  omit_trace: bool = False,
                  disable_aliases: bool = False) -> None:
 
@@ -30,8 +30,8 @@ class BatsppOpts:
         self.verbose_debug = verbose_debug
 
         # Check for verbose_debug
-        assert_type(hexview_debug, bool)
-        self.hexview_debug = hexview_debug
+        assert_type(hexdump_debug, bool)
+        self.hexdump_debug = hexdump_debug
 
         # Check for omit_trace
         assert_type(omit_trace, bool)
