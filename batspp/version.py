@@ -2,7 +2,10 @@
 #
 # Version
 #
-# Format: <compatibility>.<feature>.<hotfix>
+# Format synonymous:
+# - <mayor>.<minor>.<patch/subversion>
+# - <compatibility>.<feature>.<hotfix>
+#
 
 
 """Version"""
