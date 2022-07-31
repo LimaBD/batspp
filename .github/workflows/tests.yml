@@ -1,7 +1,7 @@
 # This workflow will install dependencies and run tests
 #
 # More information on:
-# - https://docs.github.com/es/actions/automating-builds-and-tests/building-and-testing-python
+# - https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
 name: tests
 
@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-16.04, ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
+        os: [ubuntu-16.04, ubuntu-18.04, ubuntu-latest]
         python-version: ["3.8", "3.9", "3.10"]
 
     steps:
