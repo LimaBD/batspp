@@ -205,18 +205,24 @@ class TestLexer(TestWrapper):
                     f"TestLexer.test_test(); self={self}")
 
         valids = ['# Test foobar', '# test foobar']
-        invalids = ['# foobar foobar Test foobar',
-                    '# foobar Test']
+        invalids = [
+            '# foobar foobar Test foobar',
+            '# foobar Test'
+        ]
         self.assert_token(TokenType.TEST, valids=valids, invalids=invalids)
 
     def test_setup(self):
         """Test for SETUP token type"""
-        debug.trace(debug.QUITE_DETAILED,
-                    f"TestLexer.test_setup(); self={self}")
+        debug.trace(
+            debug.QUITE_DETAILED,
+            f"TestLexer.test_setup(); self={self}"
+        )
 
         valids = ['# Setup', '# setup of foobar']
-        invalids = ['# foobar foobar Setup foobar',
-                    '# foobar Setup']
+        invalids = [
+            '# foobar foobar Setup foobar',
+            '# foobar Setup'
+        ]
         self.assert_token(TokenType.SETUP, valids=valids, invalids=invalids)
 
     def test_teardown(self):
@@ -228,11 +234,15 @@ class TestLexer(TestWrapper):
         debug.trace(debug.QUITE_DETAILED,
                     f"TestLexer.test_continuation(); self={self}")
 
-        valids = ['# Continuation of foobar',
-                  '# continuation of foobar',
-                  '# Continue of foobar']
-        invalids = ['# foobar foobar Continuation foobar',
-                    '# foobar continuation']
+        valids = [
+            '# Continuation of foobar',
+            '# continuation of foobar',
+            '# Continue of foobar'
+        ]
+        invalids = [
+            '# foobar foobar Continuation foobar',
+            '# foobar continuation'
+        ]
         self.assert_token(TokenType.CONTINUATION, valids=valids, invalids=invalids)
 
     def test_pointer(self):
@@ -250,10 +260,12 @@ class TestLexer(TestWrapper):
                     f"TestLexer.test_assert_eq(); self={self}")
 
         types = self.tokenize_types('somefunction arg1 arg2 => expected result')
-        self.assertEqual(types, [TokenType.TEXT,
-                                 TokenType.ASSERT_EQ,
-                                 TokenType.TEXT,
-                                 TokenType.EOF])
+        self.assertEqual(types, [
+            TokenType.TEXT,
+            TokenType.ASSERT_EQ,
+            TokenType.TEXT,
+            TokenType.EOF
+        ])
 
     def test_assert_ne(self):
         """Test for ASSERT_NE token type"""
@@ -261,30 +273,36 @@ class TestLexer(TestWrapper):
                     f"TestLexer.test_assert_ne(); self={self}")
 
         types = self.tokenize_types('somefunction arg1 arg2 =/> not expected result')
-        self.assertEqual(types, [TokenType.TEXT,
-                                 TokenType.ASSERT_NE,
-                                 TokenType.TEXT,
-                                 TokenType.EOF])
+        self.assertEqual(types, [
+            TokenType.TEXT,
+            TokenType.ASSERT_NE,
+            TokenType.TEXT,
+            TokenType.EOF
+        ])
 
     def test_end_eof_tags(self):
         """Test for END and EOF tags"""
         types = self.tokenize_types('$ some command\nexpected text\n<EOF>\n<END>')
-        self.assertEqual(types, [TokenType.PESO,
-                                 TokenType.TEXT,
-                                 TokenType.TEXT,
-                                 TokenType.MINOR,
-                                 TokenType.MINOR,
-                                 TokenType.EOF])
+        self.assertEqual(types, [
+            TokenType.PESO,
+            TokenType.TEXT,
+            TokenType.TEXT,
+            TokenType.MINOR,
+            TokenType.MINOR,
+            TokenType.EOF
+        ])
 
     def test_blank(self):
         """Test for BLANK tag"""
         types = self.tokenize_types('$ some command\nexpected text\n<BLANK>\nwith an blank line')
-        self.assertEqual(types, [TokenType.PESO,
-                                 TokenType.TEXT,
-                                 TokenType.TEXT,
-                                 TokenType.TEXT,
-                                 TokenType.TEXT,
-                                 TokenType.EOF])
+        self.assertEqual(types, [
+            TokenType.PESO,
+            TokenType.TEXT,
+            TokenType.TEXT,
+            TokenType.TEXT,
+            TokenType.TEXT,
+            TokenType.EOF
+        ])
 
     def test_text(self):
         """Test for TEXT token type"""

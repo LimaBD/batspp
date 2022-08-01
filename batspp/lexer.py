@@ -38,18 +38,22 @@ class Tags(Enum):
 class TokenData:
     """Data class for token"""
 
-    def __init__(self,
-                 text_line:str = '',
-                 line:int = None,
-                 column:int = None) -> None:
+    def __init__(
+            self,
+            text_line:str = '',
+            line:int = None,
+            column:int = None
+        ) -> None:
         self.text_line = text_line
         self.line = line
         self.column = column
 
     def __str__(self):
-        return (f'TokenData(text_line={self.text_line},\n'
-                f'\t          line={self.line},\n'
-                f'\t          column={self.column})')
+        return (
+            f'TokenData(text_line={self.text_line},\n'
+            f'\t          line={self.line},\n'
+            f'\t          column={self.column})'
+        )
 
 
 class TokenType(Enum):
@@ -75,10 +79,12 @@ class Token:
     Token class
     """
 
-    def __init__(self,
-                 ttype:str,
-                 tvalue:any,
-                 data: TokenData = TokenData()):
+    def __init__(
+            self,
+            ttype:str,
+            tvalue:any,
+            data: TokenData = TokenData()
+        ) -> None:
         # NOTE: extra "t" in ttype and tvalue
         #       avoids redefine the built-in 'type'
         self.type = ttype
@@ -86,9 +92,11 @@ class Token:
         self.data = data
 
     def __str__(self):
-        return (f'Token(type={self.type},\n'
-                f'      value={self.value},\n'
-                f'      data={self.data})')
+        return (
+            f'Token(type={self.type},\n'
+            f'      value={self.value},\n'
+            f'      data={self.data})'
+    )
 
 
 class TextLiner:
@@ -179,9 +187,11 @@ class Lexer:
         #       control and handle exceptions better
         while self.text.is_line_safe():
 
-            data = TokenData(text_line=self.text.get_current_line(),
-                             line = self.text.line + 1,
-                             column = self.text.column + 1)
+            data = TokenData(
+                text_line = self.text.get_current_line(),
+                line = self.text.line + 1,
+                column = self.text.column + 1
+            )
 
             # Tokenize lines with double comments as minor token
             match = re.match(r'^##', self.text.get_current_line())
@@ -279,10 +289,12 @@ class Lexer:
                 self.append_minor_token(Token(TokenType.MINOR, None, data))
                 continue
 
-            exceptions.error(message='invalid syntax',
-                             text_line=data.text_line,
-                             line=data.line,
-                             column=data.column)
+            exceptions.error(
+                message='invalid syntax',
+                text_line=data.text_line,
+                line=data.line,
+                column=data.column
+            )
 
         # Tokenize End of file
         self.append_token(Token(TokenType.EOF, None, None))
@@ -308,5 +320,7 @@ class Lexer:
         # Tokenize text
         self.extract_tokens()
 
-        debug.trace(7, f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests})')
+        debug.trace(7,
+            f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests})'
+        )
         return self.tokens
