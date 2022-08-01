@@ -19,7 +19,8 @@ class BatsppArgs:
                  temp_dir: str = '',
                  visible_paths: 'list|None' = None,
                  run_opts: str = '',
-                 copy_dir: str = '') -> None:
+                 copy_dir: str = '',
+                 debug: str = '') -> None:
 
         # Check for sources, filter empty sources
         assert_type(sources, (list, type(None)))
@@ -44,3 +45,7 @@ class BatsppArgs:
         # Check for copy_dir
         assert_type(copy_dir, str)
         self.copy_dir = copy_dir
+
+        # Check for debug
+        assert_type(debug, str)
+        self.debug = debug

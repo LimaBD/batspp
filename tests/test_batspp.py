@@ -29,9 +29,11 @@ class TestBatspp(TestWrapper):
     use_temp_base_dir = True
     maxDiff           = None
 
-    simple_test = ('# Example test\n\n'
-                   '$ echo "hello world"\n'
-                   'hello world\n\n')
+    simple_test = (
+        '# Example test\n\n'
+        '$ echo "hello world"\n'
+        'hello world\n\n'
+    )
 
     def test_file(self):
         """Test for test file argument"""
@@ -161,9 +163,9 @@ class TestBatspp(TestWrapper):
 
         # A single path
         result = gh.run(f'python3 {BATSPP_PATH} --visible_paths ./some/folder/ --output {test_file}')
-        self.assertTrue('# Setup\nPATH=./some/folder/:$PATH\n' in result)
+        self.assertTrue('PATH=./some/folder/:$PATH\n' in result)
 
-        expected_setup = '# Setup\nPATH=./some/folder/:./another/folder/:$PATH\n'
+        expected_setup = 'PATH=./some/folder/:./another/folder/:$PATH\n'
 
         # Multiple path
         result = gh.run(f'python3 {BATSPP_PATH} --visible_paths "./some/folder/ ./another/folder/" --output {test_file}')
@@ -218,6 +220,26 @@ class TestBatspp(TestWrapper):
         """Test --disable_aliases argument"""
         debug.trace(debug.DETAILED, f"TestBatspp.test_disable_aliases({self})")
         ## TODO: WORK-IN-PROGRESS
+
+    def test_hexdump(self):
+        """Test --hexdump argument"""
+        debug.trace(debug.DETAILED, f"TestBatspp.test_hexdump({self})")
+
+        test_file = f'{self.temp_file}.batspp'
+        gh.write_file(test_file, self.simple_test)
+
+        result = gh.run(f'python3 {BATSPP_PATH} --hexdump_debug --output {test_file}')
+        self.assertTrue('VERBOSE_DEBUG="| hexdump -C"' in result)
+
+    def test_debug(self):
+        """Test --debug argument"""
+        debug.trace(debug.DETAILED, f"TestBatspp.test_debug({self})")
+
+        test_file = f'{self.temp_file}.batspp'
+        gh.write_file(test_file, self.simple_test)
+
+        result = gh.run(f'python3 {BATSPP_PATH} --debug "| wc -l" --output {test_file}')
+        self.assertTrue('VERBOSE_DEBUG="| wc -l"' in result)
 
 
 if __name__ == '__main__':

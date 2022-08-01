@@ -5,7 +5,6 @@
 # This module is responsible for building
 # an abstract syntax tree (AST) for Batspp
 #
-## TODO: parse teardown blocks
 ## TODO: solve: Setup and Continue referenced before
 ##       assignment should print the correct line, not the next.
 
@@ -38,18 +37,6 @@ class AST:
         self.data = data
 
 
-class Setup(AST):
-    """
-    AST node for setup
-    """
-
-    def __init__(self,
-                 commands:list = None,
-                 data: TokenData = TokenData()) -> None:
-        super().__init__(data)
-        self.commands = commands if commands else []
-
-
 class AssertionType(Enum):
     """Assertion type enum"""
     OUTPUT = 'output'
@@ -62,15 +49,17 @@ class Assertion(AST):
     AST node for assertion
     """
 
-    def __init__(self,
-                 atype: AssertionType,
-                 setup: Setup = None,
-                 actual: str = '',
-                 expected: str = '',
-                 data: TokenData = TokenData()) -> None:
+    def __init__(
+            self,
+            atype: AssertionType,
+            setup_commands: list = None,
+            actual: str = '',
+            expected: str = '',
+            data: TokenData = TokenData()
+        ) -> None:
         super().__init__(data)
         self.atype = atype
-        self.setup = setup
+        self.setup_commands = setup_commands
         self.actual = actual
         self.expected = expected
 
@@ -80,10 +69,12 @@ class Test(AST):
     AST node for test
     """
 
-    def __init__(self,
-                 pointer: str = '',
-                 assertions: list = None,
-                 data: TokenData = TokenData()) -> None:
+    def __init__(
+            self,
+            pointer: str = '',
+            assertions: list = None,
+            data: TokenData = TokenData()
+        ) -> None:
         super().__init__(data)
         self.pointer = pointer
         self.assertions = assertions if assertions else []
@@ -94,13 +85,17 @@ class TestsSuite(AST):
     AST node for test suite
     """
 
-    def __init__(self,
-                 setup: Setup,
-                 tests: list,
-                 data: TokenData = TokenData()) -> None:
+    def __init__(
+            self,
+            tests: list,
+            setup_commands: list = None,
+            teardown_commands: list = None,
+            data: TokenData = TokenData()
+        ) -> None:
         super().__init__(data)
-        self.setup = setup
         self.tests = tests
+        self.setup_commands = setup_commands
+        self.teardown_commands = teardown_commands
 
 
 class Parser:
@@ -114,7 +109,8 @@ class Parser:
         self.index = 0
         self.last_pointer = ''
         self.test_nodes = []
-        self.setup_stack = []
+        self.setup_commands_stack = []
+        self.teardown_commands_stack = []
         self.embedded_tests = False
 
     def get_current_token(self) -> Token:
@@ -153,10 +149,11 @@ class Parser:
         if current_token.type is token_type:
             self.index += 1
         else:
-            exceptions.error(message=(f'Expected {token_type} but '
-                                      f'founded {current_token.type}'),
-                             text_line=current_token.data.text_line,
-                             line=current_token.data.line)
+            exceptions.error(
+                message=f'Expected {token_type} but founded {current_token.type}',
+                text_line=current_token.data.text_line,
+                line=current_token.data.line
+            )
 
     def is_command_next(self) -> bool:
         """
@@ -172,14 +169,16 @@ class Parser:
             result = (first.type is TokenType.PESO and
                       second.type is TokenType.TEXT)
 
-        debug.trace(7, (f'parser.is_command_next() =>'
-                        f' next tokens types: {first} {second}'
-                        f' => {result}'))
+        debug.trace(7, (
+            f'parser.is_command_next() =>'
+            f' next tokens types: {first} {second}'
+            f' => {result}'
+        ))
         return result
 
-    def is_setup_next(self) -> bool:
+    def is_pure_command_next(self) -> bool:
         """
-        Check if setup tokens pattern is next
+        Check that the next pattern is a command NOT followed by text
         """
 
         result = False
@@ -190,9 +189,11 @@ class Parser:
             result = (is_command and
                       third_token.type is not TokenType.TEXT)
 
-        debug.trace(7, ('parser.is_setup_next() => '
-                        f'command:{is_command} {third_token}'
-                        f' => {result}'))
+        debug.trace(7, (
+            'parser.is_pure_command_next() => '
+            f'command:{is_command} {third_token}'
+            f' => {result}'
+        ))
         return result
 
     def is_assertion_next(self) -> bool:
@@ -218,9 +219,11 @@ class Parser:
                 result = (second_token.type in [TokenType.ASSERT_EQ, TokenType.ASSERT_NE] and
                           third_token.type is TokenType.TEXT)
 
-        debug.trace(7, ('parser.is_assertion_next() => '
-                        f'command:{first_token} {second_token} {third_token}'
-                        f' => {result}'))
+        debug.trace(7, (
+            'parser.is_assertion_next() => '
+            f'command:{first_token} {second_token} {third_token}'
+            f' => {result}'
+        ))
         return result
 
     def build_test(self, pointer:str='') -> None:
@@ -260,7 +263,7 @@ class Parser:
         #   $ command
         #   expected-output
         #
-        # Are break into setup and assertion nodes
+        # Are break into setup commands or assertion nodes
         #
         # If continuation has no pointer token,
         # set pointer to the last test
@@ -283,38 +286,41 @@ class Parser:
 
         # Otherwise the continuation is invalid
         else:
-            exceptions.error(message='Continuation without test assigned',
-                             text_line=data.text_line,
-                             line=data.line,
-                             column=data.column)
+            exceptions.error(
+                message='Continuation without test assigned',
+                text_line=data.text_line,
+                line=data.line,
+                column=data.column
+            )
 
         self.break_setup_assertion(pointer)
 
     def break_setup_assertion(self, pointer:int = '') -> None:
         """
         Process and break block test
-        into setup and assertion AST nodes and set POINTER as pointer
+        into setup commands and assertion AST nodes and set POINTER as pointer
         """
         debug.trace(7, f'parser.break_setup_assertion(pointer={pointer})')
 
-        # Separate/break setup and assertion
-        # blocks into setup and assertion nodes
+        # Separate/break blocks into setup commands and assertion nodes
 
         assert pointer, 'Invalid empty pointer'
 
         while True:
-            if self.is_setup_next():
-                self.build_setup(pointer)
+            if self.is_pure_command_next():
+                # Only setups can be present on a
+                # block assertion, not teardowns
+                self.append_setup_commands(pointer)
             elif self.is_assertion_next():
                 self.build_assertion(pointer)
             else:
                 break
 
-    def build_setup(self, pointer:str='') -> None:
+    def append_setup_commands(self, pointer:str='') -> None:
         """
-        Build and append Setup AST node and set POINTER as pointer
+        Append Setup commands and set POINTER as pointer
         """
-        debug.trace(7, f'parser.build_setup(pointer={pointer})')
+        debug.trace(7, f'parser.append_setup_commands(pointer={pointer})')
 
         # Set debug data
         data = self.get_current_token().data
@@ -339,25 +345,48 @@ class Parser:
             else:
                 pass
 
-        # Check for commands
-        #
-        # Setups directives must contains at least one command
+        commands = self.extract_pure_commands(data)
+
+        # Push new setup commands to the stack,
+        # this must contains an pointer to later
+        # assign this to an assertion
+        self.setup_commands_stack.append((pointer, commands))
+
+    def append_teardown_commands(self) -> None:
+        """
+        Append teardown commands to stack
+        """
+        debug.trace(7, 'parser.append_teardown_commands()')
+
+        # Set debug data
+        data = self.get_current_token().data
+
+        self.eat(TokenType.TEARDOWN)
+        commands = self.extract_pure_commands(data)
+
+        self.teardown_commands_stack.append(commands)
+
+    def extract_pure_commands(self, data):
+        """
+        Extract pure commands from blocks of pure commands,
+        also raise exception if block of commands are empty.
+        """
         commands = []
-        while self.is_setup_next():
+
+        while self.is_pure_command_next():
             self.eat(TokenType.PESO)
             commands.append(self.get_current_token().value)
             self.eat(TokenType.TEXT)
-        if not commands:
-            exceptions.error(message='Setup cannot be empty',
-                             text_line=data.text_line,
-                             line=data.line,
-                             column=data.column)
 
-        # Push new setup node to the stack,
-        # this must contains an pointer to later
-        # assign this to an assertion
-        node = (pointer, Setup(commands=commands, data=data))
-        self.setup_stack.append(node)
+        if not commands:
+            exceptions.error(
+                message = 'Setup cannot be empty',
+                text_line = data.text_line,
+                line = data.line,
+                column = data.column
+            )
+
+        return commands
 
     def build_assertion(self, pointer:str='') -> None:
         """
@@ -409,15 +438,17 @@ class Parser:
         expected = expected[:-1] # Remove last newline
 
         # New assertion node
-        node = Assertion(atype=atype,
-                         setup=None,
-                         actual=actual,
-                         expected=expected,
-                         data=data)
+        node = Assertion(
+            atype=atype,
+            setup_commands=None,
+            actual=actual,
+            expected=expected,
+            data=data
+        )
 
         # Assign setups from the stack with
         # the same pointer as the assertion
-        node.setup = self.pop_setup(pointer=pointer)
+        node.setup_commands = self.pop_setup_commands(pointer=pointer)
 
         # Assign assertion node to test suite
         #
@@ -435,11 +466,12 @@ class Parser:
 
         # The node cannot remain alone without being assigned to a test
         if node is not None:
-            exceptions.error(message=(f'Assertion "{pointer}"'
-                                      ' referenced before assignment.'),
-                             text_line=node.data.text_line,
-                             line=node.data.line,
-                             column=None)
+            exceptions.error(
+                message=f'Assertion "{pointer}" referenced before assignment.',
+                text_line=node.data.text_line,
+                line=node.data.line,
+                column=None
+            )
 
     def build_tests_suite(self) -> AST:
         """
@@ -469,7 +501,11 @@ class Parser:
 
             # Process next tokens as a setup directive pattern
             elif token_type is TokenType.SETUP:
-                self.build_setup()
+                self.append_setup_commands()
+
+            # Process next tokens as teardown directive pattern
+            elif token_type is TokenType.TEARDOWN:
+                self.append_teardown_commands()
 
             # Create new test node for standlone commands and assertions
             elif self.is_command_next() or self.is_assertion_next():
@@ -487,35 +523,40 @@ class Parser:
         self.eat(TokenType.EOF)
 
         # Set global global setup for test suite
-        setup = self.pop_setup(pointer='')
+        setup_commands = self.pop_setup_commands(pointer='')
 
         # Finishing the parsing, cannot be remaining setups on stack
-        if self.setup_stack:
-            first_invalid = self.setup_stack[0]
-            exceptions.error(message=(f'Setup "{first_invalid.pointer}"'
-                                      ' referenced before assignment.'),
-                             text_line=first_invalid.data.text_line,
-                             line=first_invalid.data.line,
-                             column=None)
+        if self.setup_commands_stack:
+            first_invalid = self.setup_commands_stack[0]
+            exceptions.error(
+                message=f'Setup "{first_invalid.pointer}" referenced before assignment.',
+                text_line=first_invalid.data.text_line,
+                line=first_invalid.data.line,
+                column=None
+            )
 
-        result = TestsSuite(setup, self.test_nodes)
+        result = TestsSuite(
+            self.test_nodes,
+            setup_commands = setup_commands,
+            teardown_commands = self.teardown_commands_stack
+        )
         debug.trace(7, f'parser.build_tests_suite() => {result}')
         return result
 
-    def pop_setup(self, pointer: str) -> Setup:
+    def pop_setup_commands(self, pointer: str) -> list:
         """
-        Pop setups nodes from stack with same POINTER,
-        if several setups are founded, unify all into one
+        Pop setup commands from stack with same POINTER,
+        if several setups commands blocks are founded, unify all into one
         """
-        commands = []
+        result = []
 
-        # Get commands from setups with same pointer
-        for stack_pointer, setup in self.setup_stack:
+        # Get commands from stack with same pointer
+        for stack_pointer, commands in self.setup_commands_stack:
             if stack_pointer == pointer:
-                commands += setup.commands
-                self.setup_stack.remove((stack_pointer, setup))
+                result += commands
+                self.setup_commands_stack.remove((stack_pointer, commands))
 
-        return Setup(commands=commands, data=TokenData()) if commands else None
+        return result
 
     def parse(self, tokens: list, embedded_tests:bool=False) -> AST:
         """
@@ -531,7 +572,8 @@ class Parser:
         self.index = 0
         self.last_pointer = ''
         self.test_nodes = []
-        self.setup_stack = []
+        self.setup_commands_stack = []
+        self.teardown_commands_stack = []
         self.embedded_tests = embedded_tests
 
         # build AST

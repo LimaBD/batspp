@@ -21,7 +21,7 @@ from mezcla import debug
 sys.path.insert(0, './batspp')
 from lexer import TokenData # type: ignore
 from parser import ( # type: ignore
-    Setup, AssertionType, Assertion, Test, TestsSuite
+    AssertionType, Assertion, Test, TestsSuite
 )
 from interpreter import NodeVisitor, Interpreter # type: ignore
 
@@ -53,29 +53,6 @@ class TestInterpreter(TestWrapper):
                     f"TestInterpreter.test_visit_TestsSuite(); self={self}")
         ## TODO: WORK-IN-PROGRESS
 
-    def test_visit_Setup(self):
-        """Test for visit_Setup()"""
-        debug.trace(debug.QUITE_DETAILED,
-                    f"TestInterpreter.test_visit_Setup(); self={self}")
-        data = TokenData(text_line='some line', line=3, column=3)
-        interpreter = Interpreter()
-
-        # NOTE: the extra spaces on commands are used
-        #       to ensure that commands are striped.
-
-        # Global setup
-        node = Setup(commands=['      echo "some line" > file.txt'], data=data)
-        actual = interpreter.visit_Setup(node)
-        self.assertEqual(actual, '# Setup\necho "some line" > file.txt\n\n')
-
-        # Local setup
-        interpreter.last_title = 'some test'
-        commands = ['     echo "some line" > file.txt    ',
-                    'echo "another line" >> file.txt     ']
-        node = Setup(commands=commands, data=data)
-        actual = interpreter.visit_Setup(node)
-        self.assertEqual(actual, '\techo "some line" > file.txt\n\techo "another line" >> file.txt\n')
-
     def test_visit_Test(self):
         """Test for visit_Test()"""
         debug.trace(debug.QUITE_DETAILED,
@@ -104,10 +81,12 @@ class TestInterpreter(TestWrapper):
         interpreter = Interpreter()
 
         interpreter.last_title = 'important test'
-        node = Assertion(atype=AssertionType.EQUAL,
-                         actual='echo "some text"',
-                         expected='some text',
-                         data=data)
+        node = Assertion(
+            atype=AssertionType.EQUAL,
+            actual='echo "some text"',
+            expected='some text',
+            data=data
+        )
         actual = interpreter.visit_Assertion(node)
 
         self.assertEqual(len(interpreter.stack_functions), 2)
@@ -127,9 +106,8 @@ class TestInterpreter(TestWrapper):
                     f"TestInterpreter.test_interpret(); self={self}")
         data = TokenData(text_line='some line', line=3, column=3)
 
-        local_setup = Setup(commands=['echo "hello world" > file.txt'], data=data)
         first_assertion = Assertion(atype=AssertionType.EQUAL,
-                                    setup=local_setup,
+                                    setup_commands=['echo "hello world" > file.txt'],
                                     actual='cat file.txt',
                                     expected='hello world',
                                     data=data)
@@ -138,68 +116,81 @@ class TestInterpreter(TestWrapper):
                                     expected='11',
                                     data=data)
         test = Test(pointer='important test', assertions=[first_assertion, second_assertion], data=data)
-        global_setup = Setup(commands=['echo "hello world" > file.txt'])
-        test_suite_node = TestsSuite(setup=global_setup,
-                                     tests=[test],
+        test_suite_node = TestsSuite(tests=[test],
+                                     setup_commands=['echo "hello world" > file.txt'],
+                                     teardown_commands=['echo "finished test"'],
                                      data=data)
 
         actual = Interpreter().interpret(test_suite_node)
 
-        expected = ('#!/usr/bin/env bats\n'
-                    '#\n'
-                    '# This test file was generated using Batspp\n'
-                    '# https://github.com/LimaBD/batspp\n'
-                    '#\n'
-                    '\n'
-                    '# Constants\n'
-                    'VERBOSE_DEBUG=""\n'
-                    'TEMP_DIR="/tmp"\n'
-                    '\n'
-                    '# Setup\n'
-                    'echo "hello world" > file.txt\n'
-                    '\n'
-                    '@test "important test" {\n'
-                    '\ttest_folder=$(echo $TEMP_DIR/important-test-$$)\n'
-                    '\tmkdir --parents "$test_folder"\n'
-                    '\tcd "$test_folder" || echo Warning: Unable to "cd $test_folder"\n'
-                    '\n'
-                    '\t# Assertion of line 3\n'
-                    '\techo "hello world" > file.txt\n'
-                    '\tprint_debug "$(important-test-line3-actual)" "$(important-test-line3-expected)"\n'
-                    '\t[ "$(important-test-line3-actual)" == "$(important-test-line3-expected)" ]\n'
-                    '\n'
-                    '\t# Assertion of line 3\n'
-                    '\tprint_debug "$(important-test-line3-actual)" "$(important-test-line3-expected)"\n'
-                    '\t[ "$(important-test-line3-actual)" == "$(important-test-line3-expected)" ]\n'
-                    '}\n'
-                    '\n'
-                    'function important-test-line3-actual () {\n'
-                    '\tcat file.txt\n'
-                    '}\n'
-                    '\n'
-                    'function important-test-line3-expected () {\n'
-                    '\techo -e \'hello world\'\n'
-                    '}\n'
-                    '\n'
-                    'function important-test-line3-actual () {\n'
-                    '\tcat file.txt | wc -m\n'
-                    '}\n'
-                    '\n'
-                    'function important-test-line3-expected () {\n'
-                    '\techo -e \'11\'\n'
-                    '}\n'
-                    '\n'
-                    '# This prints debug data when an assertion fail\n'
-                    '# $1 -> actual value\n'
-                    '# $2 -> expected value\n'
-                    'function print_debug() {\n'
-                    '\techo "=======  actual  ======="\n'
-                    '\tbash -c "echo "$1" $VERBOSE_DEBUG"\n'
-                    '\techo "======= expected ======="\n'
-                    '\tbash -c "echo "$2" $VERBOSE_DEBUG"\n'
-                    '\techo "========================"\n'
-                    '}\n'
-                    '\n')
+        expected = (
+            '#!/usr/bin/env bats\n'
+            '#\n'
+            '# This test file was generated using Batspp\n'
+            '# https://github.com/LimaBD/batspp\n'
+            '#\n'
+            '\n'
+            '# Constants\n'
+            'VERBOSE_DEBUG=""\n'
+            'TEMP_DIR="/tmp"\n'
+            '\n'
+            '# Setup function\n'
+            '# $1 -> test name\n'
+            'function run_setup () {\n'
+            '\ttest_folder=$(echo $TEMP_DIR/$1-$$)\n'
+            '\tmkdir --parents "$test_folder"\n'
+            '\tcd "$test_folder" || echo Warning: Unable to "cd $test_folder"\n'
+            '\techo "hello world" > file.txt\n'
+            '}\n'
+            '\n'
+            '# Teardown function\n'
+            'function run_teardown () {\n'
+            '\techo "finished test"\n'
+            '}\n'
+            '\n'
+            '@test "important test" {\n'
+            '\trun_setup "important-test"\n'
+            '\n'
+            '\t# Assertion of line 3\n'
+            '\techo "hello world" > file.txt\n'
+            '\tprint_debug "$(important-test-line3-actual)" "$(important-test-line3-expected)"\n'
+            '\t[ "$(important-test-line3-actual)" == "$(important-test-line3-expected)" ]\n'
+            '\n'
+            '\t# Assertion of line 3\n'
+            '\tprint_debug "$(important-test-line3-actual)" "$(important-test-line3-expected)"\n'
+            '\t[ "$(important-test-line3-actual)" == "$(important-test-line3-expected)" ]\n'
+            '\n'
+            '\trun_teardown\n'
+            '}\n'
+            '\n'
+            'function important-test-line3-actual () {\n'
+            '\tcat file.txt\n'
+            '}\n'
+            '\n'
+            'function important-test-line3-expected () {\n'
+            '\techo -e \'hello world\'\n'
+            '}\n'
+            '\n'
+            'function important-test-line3-actual () {\n'
+            '\tcat file.txt | wc -m\n'
+            '}\n'
+            '\n'
+            'function important-test-line3-expected () {\n'
+            '\techo -e \'11\'\n'
+            '}\n'
+            '\n'
+            '# This prints debug data when an assertion fail\n'
+            '# $1 -> actual value\n'
+            '# $2 -> expected value\n'
+            'function print_debug() {\n'
+            '\techo "=======  actual  ======="\n'
+            '\tbash -c "echo \\"$1\\" $VERBOSE_DEBUG"\n'
+            '\techo "======= expected ======="\n'
+            '\tbash -c "echo \\"$2\\" $VERBOSE_DEBUG"\n'
+            '\techo "========================"\n'
+            '}\n'
+            '\n'
+        )
 
         self.assertEqual(actual, expected)
 

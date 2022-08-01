@@ -6,7 +6,6 @@
 # bats-core tests from Abstract Syntax Trees (AST) for Batspp
 #
 ## TODO: make setups commands output nothing
-## TODO: implement setup and teardown bats functions
 
 
 """
@@ -29,18 +28,21 @@ from mezcla import debug
 from batspp_opts import BatsppOpts
 from batspp_args import BatsppArgs
 from parser import (
-    TestsSuite, Test, Setup,
+    TestsSuite, Test,
     Assertion, AssertionType
 )
 
 
-# Test file constants names
+# Constants
 #
-# NOTE: these can be diferent from the
-#       Batspp command-line labels
+# Note that some constants related to the Batspp
+# command-line argument processing class can vary,
+# these constants arent duplicated.
 VERBOSE_DEBUG = 'VERBOSE_DEBUG'
 TEMP_DIR = 'TEMP_DIR'
 COPY_DIR = 'COPY_DIR'
+SETUP_FUNCTION = 'run_setup'
+TEARDOWN_FUNCTION = 'run_teardown'
 
 
 class NodeVisitor:
@@ -76,41 +78,27 @@ class Interpreter(NodeVisitor):
         self.last_title = ''
         self.debug_required = False
 
-    def get_unspaced_title(self) -> str:
-        """Get unspaced title"""
-        return re.sub(r' +', '-', self.last_title.lower())
-
     # pylint: disable=invalid-name
     def visit_TestsSuite(self, node: TestsSuite) -> str:
         """Visit TestsSuite NODE"""
 
         result = ''
 
-        # Visit (global) setup node
-        result += self.visit(node.setup) if node.setup else ''
+        # Global setups are formated into a function
+        if node.tests:
+            result += build_setup_function(
+                commands = node.setup_commands,
+                test_folder = True,
+                copy_dir = self.args.copy_dir
+            )
+            result += build_teardown_function(
+                commands = node.teardown_commands
+            )
 
         # Visit tests nodes
-        for test in node.tests:
-            result += self.visit(test)
+        result += ''.join([self.visit(test) for test in node.tests])
 
         debug.trace(7, f'interpreter.visit_TestsSuite(node={node}) => {result}')
-        return result
-
-    # pylint: disable=invalid-name
-    def visit_Setup(self, node: Setup) -> str:
-        """Visit Setup NODE"""
-
-        # Check header comment and commands indentation
-        result = '# Setup\n' if not self.last_title else ''
-        indent = '\t' if self.last_title else ''
-
-        # Append commands
-        for command in node.commands:
-            result += f'{indent}{command.strip()}\n'
-
-        result += '\n' if not self.last_title else ''
-
-        debug.trace(7, f'interpreter.visit_Setup(node={node}) => {result}')
         return result
 
     # pylint: disable=invalid-name
@@ -119,28 +107,26 @@ class Interpreter(NodeVisitor):
         Visit Test NODE, also updates global class test title
         """
 
-        # Process title
         self.last_title = node.pointer
 
-        copy_cmd = f'\tcommand cp $COPY_DIR "$test_folder"\n' if self.args.copy_dir else ''
-
-        # Test with default local setup
-        # NOTE: warning added on 'cd "$test_folder"' for sake of shellcheck
-        result = (f'@test "{self.last_title}" {{\n'
-                  f'\ttest_folder=$(echo ${TEMP_DIR}/{self.get_unspaced_title()}-$$)\n'
-                  '\tmkdir --parents "$test_folder"\n'
-                  f'{copy_cmd}'
-                  '\tcd "$test_folder" || echo Warning: Unable to "cd $test_folder"\n')
+        # Test header
+        result = (
+            f'@test "{self.last_title}" {{\n'
+            f'\t{SETUP_FUNCTION} "{flatten_str(self.last_title)}"\n'
+        )
 
         # Visit assertions
-        for assertion in node.assertions:
-            result += self.visit(assertion)
+        result += ''.join([self.visit(asn) for asn in node.assertions])
 
-        result += '}\n\n'
+        # Test footer
+        result += (
+            '\n'
+            f'\t{TEARDOWN_FUNCTION}\n'
+            '}\n\n'
+        )
 
         # Pop functions from stack
-        for function in self.stack_functions:
-            result += function
+        result += ''.join(self.stack_functions)
         self.stack_functions = []
 
         debug.trace(7, f'interpreter.visit_Test(node={node}) => {result}')
@@ -155,23 +141,33 @@ class Interpreter(NodeVisitor):
 
         # Set function names for
         # actual and expected values
-        actual_function = f'{self.get_unspaced_title()}-line{node.data.line}-actual'
-        expected_function = f'{self.get_unspaced_title()}-line{node.data.line}-expected'
+        actual_function = f'{flatten_str(self.last_title)}-line{node.data.line}-actual'
+        expected_function = f'{flatten_str(self.last_title)}-line{node.data.line}-expected'
 
-        # Visit setup nodes
-        setup = self.visit(node.setup) if node.setup else ''
+        # Set setup
+        setup = build_commands_block(node.setup_commands) if node.setup_commands else ''
 
         # Set assertion operator
-        operator = '==' if node.atype in [AssertionType.OUTPUT, AssertionType.EQUAL] else '!='
+        operator = ''
+        if node.atype in [AssertionType.OUTPUT, AssertionType.EQUAL]:
+            operator = '=='
+        else:
+            operator = '!='
 
         # Set debug
-        debug_cmd = f'\tprint_debug "$({actual_function})" "$({expected_function})"\n' if not self.opts.omit_trace else ''
+        debug_cmd = ''
+        if not self.opts.omit_trace:
+            debug_cmd = (
+                f'\tprint_debug "$({actual_function})" "$({expected_function})"\n'
+            )
 
         # Unify everything
-        result = (f'\n\t# Assertion of line {node.data.line}\n'
-                  f'{setup}'
-                  f'{debug_cmd}'
-                  f'\t[ "$({actual_function})" {operator} "$({expected_function})" ]\n')
+        result = (
+            f'\n\t# Assertion of line {node.data.line}\n'
+            f'{setup}'
+            f'{debug_cmd}'
+            f'\t[ "$({actual_function})" {operator} "$({expected_function})" ]\n'
+        )
 
         # Check global class option to
         # later implement a debug function
@@ -181,37 +177,22 @@ class Interpreter(NodeVisitor):
         #       poblems with '(' and ')'
 
         # Push to stack function for the actual value
-        function = (f'function {actual_function} () {{\n'
-                    f'\t{node.actual.strip()}\n'
-                    '}\n\n')
+        function = (
+            f'function {actual_function} () {{\n'
+            f'\t{node.actual.strip()}\n'
+            '}\n\n'
+        )
         self.stack_functions.append(function)
 
         # Push to stack function for the expected value
-        function = (f'function {expected_function} () {{\n'
-                    f'\techo -e {repr(node.expected)}\n'
-                    '}\n\n')
+        function = (
+            f'function {expected_function} () {{\n'
+            f'\techo -e {repr(node.expected)}\n'
+            '}\n\n'
+        )
         self.stack_functions.append(function)
 
         debug.trace(7, f'interpreter.visit_Assertion(node={node}) => {result}')
-        return result
-
-    def implement_debug(self) -> str:
-        """
-        Return debug code
-        """
-
-        result = ('# This prints debug data when an assertion fail\n'
-                  '# $1 -> actual value\n'
-                  '# $2 -> expected value\n'
-                  'function print_debug() {\n'
-                  '\techo "=======  actual  ======="\n'
-                  f'\tbash -c "echo \"$1\" ${VERBOSE_DEBUG}"\n'
-                  '\techo "======= expected ======="\n'
-                  f'\tbash -c "echo \"$2\" ${VERBOSE_DEBUG}"\n'
-                  '\techo "========================"\n'
-                  '}\n\n')
-
-        debug.trace(7,f'Interpreter.implement_debug() => {result}')
         return result
 
     def implement_constants(self):
@@ -221,7 +202,7 @@ class Interpreter(NodeVisitor):
         # used in the tests file, for example
         #
         # # Constants
-        # VERBOSE_DEBUG="| hexview"
+        # VERBOSE_DEBUG="| hexdump -C"
         # .
         # .
         # .
@@ -229,10 +210,18 @@ class Interpreter(NodeVisitor):
 
         result, constants = '', ''
 
-        # Append VERBOSE_DEBUG constant
+        # Append default VERBOSE_DEBUG constant
+        #
+        # NOTE: BatsppOpts.verbose_debug are used to
+        #       default debug, for now is equivalent to hexdump_debug.
         if self.debug_required:
-            ## TODO: implement hexview.perl
-            value = '' if self.opts.verbose_debug else ''
+            value = ''
+            if self.args.debug:
+                value = self.args.debug
+            elif self.opts.verbose_debug or self.opts.hexdump_debug:
+                # More information about hexdump command:
+                # - https://linoxide.com/linux-hexdump-command-examples/
+                value = '| hexdump -C'
             constants += f'{VERBOSE_DEBUG}="{value}"\n'
 
         # Append TEMP_DIR constant
@@ -248,7 +237,7 @@ class Interpreter(NodeVisitor):
         debug.trace(7, f'Interpreter.implement_constants() => "{result}"')
         return result
 
-    def commands_from_args(self):
+    def get_args_commands(self):
         """
         Return a list of aditional setup commands from arguments
         """
@@ -268,10 +257,12 @@ class Interpreter(NodeVisitor):
 
         return commands
 
-    def interpret(self,
-                  tree: TestsSuite,
-                  opts: BatsppOpts = BatsppOpts(),
-                  args: BatsppArgs = BatsppArgs()) -> str:
+    def interpret(
+            self,
+            tree: TestsSuite,
+            opts: BatsppOpts = BatsppOpts(),
+            args: BatsppArgs = BatsppArgs()
+        ) -> str:
         """
         Interpret Batspp abstract syntax tree and build tests
         """
@@ -290,12 +281,9 @@ class Interpreter(NodeVisitor):
 
         # Append commands passed by arguments
         # (not in test file) to a setup global
-        aditional_commands = self.commands_from_args()
-        if aditional_commands:
-            if tree.setup:
-                tree.setup.commands += aditional_commands
-            else:
-                tree.setup = Setup(commands=aditional_commands)
+        args_commands = self.get_args_commands()
+        if args_commands:
+            tree.setup_commands += args_commands
 
         # Visit abstract syntax tree nodes
         tests = self.visit(tree)
@@ -305,13 +293,15 @@ class Interpreter(NodeVisitor):
 
         if tests:
             # Add tests header
-            result += (f'#!/usr/bin/env bats'
-                       f'{" " if self.args.run_opts else ""}'
-                       f'{self.args.run_opts}\n'
-                       '#\n'
-                       '# This test file was generated using Batspp\n'
-                       '# https://github.com/LimaBD/batspp\n'
-                       '#\n\n')
+            result += (
+                '#!/usr/bin/env bats'
+                f'{" " if self.args.run_opts else ""}'
+                f'{self.args.run_opts}\n'
+                '#\n'
+                '# This test file was generated using Batspp\n'
+                '# https://github.com/LimaBD/batspp\n'
+                '#\n\n'
+            )
 
             result += self.implement_constants()
 
@@ -319,7 +309,117 @@ class Interpreter(NodeVisitor):
             result += tests
 
             # Add implement debug
-            result += self.implement_debug() if self.debug_required and not self.opts.omit_trace else ''
+            if self.debug_required and not self.opts.omit_trace:
+                result += build_debug_function()
 
         debug.trace(7, f'Interpreter.interpret() => "{result}"')
         return result
+
+
+def flatten_str(string:str) -> str:
+    """Returns unspaced and lowercase STRING"""
+    result = re.sub(r' +', '-', string.lower())
+    debug.trace(7, f'interpreter.flatten_str({string}) => {result}')
+    return result
+
+
+def build_commands_block(commands: list, indent: str = '\t') -> str:
+    """Build commands block with COMMANDS indented with tab"""
+    result = ''.join([f'{indent}{cmd.strip()}\n' for cmd in commands])
+    debug.trace(7, f'interpreter.build_commands_block({commands}) => {result}')
+    return result
+
+
+def build_setup_function(
+        commands: list = None,
+        test_folder: bool = True,
+        copy_dir: bool = False
+    ) -> str:
+    """
+    Build setup function with
+    default commands and specified COMMANDS
+    """
+
+    result = ''
+
+    # Work-around to source files one time and
+    # before create a default test folder
+    sources = []
+    for cmd in commands:
+        if 'shopt -s expand_aliases' in cmd or 'source ' in cmd:
+            sources.append(cmd)
+    if sources:
+        commands = list(set(sources) - set(commands))
+        result += (
+            '# One time global setup\n'
+            f'{build_commands_block(sources, indent="")}'
+            '\n'
+        )
+
+    result += (
+        '# Setup function\n'
+        '# $1 -> test name\n'
+        f'function {SETUP_FUNCTION} () {{\n'
+    )
+
+    if test_folder:
+        result += (
+            f'\ttest_folder=$(echo ${TEMP_DIR}/$1-$$)\n'
+            '\tmkdir --parents "$test_folder"\n'
+            '\tcd "$test_folder" || echo Warning: Unable to "cd $test_folder"\n'
+        )
+
+    if copy_dir:
+        # NOTE: warning added on 'cd "$test_folder"' for sake of shellcheck
+        result += (
+            '\tcommand cp $COPY_DIR "$test_folder"\n'
+        )
+
+    result += build_commands_block(commands)
+
+    result += '}\n\n'
+
+    debug.trace(7, f'interpreter.build_global_setup({commands}) => {result}')
+    return result
+
+
+def build_teardown_function(commands: list) -> str:
+    """Build teardown function"""
+
+    body = ''
+
+    if commands:
+        body = build_commands_block(commands)
+    else:
+        body = '\t: # Nothing here...\n'
+
+    result = (
+        '# Teardown function\n'
+        f'function {TEARDOWN_FUNCTION} () {{\n'
+        f'{body}'
+        '}\n\n'
+    )
+
+    debug.trace(7, f'interpreter.build_teardown_function({commands}) => {result}')
+    return result
+
+
+def build_debug_function() -> str:
+    """Build debug function"""
+    # NOTE: this provide a debug trace too.
+
+    result = (
+        '# This prints debug data when an assertion fail\n'
+        '# $1 -> actual value\n'
+        '# $2 -> expected value\n'
+        'function print_debug() {\n'
+        '\techo "=======  actual  ======="\n'
+        f'\tbash -c "echo \\\"$1\\\" ${VERBOSE_DEBUG}"\n'
+        '\techo "======= expected ======="\n'
+        f'\tbash -c "echo \\\"$2\\\" ${VERBOSE_DEBUG}"\n'
+        '\techo "========================"\n'
+        '}\n\n'
+    )
+
+    debug.trace(7, 'interpreter.build_debug()')
+    return result

@@ -2,10 +2,13 @@
 #
 # Version
 #
-# Format: <compatibility>.<feature>.<hotfix>
+# Format synonymous:
+# - <mayor>.<minor>.<patch/subversion>
+# - <compatibility>.<feature>.<hotfix>
+#
 
 
 """Version"""
 
 
-__version__ = '2.0.1'
+__version__ = '2.1.0'

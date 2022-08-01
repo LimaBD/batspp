@@ -38,7 +38,7 @@ class TestEndUsage(TestWrapper):
 
         actual_filename = f'{self.temp_file}.bats'
 
-        output = gh.run(f'cd {EXAMPLES_PATH} && {BATSPP_PATH} --save {actual_filename} batspp_example.batspp')
+        output = gh.run(f'cd {EXAMPLES_PATH} && {BATSPP_PATH} --hexdump_debug --save {actual_filename} batspp_example.batspp')
         output += '\n' # Compensate the new line added by gh.read_lines()
 
         # Check output
