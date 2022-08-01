@@ -6,7 +6,6 @@
 # bats-core tests from Abstract Syntax Trees (AST) for Batspp
 #
 ## TODO: make setups commands output nothing
-## TODO: add teardown functions
 
 
 """
@@ -43,6 +42,7 @@ VERBOSE_DEBUG = 'VERBOSE_DEBUG'
 TEMP_DIR = 'TEMP_DIR'
 COPY_DIR = 'COPY_DIR'
 SETUP_FUNCTION = 'run_setup'
+TEARDOWN_FUNCTION = 'run_teardown'
 
 
 class NodeVisitor:
@@ -86,9 +86,14 @@ class Interpreter(NodeVisitor):
 
         # Global setups are formated into a function
         if node.tests:
-            result += build_setup_function(commands = node.setup_commands,
-                                        test_folder = True,
-                                        copy_dir = self.args.copy_dir)
+            result += build_setup_function(
+                commands = node.setup_commands,
+                test_folder = True,
+                copy_dir = self.args.copy_dir
+            )
+            result += build_teardown_function(
+                commands = node.teardown_commands
+            )
 
         # Visit tests nodes
         result += ''.join([self.visit(test) for test in node.tests])
@@ -114,7 +119,11 @@ class Interpreter(NodeVisitor):
         result += ''.join([self.visit(asn) for asn in node.assertions])
 
         # Test footer
-        result += '}\n\n'
+        result += (
+            '\n'
+            f'\t{TEARDOWN_FUNCTION}\n'
+            '}\n\n'
+        )
 
         # Pop functions from stack
         result += ''.join(self.stack_functions)
@@ -371,6 +380,27 @@ def build_setup_function(
     result += '}\n\n'
 
     debug.trace(7, f'interpreter.build_global_setup({commands}) => {result}')
+    return result
+
+
+def build_teardown_function(commands: list) -> str:
+    """Build teardown function"""
+
+    body = ''
+
+    if commands:
+        body = build_commands_block(commands)
+    else:
+        body = '\t: # Nothing here...\n'
+
+    result = (
+        '# Teardown function\n'
+        f'function {TEARDOWN_FUNCTION} () {{\n'
+        f'{body}'
+        '}\n\n'
+    )
+
+    debug.trace(7, f'interpreter.build_teardown_function({commands}) => {result}')
     return result
 
 

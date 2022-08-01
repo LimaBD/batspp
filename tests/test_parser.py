@@ -101,9 +101,9 @@ class TestParser(TestWrapper):
         ]
         self.assertFalse(parser.is_command_next())
 
-    def test_is_setup_next(self):
-        """Test for is_setup_next()"""
-        debug.trace(7, f'TestParser.test_is_setup_next({self})')
+    def test_is_pure_command_next(self):
+        """Test for is_pure_command_next()"""
+        debug.trace(7, f'TestParser.test_is_pure_command_next({self})')
         parser = Parser()
 
         # Valid setup patern
@@ -112,7 +112,7 @@ class TestParser(TestWrapper):
             Token(TokenType.TEXT, 'some text'),
             Token(TokenType.EOF, None)
         ]
-        self.assertTrue(parser.is_setup_next())
+        self.assertTrue(parser.is_pure_command_next())
 
         # Multiple setup patterns
         parser.tokens = [
@@ -122,7 +122,7 @@ class TestParser(TestWrapper):
             Token(TokenType.TEXT, 'some text'),
             Token(TokenType.EOF, None)
         ]
-        self.assertTrue(parser.is_setup_next())
+        self.assertTrue(parser.is_pure_command_next())
 
         # Not a command pattern
         parser.tokens = [
@@ -130,7 +130,7 @@ class TestParser(TestWrapper):
             Token(TokenType.TEXT, 'some text'),
             Token(TokenType.EOF, None)
         ]
-        self.assertFalse(parser.is_setup_next())
+        self.assertFalse(parser.is_pure_command_next())
 
         # Extra text token
         parser.tokens = [
@@ -139,7 +139,7 @@ class TestParser(TestWrapper):
             Token(TokenType.TEXT, 'more text'),
             Token(TokenType.EOF, None)
         ]
-        self.assertFalse(parser.is_setup_next())
+        self.assertFalse(parser.is_pure_command_next())
 
     def test_is_assertion_next(self):
         """Test for is_assertion_next()"""
@@ -257,9 +257,9 @@ class TestParser(TestWrapper):
         debug.trace(7, f'TestParser.test_break_setup_assertion({self})')
         ## TODO: WORK-IN-PROGRESS
 
-    def test_build_setupcommands(self):
-        """Test for build_setup_commands()"""
-        debug.trace(7, f'TestParser.test_build_setupcommands({self})')
+    def test_append_setup_commands(self):
+        """Test for append_setup_commands()"""
+        debug.trace(7, f'TestParser.test_append_setup_commands({self})')
         parser = Parser()
 
         # Global setup pattern
@@ -272,7 +272,7 @@ class TestParser(TestWrapper):
             Token(TokenType.TEXT, 'another command'),
             Token(TokenType.EOF, None)
         ]
-        parser.build_setup_commands()
+        parser.append_setup_commands()
         self.assertEqual(len(parser.setup_commands_stack), 1)
         self.assertEqual(parser.setup_commands_stack[0][0], '')
         self.assertNotEqual(parser.setup_commands_stack[0][0], 'wrong pointer!')
@@ -291,7 +291,7 @@ class TestParser(TestWrapper):
             Token(TokenType.TEXT, 'some command'),
             Token(TokenType.EOF, None)
         ]
-        parser.build_setup_commands()
+        parser.append_setup_commands()
         self.assertEqual(len(parser.setup_commands_stack), 1)
         self.assertEqual(parser.setup_commands_stack[0][0], 'important test')
         self.assertNotEqual(parser.setup_commands_stack[0][0], 'wrong pointer!')
@@ -304,7 +304,7 @@ class TestParser(TestWrapper):
             Token(TokenType.EOF, None)
         ]
         self.assertFalse(parser.setup_commands_stack)
-        parser.build_setup_commands(pointer='some lonely setup')
+        parser.append_setup_commands(pointer='some lonely setup')
         self.assertEqual(len(parser.setup_commands_stack), 1)
         self.assertEqual(parser.setup_commands_stack[0][0], 'some lonely setup')
 
@@ -317,7 +317,7 @@ class TestParser(TestWrapper):
             Token(TokenType.TEXT, 'some command'),
             Token(TokenType.EOF, None)
         ]
-        parser.build_setup_commands()
+        parser.append_setup_commands()
         self.assertEqual(len(parser.setup_commands_stack), 1)
         self.assertEqual(parser.setup_commands_stack[0][0], 'important test')
 

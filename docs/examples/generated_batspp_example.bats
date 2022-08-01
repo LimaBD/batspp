@@ -6,7 +6,7 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-6444"
+TEMP_DIR="/tmp/batspp-27063"
 
 # One time global setup
 shopt -s expand_aliases
@@ -20,12 +20,19 @@ function run_setup () {
 	cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
 }
 
+# Teardown function
+function run_teardown () {
+	: # Nothing here...
+}
+
 @test "test of line 17" {
 	run_setup "test-of-line-17"
 
 	# Assertion of line 17
 	print_debug "$(test-of-line-17-line17-actual)" "$(test-of-line-17-line17-expected)"
 	[ "$(test-of-line-17-line17-actual)" == "$(test-of-line-17-line17-expected)" ]
+
+	run_teardown
 }
 
 function test-of-line-17-line17-actual () {
@@ -42,6 +49,8 @@ function test-of-line-17-line17-expected () {
 	# Assertion of line 23
 	print_debug "$(test-of-line-23-line23-actual)" "$(test-of-line-23-line23-expected)"
 	[ "$(test-of-line-23-line23-actual)" == "$(test-of-line-23-line23-expected)" ]
+
+	run_teardown
 }
 
 function test-of-line-23-line23-actual () {
@@ -58,6 +67,8 @@ function test-of-line-23-line23-expected () {
 	# Assertion of line 31
 	print_debug "$(test-of-line-31-line31-actual)" "$(test-of-line-31-line31-expected)"
 	[ "$(test-of-line-31-line31-actual)" == "$(test-of-line-31-line31-expected)" ]
+
+	run_teardown
 }
 
 function test-of-line-31-line31-actual () {
@@ -74,6 +85,8 @@ function test-of-line-31-line31-expected () {
 	# Assertion of line 34
 	print_debug "$(test-of-line-34-line34-actual)" "$(test-of-line-34-line34-expected)"
 	[ "$(test-of-line-34-line34-actual)" != "$(test-of-line-34-line34-expected)" ]
+
+	run_teardown
 }
 
 function test-of-line-34-line34-actual () {
@@ -98,6 +111,8 @@ function test-of-line-34-line34-expected () {
 	echo -n " and continue directives" >> $filepath
 	print_debug "$(setup-and-title-line54-actual)" "$(setup-and-title-line54-expected)"
 	[ "$(setup-and-title-line54-actual)" == "$(setup-and-title-line54-expected)" ]
+
+	run_teardown
 }
 
 function setup-and-title-line43-actual () {
@@ -128,6 +143,8 @@ function setup-and-title-line54-expected () {
 	# Assertion of line 63
 	print_debug "$(test-of-line-59-line63-actual)" "$(test-of-line-59-line63-expected)"
 	[ "$(test-of-line-59-line63-actual)" == "$(test-of-line-59-line63-expected)" ]
+
+	run_teardown
 }
 
 function test-of-line-59-line61-actual () {
