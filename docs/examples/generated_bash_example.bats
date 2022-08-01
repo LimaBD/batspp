@@ -6,16 +6,22 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-134382"
+TEMP_DIR="/tmp/batspp-6701"
 
-# Setup
+# One time global setup
 shopt -s expand_aliases
 source /home/angrygingy/Desktop/work-repos/batspp/docs/examples/bash_example.bash
 
-@test "test of line 15" {
-	test_folder=$(echo $TEMP_DIR/test-of-line-15-$$)
+# Setup function
+# $1 -> test name
+function run_setup () {
+	test_folder=$(echo $TEMP_DIR/$1-$$)
 	mkdir --parents "$test_folder"
 	cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
+}
+
+@test "test of line 15" {
+	run_setup "test-of-line-15"
 
 	# Assertion of line 15
 	print_debug "$(test-of-line-15-line15-actual)" "$(test-of-line-15-line15-expected)"
@@ -31,9 +37,7 @@ function test-of-line-15-line15-expected () {
 }
 
 @test "test of line 24" {
-	test_folder=$(echo $TEMP_DIR/test-of-line-24-$$)
-	mkdir --parents "$test_folder"
-	cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
+	run_setup "test-of-line-24"
 
 	# Assertion of line 24
 	print_debug "$(test-of-line-24-line24-actual)" "$(test-of-line-24-line24-expected)"
@@ -49,9 +53,7 @@ function test-of-line-24-line24-expected () {
 }
 
 @test "test of line 27" {
-	test_folder=$(echo $TEMP_DIR/test-of-line-27-$$)
-	mkdir --parents "$test_folder"
-	cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
+	run_setup "test-of-line-27"
 
 	# Assertion of line 27
 	print_debug "$(test-of-line-27-line27-actual)" "$(test-of-line-27-line27-expected)"
@@ -67,9 +69,7 @@ function test-of-line-27-line27-expected () {
 }
 
 @test "test of line 59" {
-	test_folder=$(echo $TEMP_DIR/test-of-line-59-$$)
-	mkdir --parents "$test_folder"
-	cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
+	run_setup "test-of-line-59"
 
 	# Assertion of line 59
 	print_debug "$(test-of-line-59-line59-actual)" "$(test-of-line-59-line59-expected)"
@@ -85,9 +85,7 @@ function test-of-line-59-line59-expected () {
 }
 
 @test "test of line 71" {
-	test_folder=$(echo $TEMP_DIR/test-of-line-71-$$)
-	mkdir --parents "$test_folder"
-	cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
+	run_setup "test-of-line-71"
 
 	# Assertion of line 73
 	filepath=$(echo $TMP/testfile-"$$")
@@ -105,9 +103,7 @@ function test-of-line-71-line73-expected () {
 }
 
 @test "test of line 79" {
-	test_folder=$(echo $TEMP_DIR/test-of-line-79-$$)
-	mkdir --parents "$test_folder"
-	cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
+	run_setup "test-of-line-79"
 
 	# Assertion of line 81
 	filepath=$(echo $TMP/testfile-"$$")

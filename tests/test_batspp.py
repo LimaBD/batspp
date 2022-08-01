@@ -29,9 +29,11 @@ class TestBatspp(TestWrapper):
     use_temp_base_dir = True
     maxDiff           = None
 
-    simple_test = ('# Example test\n\n'
-                   '$ echo "hello world"\n'
-                   'hello world\n\n')
+    simple_test = (
+        '# Example test\n\n'
+        '$ echo "hello world"\n'
+        'hello world\n\n'
+    )
 
     def test_file(self):
         """Test for test file argument"""
@@ -161,9 +163,9 @@ class TestBatspp(TestWrapper):
 
         # A single path
         result = gh.run(f'python3 {BATSPP_PATH} --visible_paths ./some/folder/ --output {test_file}')
-        self.assertTrue('# Setup\nPATH=./some/folder/:$PATH\n' in result)
+        self.assertTrue('PATH=./some/folder/:$PATH\n' in result)
 
-        expected_setup = '# Setup\nPATH=./some/folder/:./another/folder/:$PATH\n'
+        expected_setup = 'PATH=./some/folder/:./another/folder/:$PATH\n'
 
         # Multiple path
         result = gh.run(f'python3 {BATSPP_PATH} --visible_paths "./some/folder/ ./another/folder/" --output {test_file}')
