@@ -21,9 +21,7 @@ from mezcla import debug
 
 # Constants
 EXAMPLES_PATH = './docs/examples'
-# This and "script_module=None" solve problem:
-#     "Assertion failed: "No module named" not in help_usage"
-BATSPP_PATH = os.path.abspath('./batspp/batspp')
+SCRIPT = 'batspp'
 
 
 class TestEndUsage(TestWrapper):
@@ -38,7 +36,7 @@ class TestEndUsage(TestWrapper):
 
         actual_filename = f'{self.temp_file}.bats'
 
-        output = gh.run(f'cd {EXAMPLES_PATH} && {BATSPP_PATH} --hexdump_debug --save {actual_filename} batspp_example.batspp')
+        output = gh.run(f'pip install . >/dev/null 2>&1 && cd {EXAMPLES_PATH} && {SCRIPT} --hexdump_debug --save {actual_filename} batspp_example.batspp')
         output += '\n' # Compensate the new line added by gh.read_lines()
 
         # Check output
