@@ -116,8 +116,9 @@ class TestInterpreter(TestWrapper):
                                     expected='11',
                                     data=data)
         test = Test(pointer='important test', assertions=[first_assertion, second_assertion], data=data)
-        test_suite_node = TestsSuite(setup_commands=['echo "hello world" > file.txt'],
-                                     tests=[test],
+        test_suite_node = TestsSuite(tests=[test],
+                                     setup_commands=['echo "hello world" > file.txt'],
+                                     teardown_commands=['echo "finished test"'],
                                      data=data)
 
         actual = Interpreter().interpret(test_suite_node)
@@ -144,7 +145,7 @@ class TestInterpreter(TestWrapper):
             '\n'
             '# Teardown function\n'
             'function run_teardown () {\n'
-            '\t: # Nothing here...\n'
+            '\techo "finished test"\n'
             '}\n'
             '\n'
             '@test "important test" {\n'
