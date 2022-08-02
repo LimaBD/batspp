@@ -20,10 +20,13 @@ from mezcla import debug
 # Local modules
 sys.path.insert(0, './batspp')
 from _tokens import TokenData # type: ignore
-from _parser import ( # type: ignore
-    AssertionType, Assertion, Test, TestsSuite
+from _ast_nodes import ( # type: ignore
+    AssertionType, Assertion,
+    Test, TestsSuite
 )
-from _interpreter import NodeVisitor, Interpreter # type: ignore
+from _interpreter import ( # type: ignore
+    NodeVisitor, Interpreter
+)
 
 
 class TestNodeVisitor(TestWrapper):
