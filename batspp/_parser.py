@@ -27,7 +27,7 @@ from mezcla import debug
 
 # Local modules
 from _exceptions import error
-from _lexer import (
+from _tokens import (
     TokenData, TokenType, Token
 )
 

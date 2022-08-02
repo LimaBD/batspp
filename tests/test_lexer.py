@@ -20,7 +20,10 @@ from mezcla import debug
 # Module being tested
 sys.path.insert(0, './batspp')
 from _lexer import ( # type: ignore
-    TextLiner, Lexer, Token, TokenType
+    TextLiner, Lexer
+)
+from _tokens import ( # type: ignore
+    Token, TokenType
 )
 
 
