@@ -19,11 +19,11 @@ from mezcla import debug
 
 # Local modules
 sys.path.insert(0, './batspp')
-from lexer import TokenData # type: ignore
-from parser import ( # type: ignore
+from _lexer import TokenData # type: ignore
+from _parser import ( # type: ignore
     AssertionType, Assertion, Test, TestsSuite
 )
-from interpreter import NodeVisitor, Interpreter # type: ignore
+from _interpreter import NodeVisitor, Interpreter # type: ignore
 
 
 class TestNodeVisitor(TestWrapper):

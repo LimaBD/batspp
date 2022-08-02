@@ -26,8 +26,10 @@ from mezcla import debug
 
 
 # Local modules
-import exceptions
-from lexer import TokenData, TokenType, Token
+from _exceptions import error
+from _lexer import (
+    TokenData, TokenType, Token
+)
 
 
 class AST:
@@ -149,7 +151,7 @@ class Parser:
         if current_token.type is token_type:
             self.index += 1
         else:
-            exceptions.error(
+            error(
                 message=f'Expected {token_type} but founded {current_token.type}',
                 text_line=current_token.data.text_line,
                 line=current_token.data.line
@@ -286,7 +288,7 @@ class Parser:
 
         # Otherwise the continuation is invalid
         else:
-            exceptions.error(
+            error(
                 message='Continuation without test assigned',
                 text_line=data.text_line,
                 line=data.line,
@@ -379,7 +381,7 @@ class Parser:
             self.eat(TokenType.TEXT)
 
         if not commands:
-            exceptions.error(
+            error(
                 message = 'Setup cannot be empty',
                 text_line = data.text_line,
                 line = data.line,
@@ -466,7 +468,7 @@ class Parser:
 
         # The node cannot remain alone without being assigned to a test
         if node is not None:
-            exceptions.error(
+            error(
                 message=f'Assertion "{pointer}" referenced before assignment.',
                 text_line=node.data.text_line,
                 line=node.data.line,
@@ -528,7 +530,7 @@ class Parser:
         # Finishing the parsing, cannot be remaining setups on stack
         if self.setup_commands_stack:
             first_invalid = self.setup_commands_stack[0]
-            exceptions.error(
+            error(
                 message=f'Setup "{first_invalid.pointer}" referenced before assignment.',
                 text_line=first_invalid.data.text_line,
                 line=first_invalid.data.line,

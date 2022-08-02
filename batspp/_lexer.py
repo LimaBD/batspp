@@ -25,7 +25,7 @@ from mezcla import debug
 
 
 # Local modules
-import exceptions
+from _exceptions import error
 
 
 class Tags(Enum):
@@ -289,7 +289,7 @@ class Lexer:
                 self.append_minor_token(Token(TokenType.MINOR, None, data))
                 continue
 
-            exceptions.error(
+            error(
                 message='invalid syntax',
                 text_line=data.text_line,
                 line=data.line,
