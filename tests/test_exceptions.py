@@ -9,7 +9,6 @@
 
 # Standard packages
 import sys
-from typing_extensions import assert_type
 import unittest
 
 
