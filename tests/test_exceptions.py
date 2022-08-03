@@ -19,7 +19,9 @@ from mezcla import debug
 
 # Module being tested
 sys.path.insert(0, './batspp')
-import exceptions # type: ignore
+from _exceptions import ( # type: ignore
+    error, assert_type
+)
 
 
 class TestExceptions(TestWrapper):

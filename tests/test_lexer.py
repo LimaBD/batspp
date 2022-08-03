@@ -19,7 +19,12 @@ from mezcla import debug
 
 # Module being tested
 sys.path.insert(0, './batspp')
-from lexer import TextLiner, Lexer, Token, TokenType # type: ignore
+from _lexer import ( # type: ignore
+    TextLiner, Lexer
+)
+from _tokens import ( # type: ignore
+    Token, TokenType
+)
 
 
 class TestTextLiner(TestWrapper):

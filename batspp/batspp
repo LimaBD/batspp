@@ -32,7 +32,6 @@ Also you can test bash functions:
 
 
 # Standard packages
-import re
 import os
 import sys
 
@@ -46,7 +45,7 @@ from mezcla import text_utils
 
 
 # Local modules
-from version import __version__
+from __version__ import __version__
 from batspp_opts import BatsppOpts
 from batspp_args import BatsppArgs
 from batspp_test import BatsppTest
@@ -70,11 +69,6 @@ SKIP_RUN = 'skip_run'
 OMIT_TRACE = 'omit_trace'
 DISABLE_ALIASES = 'disable_aliases'
 VERSION = 'version'
-
-
-# Some constants
-BATSPP_EXTENSION = 'batspp'
-BATS_EXTENSION = 'bats'
 
 
 class Batspp(Main):
@@ -128,18 +122,9 @@ class Batspp(Main):
             print(f'Batspp version {__version__}')
             return
 
-        # Check for embedded tests
-        #
-        # Source the test file to load
-        # aliases and functions
-        embedded_tests = not self.file.endswith(f'.{BATSPP_EXTENSION}')
-        if embedded_tests:
-            self.sources.append(self.file)
-
         # Build tests
         test = BatsppTest()
         opts = BatsppOpts(
-            embedded_tests = embedded_tests,
             hexdump_debug = self.hexdump_debug,
             verbose_debug = self.verbose_debug,
             omit_trace = self.omit_trace,
@@ -154,21 +139,14 @@ class Batspp(Main):
             debug = self.debug
         )
 
+        test.set_options(opts)
+        test.set_arguments(args)
+
         try:
-            test.build(
-                system.read_file(self.file),
-                opts = opts,
-                args = args
-            )
+            test.parse_file(self.file)
         except: # pylint: disable=bare-except
             print(f'Not founded tests on file {self.file}')
             return
-
-        # Build a filename to save the tests
-        # if the entered path only contains a dir path
-        if self.save_path.endswith('/'):
-            filename = re.search(r"\/(\w+)\.", self.file).group(0)
-            self.save_path += f'generated_{filename}.{BATS_EXTENSION}'
 
         test.save(self.save_path)
 
@@ -176,7 +154,7 @@ class Batspp(Main):
         if self.output:
             print(test.get_tests())
         elif not self.skip_run:
-            print(test.run(self.run_opts))
+            print(test.run())
 
     def get_entered_bool(self, label:str, default:bool=False) -> bool:
         """

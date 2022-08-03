@@ -8,7 +8,7 @@
 
 
 # Local modules
-from exceptions import assert_type
+from _exceptions import assert_type
 
 
 class BatsppOpts:
