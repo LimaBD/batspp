@@ -7,37 +7,83 @@
 # - upload dist to PyPi
 #
 
-echo "build - checking the required tools..."
 
-# Make sure your build tool is up to date
-pip install build
+function install_required_tools () {
+    echo "build - checking the required tools..."
 
-# Setuptools is a package development process library designed
-# for creating and distributing Python packages.
-pip install setuptools
+    # Make sure your build tool is up to date
+    pip install build
 
-# The Wheel package provides a bdist_wheel command for setuptools.
-# It creates .whl file which is directly installable through the pip install command.
-pip install wheel
+    # Setuptools is a package development process library designed
+    # for creating and distributing Python packages.
+    pip install setuptools
 
-# This is a smart progress meter used internally by Twine.
-pip install tqdm
+    # The Wheel package provides a bdist_wheel command for setuptools.
+    # It creates .whl file which is directly installable through the pip install command.
+    pip install wheel
 
-# The Twine package provides a secure, authenticated,
-# and verified connection between your system and PyPi over HTTPS.
-pip install twine
+    # This is a smart progress meter used internally by Twine.
+    pip install tqdm
 
-echo "build - checking dependencies..."
-pip install -r ./requirements.txt
+    # The Twine package provides a secure, authenticated,
+    # and verified connection between your system and PyPi over HTTPS.
+    pip install twine
+}
 
-echo "build - compiling package..."
-# This will create build, dist and project.egg.info folders
-python3 setup.py bdist_wheel
 
-echo "build - uploading dist/* to PyPi..."
-twine upload dist/* --verbose
+function install_dependencies () {
+    echo "build - checking dependencies..."
+    pip install -r ./requirements.txt
+}
 
-echo "build - cleaning"
-rm -rf ./build/ ./dist/ ./batspp/batspp.egg-info
 
-echo "build - finish!"
+# Upload to pypi
+#
+# $1 -> "test" or "main"
+function upload_pypi () {
+    echo "build - compiling package..."
+    # This will create build, dist and project.egg.info folders
+    python3 setup.py bdist_wheel
+
+    echo "build - uploading to PyPi..."
+
+    # Uploading to Test Pypi
+    #
+    # More information here
+    # https://packaging.python.org/en/latest/guides/using-testpypi/
+    if [ "$1" == 'main' ]
+    then
+        twine upload dist/* --verbose
+    elif [ "$1" == 'test' ]
+    then
+        twine upload --repository testpypi dist/* --verbose
+    else
+        echo "no Pypi main|test selected"
+    fi
+}
+
+
+function clean () {
+    echo "build - cleaning"
+    rm -rf ./build/ ./dist/ ./batspp/batspp.egg-info
+}
+
+
+function main () {
+    if [[ "$1" == "main"|| "$1" == "test" ]]
+    then
+        install_required_tools
+        install_dependencies
+        upload_pypi "$1"
+        clean
+    else
+        echo 'Upload Batspp dist'
+        echo ''
+        echo 'Usage:'
+        echo "- upload main Pypi: $ $0 main"
+        echo "- upload test Pypi: $ $0 test"
+        echo ''
+    fi
+}
+
+main $@
