@@ -48,7 +48,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     scripts=['batspp/batspp'],
-    package_dir={"": "batspp"},
+    packages=['batspp'],
     python_requires=">=3.8",
     install_requires=required,
 )
