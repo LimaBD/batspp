@@ -20,14 +20,14 @@ from mezcla import system
 
 
 # Local modules
-from _lexer import Lexer
-from _parser import Parser
-from _interpreter import Interpreter
-from _settings import (
+from batspp._lexer import Lexer
+from batspp._parser import Parser
+from batspp._interpreter import Interpreter
+from batspp._settings import (
     BATSPP_EXTENSION, BATS_EXTENSION
 )
-from batspp_opts import BatsppOpts
-from batspp_args import BatsppArgs
+from batspp.batspp_opts import BatsppOpts
+from batspp.batspp_args import BatsppArgs
 
 
 class BatsppTest:

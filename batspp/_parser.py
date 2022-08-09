@@ -18,7 +18,6 @@ an Abstract Syntax Tree (AST) for Batspp
 
 
 # Standard packages
-from enum import Enum
 
 
 # Installed packages
@@ -26,11 +25,11 @@ from mezcla import debug
 
 
 # Local modules
-from _exceptions import error
-from _tokens import (
+from batspp._exceptions import error
+from batspp._tokens import (
     TokenType, Token
 )
-from _ast_nodes import (
+from batspp._ast_nodes import (
     AST, TestsSuite, Test,
     Assertion, AssertionType
 )

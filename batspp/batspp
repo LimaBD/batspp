@@ -45,10 +45,10 @@ from mezcla import text_utils
 
 
 # Local modules
-from __version__ import __version__
-from batspp_opts import BatsppOpts
-from batspp_args import BatsppArgs
-from batspp_test import BatsppTest
+from batspp.__version__ import __version__
+from batspp.batspp_opts import BatsppOpts
+from batspp.batspp_args import BatsppArgs
+from batspp.batspp_test import BatsppTest
 
 
 # Command-line labels and

@@ -8,7 +8,7 @@
 
 
 # Local modules
-from _exceptions import assert_type
+from batspp._exceptions import assert_type
 
 
 class BatsppArgs:

@@ -25,9 +25,9 @@ from mezcla import debug
 
 
 # Local modules
-from batspp_opts import BatsppOpts
-from batspp_args import BatsppArgs
-from _ast_nodes import (
+from batspp.batspp_opts import BatsppOpts
+from batspp.batspp_args import BatsppArgs
+from batspp._ast_nodes import (
     TestsSuite, Test,
     Assertion, AssertionType
 )
