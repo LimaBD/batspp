@@ -2,6 +2,9 @@
 #
 # Tests for exceptions.py module
 #
+# This test must be runned with the command:
+# $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_exceptions.py
+#
 
 
 """Tests for exceptions.py module"""

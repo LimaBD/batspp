@@ -2,6 +2,9 @@
 #
 # Tests for interpreter.py module
 #
+# This test must be runned with the command:
+# $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_interpreter.py
+#
 
 
 """Tests for interpreter.py module"""

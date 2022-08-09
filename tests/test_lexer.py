@@ -2,6 +2,9 @@
 #
 # Tests for lexer.py module
 #
+# This test must be runned with the command:
+# $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_lexer.py
+#
 
 
 """Tests for lexer.py module"""
