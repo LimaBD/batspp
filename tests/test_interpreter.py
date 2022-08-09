@@ -19,7 +19,7 @@ from mezcla import debug
 
 # Local modules
 sys.path.insert(0, './batspp')
-from batspp._tokens import TokenData
+from batspp._token import TokenData
 from batspp._ast_nodes import (
     AssertionType, Assertion,
     Test, TestsSuite

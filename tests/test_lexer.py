@@ -22,7 +22,7 @@ sys.path.insert(0, './batspp')
 from batspp._lexer import (
     TextLiner, Lexer
 )
-from batspp._tokens import (
+from batspp._token import (
     Token, TokenType
 )
 

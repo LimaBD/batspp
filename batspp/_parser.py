@@ -26,7 +26,7 @@ from mezcla import debug
 
 # Local modules
 from batspp._exceptions import error
-from batspp._tokens import (
+from batspp._token import (
     TokenType, Token
 )
 from batspp._ast_nodes import (
