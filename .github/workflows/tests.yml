@@ -31,8 +31,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         npm install --location=global bats
-        export PYTHONPATH="$(pwd):$PYTHONPATH"
     - name: Run tests and generate coverage report
       run: |
-        coverage run -m unittest discover ./tests/
+        PYTHONPATH="$(pwd):$PYTHONPATH" coverage run -m unittest discover ./tests/
         coverage xml
