@@ -2,6 +2,9 @@
 #
 # Tests for exceptions.py module
 #
+# This test must be runned with the command:
+# $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_exceptions.py
+#
 
 
 """Tests for exceptions.py module"""
@@ -19,7 +22,7 @@ from mezcla import debug
 
 # Module being tested
 sys.path.insert(0, './batspp')
-from _exceptions import ( # type: ignore
+from batspp._exceptions import (
     error, assert_type
 )
 

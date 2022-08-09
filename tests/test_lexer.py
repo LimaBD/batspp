@@ -2,6 +2,9 @@
 #
 # Tests for lexer.py module
 #
+# This test must be runned with the command:
+# $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_lexer.py
+#
 
 
 """Tests for lexer.py module"""
@@ -19,10 +22,10 @@ from mezcla import debug
 
 # Module being tested
 sys.path.insert(0, './batspp')
-from _lexer import ( # type: ignore
+from batspp._lexer import (
     TextLiner, Lexer
 )
-from _tokens import ( # type: ignore
+from batspp._token import (
     Token, TokenType
 )
 

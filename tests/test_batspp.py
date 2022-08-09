@@ -2,6 +2,9 @@
 #
 # Tests for batspp script
 #
+# This test must be runned with the command:
+# $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_batspp.py
+#
 
 
 """Tests for batspp script"""

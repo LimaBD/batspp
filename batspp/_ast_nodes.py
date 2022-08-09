@@ -12,7 +12,7 @@ from enum import Enum
 
 
 # Local modules
-from _tokens import TokenData
+from batspp._token import TokenData
 
 
 class AST:

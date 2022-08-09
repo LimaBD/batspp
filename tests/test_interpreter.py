@@ -2,6 +2,9 @@
 #
 # Tests for interpreter.py module
 #
+# This test must be runned with the command:
+# $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_interpreter.py
+#
 
 
 """Tests for interpreter.py module"""
@@ -19,12 +22,12 @@ from mezcla import debug
 
 # Local modules
 sys.path.insert(0, './batspp')
-from _tokens import TokenData # type: ignore
-from _ast_nodes import ( # type: ignore
+from batspp._token import TokenData
+from batspp._ast_nodes import (
     AssertionType, Assertion,
     Test, TestsSuite
 )
-from _interpreter import ( # type: ignore
+from batspp._interpreter import (
     NodeVisitor, Interpreter
 )
 
