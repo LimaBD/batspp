@@ -4,8 +4,9 @@
 # output and content
 #
 
-examples=$(dirname $(realpath -s $0))
-base=$examples/../..
+tools=$(dirname $(realpath -s $0))
+base=$tools/..
+examples=$base/docs/examples
 
 function run_eg () {
 
