@@ -8,7 +8,7 @@
 #
 # These docs/examples generated tests and
 # output files can be updated automatically
-# running: $ docs/examples/run_examples.bash
+# running: $ tools/run_examples.bash
 #
 # This test must be runned with the command:
 # $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_end_usage.py
