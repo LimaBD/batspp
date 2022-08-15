@@ -10,4 +10,4 @@ tests=$base/tests
 echo -e "Running tests on $tests\n"
 export PYTHONPATH="$base/:$PYTHONPATH"
 coverage run -m unittest discover $tests
-coverage html --directory $tests/htmlcov
+coverage html --directory $tests/htmlcov --omit="*/tests/test_*"
