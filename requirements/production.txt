@@ -1,7 +1,7 @@
-# Common requirements for Batspp
+# Basic requirements for Batspp
 #
 # usage:
-#    pip install -r requirements/common.txt
+#    pip install -r requirements/production.txt
 #
 # solution based on:
 # - https://stackoverflow.com/a/20720019/15648632
