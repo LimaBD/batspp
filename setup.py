@@ -25,7 +25,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 # Requirements
-with open('requirements/common.txt') as f:
+with open('requirements/production.txt') as f:
     required = f.read().splitlines()
 
 setuptools.setup(
