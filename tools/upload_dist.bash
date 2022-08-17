@@ -8,32 +8,13 @@
 #
 
 
-function install_required_tools () {
-    echo "build - checking the required tools..."
-
-    # Make sure your build tool is up to date
-    pip install build
-
-    # Setuptools is a package development process library designed
-    # for creating and distributing Python packages.
-    pip install setuptools
-
-    # The Wheel package provides a bdist_wheel command for setuptools.
-    # It creates .whl file which is directly installable through the pip install command.
-    pip install wheel
-
-    # This is a smart progress meter used internally by Twine.
-    pip install tqdm
-
-    # The Twine package provides a secure, authenticated,
-    # and verified connection between your system and PyPi over HTTPS.
-    pip install twine
-}
+base=$(dirname $(realpath -s $0))/..
 
 
 function install_dependencies () {
     echo "build - checking dependencies..."
-    pip install -r ./requirements.txt
+    pip install -r $base/requirements/development.txt
+    pip install -r $base/requirements/production.txt
 }
 
 
@@ -43,7 +24,7 @@ function install_dependencies () {
 function upload_pypi () {
     echo "build - compiling package..."
     # This will create build, dist and project.egg.info folders
-    python3 setup.py bdist_wheel
+    python3 $base/setup.py $base/bdist_wheel
 
     echo "build - uploading to PyPi..."
 
@@ -53,10 +34,10 @@ function upload_pypi () {
     # https://packaging.python.org/en/latest/guides/using-testpypi/
     if [ "$1" == 'main' ]
     then
-        twine upload dist/* --verbose
+        twine upload $base/dist/* --verbose
     elif [ "$1" == 'test' ]
     then
-        twine upload --repository testpypi dist/* --verbose
+        twine upload --repository testpypi $base/dist/* --verbose
     else
         echo "no Pypi main|test selected"
     fi
@@ -65,14 +46,13 @@ function upload_pypi () {
 
 function clean () {
     echo "build - cleaning"
-    rm -rf ./build/ ./dist/ ./batspp/batspp.egg-info
+    rm -rf $base/build/ $base/dist/ $base/batspp/batspp.egg-info
 }
 
 
 function main () {
     if [[ "$1" == "main"|| "$1" == "test" ]]
     then
-        install_required_tools
         install_dependencies
         upload_pypi "$1"
         clean
