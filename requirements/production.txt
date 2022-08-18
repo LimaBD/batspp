@@ -7,6 +7,5 @@
 # - https://stackoverflow.com/a/20720019/15648632
 #
 
-setuptools==41.2.0
 mezcla==1.3.0
 six

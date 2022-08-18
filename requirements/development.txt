@@ -7,4 +7,22 @@
 # - https://stackoverflow.com/a/20720019/15648632
 #
 
+build
+
+# Setuptools is a package development process library designed
+# for creating and distributing Python packages.
+setuptools==41.2.0
+
+# The Wheel package provides a bdist_wheel command for setuptools.
+# It creates .whl file which is directly installable through the pip install command.
+wheel
+
+# This is a smart progress meter used internally by Twine.
+tqdm
+
+# The Twine package provides a secure, authenticated,
+# and verified connection between your system and PyPi over HTTPS.
+twine
+
+# This is useful to generate tests coverage reports
 coverage
