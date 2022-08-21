@@ -17,7 +17,7 @@ bats-core tests from abstract syntax trees for Batspp
 
 
 # Standard packages
-import re
+from re import sub as re_sub
 
 
 # Installed packages
@@ -318,7 +318,7 @@ class Interpreter(NodeVisitor):
 
 def flatten_str(string: str) -> str:
     """Returns unspaced and lowercase STRING"""
-    result = re.sub(r' +', '-', string.lower())
+    result = re_sub(r' +', '-', string.lower())
     debug.trace(7, f'interpreter.flatten_str({string}) => {result}')
     return result
 

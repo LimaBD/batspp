@@ -12,7 +12,7 @@
 
 # Standard packages
 import unittest
-import os
+from os import path as os_path
 
 
 # Installed packages
@@ -24,7 +24,7 @@ from mezcla import debug
 # Local packages
 # This and "script_module=None" solve problem:
 #     "Assertion failed: "No module named" not in help_usage"
-BATSPP_PATH = os.path.abspath('./batspp/batspp')
+BATSPP_PATH = os_path.abspath('./batspp/batspp')
 
 
 class TestBatspp(TestWrapper):

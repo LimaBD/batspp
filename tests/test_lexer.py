@@ -11,7 +11,7 @@
 
 
 # Standard packages
-import sys
+from sys import path as sys_path
 import unittest
 
 
@@ -21,7 +21,7 @@ from mezcla import debug
 
 
 # Local packages
-sys.path.insert(0, './batspp')
+sys_path.insert(0, './batspp')
 from batspp._lexer import (
     TextLiner, Lexer,
     )

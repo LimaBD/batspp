@@ -16,7 +16,11 @@ a sentence/text apart into tokens for Batspp
 
 
 # Standard packages
-import re
+from re import (
+    match as re_match,
+    sub as re_sub,
+    MULTILINE as re_MULTILINE,    
+    )
 from enum import Enum
 
 
@@ -133,7 +137,7 @@ class Lexer:
                 )
 
             # Tokenize lines with double comments as minor token
-            match = re.match(r'^##', self.text.get_current_line())
+            match = re_match(r'^##', self.text.get_current_line())
             if match:
                 self.text.advance_line()
                 self.append_minor_token(Token(
@@ -144,7 +148,7 @@ class Lexer:
                 continue
 
             # Tokenize empty lines
-            match = re.match(r'^ *$', self.text.get_current_line())
+            match = re_match(r'^ *$', self.text.get_current_line())
             if match:
                 self.text.advance_line()
                 self.append_minor_token(Token(
@@ -155,7 +159,7 @@ class Lexer:
                 continue
 
             # Tokenize peso
-            match = re.match(r' *\$', self.text.get_rest_line())
+            match = re_match(r' *\$', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.append_token(Token(
@@ -166,7 +170,7 @@ class Lexer:
                 continue
 
             # Tokenize test
-            match = re.match(r'^# *[Tt]est(?: +|$)', self.text.get_rest_line())
+            match = re_match(r'^# *[Tt]est(?: +|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.append_token(Token(
@@ -177,7 +181,7 @@ class Lexer:
                 continue
 
             # Tokenize setup
-            match = re.match(r'^# *[Ss]etup(?: +|$)', self.text.get_rest_line())
+            match = re_match(r'^# *[Ss]etup(?: +|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.append_token(Token(
@@ -188,7 +192,7 @@ class Lexer:
                 continue
 
             # Tokenize teardown
-            match = re.match(r'^# *[Tt]eardown(?: +|$)', self.text.get_rest_line())
+            match = re_match(r'^# *[Tt]eardown(?: +|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.append_token(Token(
@@ -199,7 +203,7 @@ class Lexer:
                 continue
 
             # Tokenize continuation
-            match = re.match(r'^# *(?:[Cc]ontinue|[Cc]ontinuation)(?: +|$)', self.text.get_rest_line())
+            match = re_match(r'^# *(?:[Cc]ontinue|[Cc]ontinuation)(?: +|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.append_token(Token(
@@ -230,7 +234,7 @@ class Lexer:
                 continue
 
             # Tokenize pointer
-            match = re.match(r'^ *of', self.text.get_rest_line())
+            match = re_match(r'^ *of', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.append_token(Token(
@@ -241,7 +245,7 @@ class Lexer:
                 continue
 
             # Tokenize assert equal
-            match= re.match(r' *=> *', self.text.get_rest_line())
+            match= re_match(r' *=> *', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.append_token(Token(
@@ -252,7 +256,7 @@ class Lexer:
                 continue
 
             # Tokenize assert not equal
-            match = re.match(r' *=\/> *', self.text.get_rest_line())
+            match = re_match(r' *=\/> *', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.append_token(Token(
@@ -263,7 +267,7 @@ class Lexer:
                 continue
 
             # Tokenize text
-            match = re.match(r'^[^#]+?(?==>|=/>|$)', self.text.get_rest_line())
+            match = re_match(r'^[^#]+?(?==>|=/>|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.append_token(Token(
@@ -274,7 +278,7 @@ class Lexer:
                 continue
 
             # Tokenize comments as minor token
-            match = re.match(r'^ *#.*?$', self.text.get_current_line())
+            match = re_match(r'^ *#.*?$', self.text.get_current_line())
             if match:
                 self.text.advance_line()
                 self.append_minor_token(Token(
@@ -300,9 +304,9 @@ class Lexer:
         # Format embedded comment tests into normal batspp tests
         if embedded_tests:
             # 1st remove not commented lines
-            text = re.sub(r'^[^#]+?$', '\n', text, flags=re.MULTILINE)
+            text = re_sub(r'^[^#]+?$', '\n', text, flags=re_MULTILINE)
             # 2nd remove comment delimiter '#' from commented lines
-            text = re.sub(r'^# *', '', text, flags=re.MULTILINE)
+            text = re_sub(r'^# *', '', text, flags=re_MULTILINE)
             debug.trace(7, f'lexer.tokenize() => formated embedded tests to:\n{text}')
 
         # Clean global class values

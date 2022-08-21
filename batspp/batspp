@@ -32,8 +32,8 @@ Also you can test bash functions:
 
 
 # Standard packages
-import os
-import sys
+from os import getpid as os_getpid
+from sys import argv as sys_argv
 
 
 # Installed packages
@@ -106,7 +106,7 @@ class Batspp(Main):
         self.hexdump_debug = self.get_entered_bool(HEXDUMP_DEBUG, self.hexdump_debug)
         self.verbose_debug = self.get_entered_bool(VERBOSE_DEBUG, self.verbose_debug)
         self.debug = self.get_entered_text(DEBUG, self.debug)
-        self.temp_dir = self.get_entered_text(TEMP_DIR, gh.form_path(tmp, f"batspp-{os.getpid()}"))
+        self.temp_dir = self.get_entered_text(TEMP_DIR, gh.form_path(tmp, f"batspp-{os_getpid()}"))
         self.copy_dir = self.get_entered_text(COPY_DIR, self.copy_dir)
         self.visible_paths = text_utils.extract_string_list(self.get_entered_text(VISIBLE_PATHS, ''))
         self.run_opts = self.get_entered_text(RUN_OPTS, self.run_opts)
@@ -189,7 +189,7 @@ class Batspp(Main):
 
 if __name__ == '__main__':
 
-    print_version = (f"--{VERSION}" in " ".join(sys.argv))
+    print_version = (f"--{VERSION}" in " ".join(sys_argv))
 
     app = Batspp(
         description = __doc__,

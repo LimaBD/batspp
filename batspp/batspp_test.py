@@ -8,8 +8,8 @@
 
 
 # Standard packages
-import re
-import os
+from re import search as re_search
+from os import path as os_path
 from datetime import datetime
 
 
@@ -82,7 +82,7 @@ class BatsppTest:
         debug.trace(7, f'BatsppTest.parse_file({file})')
 
         assert file, 'FILE cannot be empty'
-        file = os.path.abspath(file)
+        file = os_path.abspath(file)
 
         # Check for embedded tests
         #
@@ -121,7 +121,7 @@ class BatsppTest:
         if path.endswith('/'):
             file_name = ''
             if self.initial_path:
-                file_name = re.search(r"\/(\w+)\.", self.initial_path).group(0)
+                file_name = re_search(r"\/(\w+)\.", self.initial_path).group(0)
             else:
                 file_name = f'file_{datetime.now()}'
             path += f'generated_{file_name}.{BATS_EXTENSION}'
