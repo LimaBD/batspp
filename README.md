@@ -35,3 +35,6 @@ Batspp grew out of work for [Thomas O'Hara](https://github.com/tomasohara) on [s
 - [Tests examples](./docs/tests_examples.md)
 - [Batspp internals](./docs/batspp_internals.md)
 - [Contributing](./docs/contributing.md)
+
+## License
+Batspp is released under an GNU Lesser General Public License Version 3, see [LICENSE.TXT](./LICENSE.txt) for details.
