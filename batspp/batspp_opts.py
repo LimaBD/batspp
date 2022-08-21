@@ -22,12 +22,14 @@ from batspp._exceptions import assert_type
 class BatsppOpts:
     """Batspp test related options"""
 
-    def __init__(self,
-                 embedded_tests: bool = False,
-                 verbose_debug: bool = False,
-                 hexdump_debug: bool = False,
-                 omit_trace: bool = False,
-                 disable_aliases: bool = False) -> None:
+    def __init__(
+            self,
+            embedded_tests: bool = False,
+            verbose_debug: bool = False,
+            hexdump_debug: bool = False,
+            omit_trace: bool = False,
+            disable_aliases: bool = False,
+            ) -> None:
 
         # Check for embedded_tests
         assert_type(embedded_tests, bool)

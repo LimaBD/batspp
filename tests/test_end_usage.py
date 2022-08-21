@@ -59,7 +59,7 @@ class TestEndUsage(TestWrapper):
                 '=========== installing ==========='
                 f'{gh.run("pip install .")}'
                 '==================================\n'
-            )
+                )
             self.is_package_installed = True
 
         output = gh.run(f'cd {EXAMPLES_PATH} && {SCRIPT} --hexdump_debug --save {actual_filename} ./{file}.{extension}')

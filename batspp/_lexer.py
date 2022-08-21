@@ -27,8 +27,8 @@ from mezcla import debug
 # Local packages
 from batspp._exceptions import error
 from batspp._token import (
-    TokenData, TokenType, Token
-)
+    TokenData, TokenType, Token,
+    )
 
 
 class Tags(Enum):
@@ -129,111 +129,167 @@ class Lexer:
             data = TokenData(
                 text_line = self.text.get_current_line(),
                 line = self.text.line + 1,
-                column = self.text.column + 1
-            )
+                column = self.text.column + 1,
+                )
 
             # Tokenize lines with double comments as minor token
             match = re.match(r'^##', self.text.get_current_line())
             if match:
                 self.text.advance_line()
-                self.append_minor_token(Token(TokenType.MINOR, match.group(), data))
+                self.append_minor_token(Token(
+                    TokenType.MINOR,
+                    match.group(),
+                    data,
+                    ))
                 continue
 
             # Tokenize empty lines
             match = re.match(r'^ *$', self.text.get_current_line())
             if match:
                 self.text.advance_line()
-                self.append_minor_token(Token(TokenType.MINOR, match.group(), data))
+                self.append_minor_token(Token(
+                    TokenType.MINOR,
+                    match.group(),
+                    data,
+                    ))
                 continue
 
             # Tokenize peso
             match = re.match(r' *\$', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(TokenType.PESO, match.group(), data))
+                self.append_token(Token(
+                    TokenType.PESO,
+                    match.group(),
+                    data,
+                    ))
                 continue
 
             # Tokenize test
             match = re.match(r'^# *[Tt]est(?: +|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(TokenType.TEST, match.group(), data))
+                self.append_token(Token(
+                    TokenType.TEST,
+                    match.group(),
+                    data,
+                    ))
                 continue
 
             # Tokenize setup
             match = re.match(r'^# *[Ss]etup(?: +|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(TokenType.SETUP, match.group(), data))
+                self.append_token(Token(
+                    TokenType.SETUP,
+                    match.group(),
+                    data,
+                    ))
                 continue
 
             # Tokenize teardown
             match = re.match(r'^# *[Tt]eardown(?: +|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(TokenType.TEARDOWN, match.group(), data))
+                self.append_token(Token(
+                    TokenType.TEARDOWN,
+                    match.group(),
+                    data,
+                    ))
                 continue
 
             # Tokenize continuation
             match = re.match(r'^# *(?:[Cc]ontinue|[Cc]ontinuation)(?: +|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(TokenType.CONTINUATION, match.group(), data))
+                self.append_token(Token(
+                    TokenType.CONTINUATION,
+                    match.group(),
+                    data,
+                    ))
                 continue
 
             # Tokenize tags EOF and END
             if self.text.get_rest_line().startswith((Tags.END.value, Tags.EOF.value)):
                 self.text.advance_column(5)
-                self.append_token(Token(TokenType.MINOR, None, data))
+                self.append_token(Token(
+                    TokenType.MINOR,
+                    None,
+                    data,
+                    ))
                 continue
 
             # Tokenize BLANK tag
             if self.text.get_rest_line().startswith(Tags.BLANK.value):
                 self.text.advance_column(len(Tags.BLANK.value))
-                self.append_token(Token(TokenType.TEXT, '\n', data))
+                self.append_token(Token(
+                    TokenType.TEXT,
+                    '\n',
+                    data,
+                    ))
                 continue
 
             # Tokenize pointer
             match = re.match(r'^ *of', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(TokenType.POINTER, match.group(), data))
+                self.append_token(Token(
+                    TokenType.POINTER,
+                    match.group(),
+                    data,
+                    ))
                 continue
 
             # Tokenize assert equal
-            match = re.match(r' *=> *', self.text.get_rest_line())
+            match= re.match(r' *=> *', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(TokenType.ASSERT_EQ, match.group(), data))
+                self.append_token(Token(
+                    TokenType.ASSERT_EQ,
+                    match.group(),
+                    data,
+                    ))
                 continue
 
             # Tokenize assert not equal
             match = re.match(r' *=\/> *', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(TokenType.ASSERT_NE, match.group(), data))
+                self.append_token(Token(
+                    TokenType.ASSERT_NE,
+                    match.group(),
+                    data,
+                    ))
                 continue
 
             # Tokenize text
             match = re.match(r'^[^#]+?(?==>|=/>|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(TokenType.TEXT, match.group(), data))
+                self.append_token(Token(
+                    TokenType.TEXT,
+                    match.group(),
+                    data,
+                    ))
                 continue
 
             # Tokenize comments as minor token
             match = re.match(r'^ *#.*?$', self.text.get_current_line())
             if match:
                 self.text.advance_line()
-                self.append_minor_token(Token(TokenType.MINOR, None, data))
+                self.append_minor_token(Token(
+                    TokenType.MINOR,
+                    None,
+                    data,
+                    ))
                 continue
 
             error(
                 message='invalid syntax',
                 text_line=data.text_line,
                 line=data.line,
-                column=data.column
-            )
+                column=data.column,
+                )
 
         # Tokenize End of file
         self.append_token(Token(TokenType.EOF, None, None))
@@ -261,5 +317,5 @@ class Lexer:
 
         debug.trace(7,
             f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests})'
-        )
+            )
         return self.tokens

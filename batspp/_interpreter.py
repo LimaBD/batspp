@@ -29,8 +29,8 @@ from batspp.batspp_opts import BatsppOpts
 from batspp.batspp_args import BatsppArgs
 from batspp._ast_nodes import (
     TestsSuite, Test,
-    Assertion, AssertionType
-)
+    Assertion, AssertionType,
+    )
 
 
 # Constants
@@ -89,11 +89,11 @@ class Interpreter(NodeVisitor):
             result += build_setup_function(
                 commands = node.setup_commands,
                 test_folder = True,
-                copy_dir = self.args.copy_dir
-            )
+                copy_dir = self.args.copy_dir,
+                )
             result += build_teardown_function(
-                commands = node.teardown_commands
-            )
+                commands = node.teardown_commands,
+                )
 
         # Visit tests nodes
         result += ''.join([self.visit(test) for test in node.tests])
@@ -113,7 +113,7 @@ class Interpreter(NodeVisitor):
         result = (
             f'@test "{self.last_title}" {{\n'
             f'\t{SETUP_FUNCTION} "{flatten_str(self.last_title)}"\n'
-        )
+            )
 
         # Visit assertions
         result += ''.join([self.visit(asn) for asn in node.assertions])
@@ -123,7 +123,7 @@ class Interpreter(NodeVisitor):
             '\n'
             f'\t{TEARDOWN_FUNCTION}\n'
             '}\n\n'
-        )
+            )
 
         # Pop functions from stack
         result += ''.join(self.stack_functions)
@@ -159,7 +159,7 @@ class Interpreter(NodeVisitor):
         if not self.opts.omit_trace:
             debug_cmd = (
                 f'\tprint_debug "$({actual_function})" "$({expected_function})"\n'
-            )
+                )
 
         # Unify everything
         result = (
@@ -167,7 +167,7 @@ class Interpreter(NodeVisitor):
             f'{setup}'
             f'{debug_cmd}'
             f'\t[ "$({actual_function})" {operator} "$({expected_function})" ]\n'
-        )
+            )
 
         # Check global class option to
         # later implement a debug function
@@ -181,7 +181,7 @@ class Interpreter(NodeVisitor):
             f'function {actual_function} () {{\n'
             f'\t{node.actual.strip()}\n'
             '}\n\n'
-        )
+            )
         self.stack_functions.append(function)
 
         # Push to stack function for the expected value
@@ -189,7 +189,7 @@ class Interpreter(NodeVisitor):
             f'function {expected_function} () {{\n'
             f'\techo -e {repr(node.expected)}\n'
             '}\n\n'
-        )
+            )
         self.stack_functions.append(function)
 
         debug.trace(7, f'interpreter.visit_Assertion(node={node}) => {result}')
@@ -261,8 +261,8 @@ class Interpreter(NodeVisitor):
             self,
             tree: TestsSuite,
             opts: BatsppOpts = BatsppOpts(),
-            args: BatsppArgs = BatsppArgs()
-        ) -> str:
+            args: BatsppArgs = BatsppArgs(),
+            ) -> str:
         """
         Interpret Batspp abstract syntax tree and build tests
         """
@@ -301,7 +301,7 @@ class Interpreter(NodeVisitor):
                 '# This test file was generated using Batspp\n'
                 '# https://github.com/LimaBD/batspp\n'
                 '#\n\n'
-            )
+                )
 
             result += self.implement_constants()
 
@@ -316,14 +316,17 @@ class Interpreter(NodeVisitor):
         return result
 
 
-def flatten_str(string:str) -> str:
+def flatten_str(string: str) -> str:
     """Returns unspaced and lowercase STRING"""
     result = re.sub(r' +', '-', string.lower())
     debug.trace(7, f'interpreter.flatten_str({string}) => {result}')
     return result
 
 
-def build_commands_block(commands: list, indent: str = '\t') -> str:
+def build_commands_block(
+        commands: list,
+        indent: str = '\t',
+        ) -> str:
     """Build commands block with COMMANDS indented with tab"""
     result = ''.join([f'{indent}{cmd.strip()}\n' for cmd in commands])
     debug.trace(7, f'interpreter.build_commands_block({commands}) => {result}')
@@ -333,8 +336,8 @@ def build_commands_block(commands: list, indent: str = '\t') -> str:
 def build_setup_function(
         commands: list = None,
         test_folder: bool = True,
-        copy_dir: bool = False
-    ) -> str:
+        copy_dir: bool = False,
+        ) -> str:
     """
     Build setup function with
     default commands and specified COMMANDS
@@ -354,26 +357,26 @@ def build_setup_function(
             '# One time global setup\n'
             f'{build_commands_block(sources, indent="")}'
             '\n'
-        )
+            )
 
     result += (
         '# Setup function\n'
         '# $1 -> test name\n'
         f'function {SETUP_FUNCTION} () {{\n'
-    )
+        )
 
     if test_folder:
         result += (
             f'\ttest_folder=$(echo ${TEMP_DIR}/$1-$$)\n'
             '\tmkdir --parents "$test_folder"\n'
             '\tcd "$test_folder" || echo Warning: Unable to "cd $test_folder"\n'
-        )
+            )
 
     if copy_dir:
         # NOTE: warning added on 'cd "$test_folder"' for sake of shellcheck
         result += (
             '\tcommand cp $COPY_DIR "$test_folder"\n'
-        )
+            )
 
     result += build_commands_block(commands)
 
@@ -398,7 +401,7 @@ def build_teardown_function(commands: list) -> str:
         f'function {TEARDOWN_FUNCTION} () {{\n'
         f'{body}'
         '}\n\n'
-    )
+        )
 
     debug.trace(7, f'interpreter.build_teardown_function({commands}) => {result}')
     return result
@@ -419,7 +422,7 @@ def build_debug_function() -> str:
         f'\tbash -c "echo \\\"$2\\\" ${VERBOSE_DEBUG}"\n'
         '\techo "========================"\n'
         '}\n\n'
-    )
+        )
 
     debug.trace(7, 'interpreter.build_debug()')
     return result

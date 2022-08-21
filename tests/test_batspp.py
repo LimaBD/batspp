@@ -37,7 +37,7 @@ class TestBatspp(TestWrapper):
         '# Example test\n\n'
         '$ echo "hello world"\n'
         'hello world\n\n'
-    )
+        )
 
     def test_file(self):
         """Test for test file argument"""

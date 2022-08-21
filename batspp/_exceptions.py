@@ -21,10 +21,12 @@ Exceptions module
 ## NOTE: this is empty for now
 
 
-def error(message:str='',
-          text_line:str='',
-          line:int=None,
-          column:str=None) -> None:
+def error(
+        message:str='',
+        text_line:str='',
+        line:int=None,
+        column:str=None,
+        ) -> None:
     """Raise exception"""
     ## TODO: limit text_line if it is very long
 

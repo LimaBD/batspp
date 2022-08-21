@@ -23,11 +23,11 @@ from mezcla import debug
 # Local packages
 sys.path.insert(0, './batspp')
 from batspp._lexer import (
-    TextLiner, Lexer
-)
+    TextLiner, Lexer,
+    )
 from batspp._token import (
-    Token, TokenType
-)
+    Token, TokenType,
+    )
 
 
 class TestTextLiner(TestWrapper):
@@ -175,13 +175,10 @@ class TestLexer(TestWrapper):
 
     def tokenize_types(self, string:str, embedded_tests:bool = False) -> list:
         """Tokenize STRING and map by types"""
-
         tokens = self.tokenize(string, embedded_tests=embedded_tests)
-
-        types = []
-        for token in tokens:
-            types.append(token.type)
-
+        types = [token.type for token in tokens]
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestLexer.tokenize_types() => {types}")
         return types
 
     def test_minor(self):
@@ -202,21 +199,27 @@ class TestLexer(TestWrapper):
         """Test for PESO token type"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestLexer.test_peso(); self={self}")
-
-        valids = ['$', '$ some text']
-        invalids = ['foo $ some text']
+        valids = [
+            '$',
+            '$ some text',
+            ]
+        invalids = [
+            'foo $ some text',
+            ]
         self.assert_token(TokenType.PESO, valids=valids, invalids=invalids)
 
     def test_test(self):
         """Test for TEST token type"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestLexer.test_test(); self={self}")
-
-        valids = ['# Test foobar', '# test foobar']
+        valids = [
+            '# Test foobar',
+            '# test foobar',
+            ]
         invalids = [
             '# foobar foobar Test foobar',
-            '# foobar Test'
-        ]
+            '# foobar Test',
+            ]
         self.assert_token(TokenType.TEST, valids=valids, invalids=invalids)
 
     def test_setup(self):
@@ -224,13 +227,15 @@ class TestLexer(TestWrapper):
         debug.trace(
             debug.QUITE_DETAILED,
             f"TestLexer.test_setup(); self={self}"
-        )
-
-        valids = ['# Setup', '# setup of foobar']
+            )
+        valids = [
+            '# Setup',
+            '# setup of foobar',
+            ]
         invalids = [
             '# foobar foobar Setup foobar',
-            '# foobar Setup'
-        ]
+            '# foobar Setup',
+            ]
         self.assert_token(TokenType.SETUP, valids=valids, invalids=invalids)
 
     def test_teardown(self):
@@ -241,16 +246,15 @@ class TestLexer(TestWrapper):
         """Test for CONTINUATION token type"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestLexer.test_continuation(); self={self}")
-
         valids = [
             '# Continuation of foobar',
             '# continuation of foobar',
-            '# Continue of foobar'
-        ]
+            '# Continue of foobar',
+            ]
         invalids = [
             '# foobar foobar Continuation foobar',
-            '# foobar continuation'
-        ]
+            '# foobar continuation',
+            ]
         self.assert_token(TokenType.CONTINUATION, valids=valids, invalids=invalids)
 
     def test_pointer(self):
@@ -272,8 +276,8 @@ class TestLexer(TestWrapper):
             TokenType.TEXT,
             TokenType.ASSERT_EQ,
             TokenType.TEXT,
-            TokenType.EOF
-        ])
+            TokenType.EOF,
+            ])
 
     def test_assert_ne(self):
         """Test for ASSERT_NE token type"""
@@ -285,8 +289,8 @@ class TestLexer(TestWrapper):
             TokenType.TEXT,
             TokenType.ASSERT_NE,
             TokenType.TEXT,
-            TokenType.EOF
-        ])
+            TokenType.EOF,
+            ])
 
     def test_end_eof_tags(self):
         """Test for END and EOF tags"""
@@ -297,8 +301,8 @@ class TestLexer(TestWrapper):
             TokenType.TEXT,
             TokenType.MINOR,
             TokenType.MINOR,
-            TokenType.EOF
-        ])
+            TokenType.EOF,
+            ])
 
     def test_blank(self):
         """Test for BLANK tag"""
@@ -309,8 +313,8 @@ class TestLexer(TestWrapper):
             TokenType.TEXT,
             TokenType.TEXT,
             TokenType.TEXT,
-            TokenType.EOF
-        ])
+            TokenType.EOF,
+            ])
 
     def test_text(self):
         """Test for TEXT token type"""
