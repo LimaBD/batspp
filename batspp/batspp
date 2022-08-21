@@ -44,7 +44,7 @@ from mezcla import glue_helpers as gh
 from mezcla import text_utils
 
 
-# Local modules
+# Local packages
 from batspp.__version__ import __version__
 from batspp.batspp_opts import BatsppOpts
 from batspp.batspp_args import BatsppArgs

@@ -24,7 +24,7 @@ import re
 from mezcla import debug
 
 
-# Local modules
+# Local packages
 from batspp.batspp_opts import BatsppOpts
 from batspp.batspp_args import BatsppArgs
 from batspp._ast_nodes import (

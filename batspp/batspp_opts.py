@@ -7,7 +7,15 @@
 """Batspp options module"""
 
 
-# Local modules
+# Standard packages
+## NOTE: this is empty for now
+
+
+# Installed packages
+## NOTE: this is empty for now
+
+
+# Local packages
 from batspp._exceptions import assert_type
 
 

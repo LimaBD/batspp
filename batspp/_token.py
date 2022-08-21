@@ -11,6 +11,14 @@
 from enum import Enum
 
 
+# Installed packages
+## NOTE: this is empty for now
+
+
+# Local packages
+## NOTE: this is empty for now
+
+
 class TokenData:
     """Data class for token"""
 

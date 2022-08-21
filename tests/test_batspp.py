@@ -21,6 +21,7 @@ from mezcla import glue_helpers as gh
 from mezcla import debug
 
 
+# Local packages
 # This and "script_module=None" solve problem:
 #     "Assertion failed: "No module named" not in help_usage"
 BATSPP_PATH = os.path.abspath('./batspp/batspp')

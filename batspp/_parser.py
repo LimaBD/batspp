@@ -18,13 +18,14 @@ an Abstract Syntax Tree (AST) for Batspp
 
 
 # Standard packages
+## NOTE: this is empty for now
 
 
 # Installed packages
 from mezcla import debug
 
 
-# Local modules
+# Local packages
 from batspp._exceptions import error
 from batspp._token import (
     TokenType, Token

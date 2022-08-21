@@ -20,7 +20,7 @@ from mezcla.unittest_wrapper import TestWrapper
 from mezcla import debug
 
 
-# Local modules
+# Local packages
 sys.path.insert(0, './batspp')
 from batspp._token import TokenData
 from batspp._ast_nodes import (

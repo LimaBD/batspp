@@ -20,7 +20,7 @@ from mezcla.unittest_wrapper import TestWrapper
 from mezcla import debug
 
 
-# Module being tested
+# Local packages
 sys.path.insert(0, './batspp')
 from batspp._lexer import (
     TextLiner, Lexer

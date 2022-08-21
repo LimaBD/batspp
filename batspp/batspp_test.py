@@ -19,7 +19,7 @@ from mezcla import glue_helpers as gh
 from mezcla import system
 
 
-# Local modules
+# Local packages
 from batspp._lexer import Lexer
 from batspp._parser import Parser
 from batspp._interpreter import Interpreter

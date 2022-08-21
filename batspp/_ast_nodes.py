@@ -11,7 +11,11 @@
 from enum import Enum
 
 
-# Local modules
+# Installed packages
+## NOTE: this is empty for now
+
+
+# Local packages
 from batspp._token import TokenData
 
 

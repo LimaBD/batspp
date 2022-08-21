@@ -30,7 +30,7 @@ from mezcla import glue_helpers as gh
 from mezcla import debug
 
 
-# Constants
+# Local packages
 EXAMPLES_PATH = os.path.dirname(__file__) + '/../docs/examples'
 SCRIPT = 'batspp'
 

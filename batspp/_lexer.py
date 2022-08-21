@@ -24,7 +24,7 @@ from enum import Enum
 from mezcla import debug
 
 
-# Local modules
+# Local packages
 from batspp._exceptions import error
 from batspp._token import (
     TokenData, TokenType, Token
