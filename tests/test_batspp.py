@@ -12,7 +12,7 @@
 
 # Standard packages
 import unittest
-import os
+from os import path as os_path
 
 
 # Installed packages
@@ -21,9 +21,10 @@ from mezcla import glue_helpers as gh
 from mezcla import debug
 
 
+# Local packages
 # This and "script_module=None" solve problem:
 #     "Assertion failed: "No module named" not in help_usage"
-BATSPP_PATH = os.path.abspath('./batspp/batspp')
+BATSPP_PATH = os_path.abspath('./batspp/batspp')
 
 
 class TestBatspp(TestWrapper):
@@ -36,7 +37,7 @@ class TestBatspp(TestWrapper):
         '# Example test\n\n'
         '$ echo "hello world"\n'
         'hello world\n\n'
-    )
+        )
 
     def test_file(self):
         """Test for test file argument"""

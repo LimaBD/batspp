@@ -7,20 +7,30 @@
 """Batspp arguments module"""
 
 
-# Local modules
+# Standard packages
+## NOTE: this is empty for now
+
+
+# Installed packages
+## NOTE: this is empty for now
+
+
+# Local packages
 from batspp._exceptions import assert_type
 
 
 class BatsppArgs:
     """Batspp test related arguments"""
 
-    def __init__(self,
-                 sources: 'list|None' = None,
-                 temp_dir: str = '',
-                 visible_paths: 'list|None' = None,
-                 run_opts: str = '',
-                 copy_dir: str = '',
-                 debug: str = '') -> None:
+    def __init__(
+            self,
+            sources: 'list|None' = None,
+            temp_dir: str = '',
+            visible_paths: 'list|None' = None,
+            run_opts: str = '',
+            copy_dir: str = '',
+            debug: str = '',
+            ) -> None:
 
         # Check for sources, filter empty sources
         assert_type(sources, (list, type(None)))

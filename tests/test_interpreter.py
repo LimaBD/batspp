@@ -11,7 +11,7 @@
 
 
 # Standard packages
-import sys
+from sys import path as sys_path
 import unittest
 
 
@@ -20,16 +20,16 @@ from mezcla.unittest_wrapper import TestWrapper
 from mezcla import debug
 
 
-# Local modules
-sys.path.insert(0, './batspp')
+# Local packages
+sys_path.insert(0, './batspp')
 from batspp._token import TokenData
 from batspp._ast_nodes import (
     AssertionType, Assertion,
-    Test, TestsSuite
-)
+    Test, TestsSuite,
+    )
 from batspp._interpreter import (
-    NodeVisitor, Interpreter
-)
+    NodeVisitor, Interpreter,
+    )
 
 
 class TestNodeVisitor(TestWrapper):
@@ -66,8 +66,10 @@ class TestInterpreter(TestWrapper):
         data = TokenData(text_line='some line', line=3, column=3)
         interpreter = Interpreter()
 
-        interpreter.stack_functions = ['function some_function() ...',
-                                       'function another_function() ...']
+        interpreter.stack_functions = [
+            'function some_function() ...',
+            'function another_function() ...',
+            ]
         node = Test(pointer='important test', assertions=[], data=data)
         actual = interpreter.visit_Test(node)
 
@@ -91,8 +93,8 @@ class TestInterpreter(TestWrapper):
             atype=AssertionType.EQUAL,
             actual='echo "some text"',
             expected='some text',
-            data=data
-        )
+            data=data,
+            )
         actual = interpreter.visit_Assertion(node)
 
         self.assertEqual(len(interpreter.stack_functions), 2)
@@ -112,20 +114,26 @@ class TestInterpreter(TestWrapper):
                     f"TestInterpreter.test_interpret(); self={self}")
         data = TokenData(text_line='some line', line=3, column=3)
 
-        first_assertion = Assertion(atype=AssertionType.EQUAL,
-                                    setup_commands=['echo "hello world" > file.txt'],
-                                    actual='cat file.txt',
-                                    expected='hello world',
-                                    data=data)
-        second_assertion = Assertion(atype=AssertionType.EQUAL,
-                                    actual='cat file.txt | wc -m',
-                                    expected='11',
-                                    data=data)
+        first_assertion = Assertion(
+            atype=AssertionType.EQUAL,
+            setup_commands=['echo "hello world" > file.txt'],
+            actual='cat file.txt',
+            expected='hello world',
+            data=data,
+            )
+        second_assertion = Assertion(
+            atype=AssertionType.EQUAL,
+            actual='cat file.txt | wc -m',
+            expected='11',
+            data=data,
+            )
         test = Test(pointer='important test', assertions=[first_assertion, second_assertion], data=data)
-        test_suite_node = TestsSuite(tests=[test],
-                                     setup_commands=['echo "hello world" > file.txt'],
-                                     teardown_commands=['echo "finished test"'],
-                                     data=data)
+        test_suite_node = TestsSuite(
+            tests=[test],
+            setup_commands=['echo "hello world" > file.txt'],
+            teardown_commands=['echo "finished test"'],
+            data=data,
+            )
 
         actual = Interpreter().interpret(test_suite_node)
 
@@ -196,7 +204,7 @@ class TestInterpreter(TestWrapper):
             '\techo "========================"\n'
             '}\n'
             '\n'
-        )
+            )
 
         self.assertEqual(actual, expected)
 

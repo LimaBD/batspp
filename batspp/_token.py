@@ -11,6 +11,14 @@
 from enum import Enum
 
 
+# Installed packages
+## NOTE: this is empty for now
+
+
+# Local packages
+## NOTE: this is empty for now
+
+
 class TokenData:
     """Data class for token"""
 
@@ -18,8 +26,8 @@ class TokenData:
             self,
             text_line:str = '',
             line:int = None,
-            column:int = None
-        ) -> None:
+            column:int = None,
+            ) -> None:
         self.text_line = text_line
         self.line = line
         self.column = column
@@ -29,7 +37,7 @@ class TokenData:
             f'TokenData(text_line={self.text_line},\n'
             f'\t          line={self.line},\n'
             f'\t          column={self.column})'
-        )
+            )
 
 
 class TokenType(Enum):
@@ -59,8 +67,8 @@ class Token:
             self,
             ttype:str,
             tvalue:any,
-            data: TokenData = TokenData()
-        ) -> None:
+            data: TokenData = TokenData(),
+            ) -> None:
         # NOTE: extra "t" in ttype and tvalue
         #       avoids redefine the built-in 'type'
         self.type = ttype
@@ -72,4 +80,4 @@ class Token:
             f'Token(type={self.type},\n'
             f'      value={self.value},\n'
             f'      data={self.data})'
-    )
+            )

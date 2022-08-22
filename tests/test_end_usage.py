@@ -19,9 +19,9 @@
 
 
 # Standard packages
-import re
+from re import sub as re_sub
 import unittest
-import os
+from os import path as os_path
 
 
 # Installed packages
@@ -30,8 +30,8 @@ from mezcla import glue_helpers as gh
 from mezcla import debug
 
 
-# Constants
-EXAMPLES_PATH = os.path.dirname(__file__) + '/../docs/examples'
+# Local packages
+EXAMPLES_PATH = os_path.dirname(__file__) + '/../docs/examples'
 SCRIPT = 'batspp'
 
 
@@ -59,7 +59,7 @@ class TestEndUsage(TestWrapper):
                 '=========== installing ==========='
                 f'{gh.run("pip install .")}'
                 '==================================\n'
-            )
+                )
             self.is_package_installed = True
 
         output = gh.run(f'cd {EXAMPLES_PATH} && {SCRIPT} --hexdump_debug --save {actual_filename} ./{file}.{extension}')
@@ -75,12 +75,12 @@ class TestEndUsage(TestWrapper):
 
         # Manipulate a little the output to make equal the random number
         temp_dir_pattern = r'TEMP_DIR=.+'
-        actual_content = re.sub(temp_dir_pattern, '', actual_content)
-        expected_content = re.sub(temp_dir_pattern, '', expected_content)
+        actual_content = re_sub(temp_dir_pattern, '', actual_content)
+        expected_content = re_sub(temp_dir_pattern, '', expected_content)
 
         source_pattern = r'source .+'
-        actual_content = re.sub(source_pattern, '', actual_content)
-        expected_content = re.sub(source_pattern, '', expected_content)
+        actual_content = re_sub(source_pattern, '', actual_content)
+        expected_content = re_sub(source_pattern, '', expected_content)
 
         self.assertEqual(actual_content, expected_content)
 

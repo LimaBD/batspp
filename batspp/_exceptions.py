@@ -9,10 +9,24 @@ Exceptions module
 """
 
 
-def error(message:str='',
-          text_line:str='',
-          line:int=None,
-          column:str=None) -> None:
+# Standard packages
+## NOTE: this is empty for now
+
+
+# Installed packages
+## NOTE: this is empty for now
+
+
+# Local packages
+## NOTE: this is empty for now
+
+
+def error(
+        message:str='',
+        text_line:str='',
+        line:int=None,
+        column:str=None,
+        ) -> None:
     """Raise exception"""
     ## TODO: limit text_line if it is very long
 
@@ -22,6 +36,7 @@ def error(message:str='',
     output += f'\n             {" " * column}^' if column else ''
 
     raise Exception(output)
+
 
 def assert_type(var: any, expected_type: any) -> None:
     """Assert variable type"""

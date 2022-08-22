@@ -11,7 +11,7 @@
 
 
 # Standard packages
-import sys
+from sys import path as sys_path
 import unittest
 
 
@@ -20,8 +20,8 @@ from mezcla.unittest_wrapper import TestWrapper
 from mezcla import debug
 
 
-# Module being tested
-sys.path.insert(0, './batspp')
+# Local packages
+sys_path.insert(0, './batspp')
 from batspp._exceptions import (
     error, assert_type
 )

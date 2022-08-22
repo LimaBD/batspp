@@ -18,21 +18,22 @@ an Abstract Syntax Tree (AST) for Batspp
 
 
 # Standard packages
+## NOTE: this is empty for now
 
 
 # Installed packages
 from mezcla import debug
 
 
-# Local modules
+# Local packages
 from batspp._exceptions import error
 from batspp._token import (
-    TokenType, Token
-)
+    TokenType, Token,
+    )
 from batspp._ast_nodes import (
     AST, TestsSuite, Test,
-    Assertion, AssertionType
-)
+    Assertion, AssertionType,
+    )
 
 
 class Parser:
@@ -89,8 +90,8 @@ class Parser:
             error(
                 message=f'Expected {token_type} but founded {current_token.type}',
                 text_line=current_token.data.text_line,
-                line=current_token.data.line
-            )
+                line=current_token.data.line,
+                )
 
     def is_command_next(self) -> bool:
         """
@@ -103,14 +104,16 @@ class Parser:
         second = self.peek_token(1)
 
         if second is not None:
-            result = (first.type is TokenType.PESO and
-                      second.type is TokenType.TEXT)
+            result = (
+                first.type is TokenType.PESO
+                and second.type is TokenType.TEXT
+                )
 
         debug.trace(7, (
             f'parser.is_command_next() =>'
             f' next tokens types: {first} {second}'
             f' => {result}'
-        ))
+            ))
         return result
 
     def is_pure_command_next(self) -> bool:
@@ -123,14 +126,16 @@ class Parser:
         third_token = self.peek_token(2)
 
         if third_token is not None:
-            result = (is_command and
-                      third_token.type is not TokenType.TEXT)
+            result = (
+                is_command
+                and third_token.type is not TokenType.TEXT
+                )
 
         debug.trace(7, (
             'parser.is_pure_command_next() => '
             f'command:{is_command} {third_token}'
             f' => {result}'
-        ))
+            ))
         return result
 
     def is_assertion_next(self) -> bool:
@@ -148,19 +153,23 @@ class Parser:
 
             # Check for command assertion
             if first_token.type is TokenType.PESO:
-                result = (second_token.type is TokenType.TEXT and
-                          third_token.type is TokenType.TEXT)
+                result = (
+                    second_token.type is TokenType.TEXT
+                    and third_token.type is TokenType.TEXT
+                    )
 
             # Check for assert eq or ne
             elif first_token.type is TokenType.TEXT:
-                result = (second_token.type in [TokenType.ASSERT_EQ, TokenType.ASSERT_NE] and
-                          third_token.type is TokenType.TEXT)
+                result = (
+                    second_token.type in [TokenType.ASSERT_EQ, TokenType.ASSERT_NE]
+                    and third_token.type is TokenType.TEXT
+                    )
 
         debug.trace(7, (
             'parser.is_assertion_next() => '
             f'command:{first_token} {second_token} {third_token}'
             f' => {result}'
-        ))
+            ))
         return result
 
     def build_test(self, pointer:str='') -> None:
@@ -227,8 +236,8 @@ class Parser:
                 message='Continuation without test assigned',
                 text_line=data.text_line,
                 line=data.line,
-                column=data.column
-            )
+                column=data.column,
+                )
 
         self.break_setup_assertion(pointer)
 
@@ -320,8 +329,8 @@ class Parser:
                 message = 'Setup cannot be empty',
                 text_line = data.text_line,
                 line = data.line,
-                column = data.column
-            )
+                column = data.column,
+                )
 
         return commands
 
@@ -380,8 +389,8 @@ class Parser:
             setup_commands=None,
             actual=actual,
             expected=expected,
-            data=data
-        )
+            data=data,
+            )
 
         # Assign setups from the stack with
         # the same pointer as the assertion
@@ -407,8 +416,8 @@ class Parser:
                 message=f'Assertion "{pointer}" referenced before assignment.',
                 text_line=node.data.text_line,
                 line=node.data.line,
-                column=None
-            )
+                column=None,
+                )
 
     def build_tests_suite(self) -> AST:
         """
@@ -469,14 +478,14 @@ class Parser:
                 message=f'Setup "{first_invalid.pointer}" referenced before assignment.',
                 text_line=first_invalid.data.text_line,
                 line=first_invalid.data.line,
-                column=None
-            )
+                column=None,
+                )
 
         result = TestsSuite(
             self.test_nodes,
             setup_commands = setup_commands,
-            teardown_commands = self.teardown_commands_stack
-        )
+            teardown_commands = self.teardown_commands_stack,
+            )
         debug.trace(7, f'parser.build_tests_suite() => {result}')
         return result
 
@@ -495,7 +504,11 @@ class Parser:
 
         return result
 
-    def parse(self, tokens: list, embedded_tests:bool=False) -> AST:
+    def parse(
+            self,
+            tokens: list,
+            embedded_tests:bool=False,
+            ) -> AST:
         """
         Builds an Abstract Syntax Tree (AST) from TOKENS list
         """

@@ -11,7 +11,11 @@
 from enum import Enum
 
 
-# Local modules
+# Installed packages
+## NOTE: this is empty for now
+
+
+# Local packages
 from batspp._token import TokenData
 
 
@@ -22,8 +26,8 @@ class AST:
 
     def __init__(
             self,
-            data: TokenData = TokenData()
-        ) -> None:
+            data: TokenData = TokenData(),
+            ) -> None:
         self.data = data
 
 
@@ -47,8 +51,8 @@ class Assertion(AST):
             setup_commands: list = None,
             actual: str = '',
             expected: str = '',
-            data: TokenData = TokenData()
-        ) -> None:
+            data: TokenData = TokenData(),
+            ) -> None:
         super().__init__(data)
         self.atype = atype
         self.setup_commands = setup_commands
@@ -65,8 +69,8 @@ class Test(AST):
             self,
             pointer: str = '',
             assertions: list = None,
-            data: TokenData = TokenData()
-        ) -> None:
+            data: TokenData = TokenData(),
+            ) -> None:
         super().__init__(data)
         self.pointer = pointer
         self.assertions = assertions if assertions else []
@@ -82,8 +86,8 @@ class TestsSuite(AST):
             tests: list,
             setup_commands: list = None,
             teardown_commands: list = None,
-            data: TokenData = TokenData()
-        ) -> None:
+            data: TokenData = TokenData(),
+            ) -> None:
         super().__init__(data)
         self.tests = tests
         self.setup_commands = setup_commands
