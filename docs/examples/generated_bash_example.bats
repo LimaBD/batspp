@@ -6,7 +6,7 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-27320"
+TEMP_DIR="/tmp/batspp-164148"
 
 # One time global setup
 shopt -s expand_aliases
@@ -97,23 +97,23 @@ function test-of-line-59-line59-expected () {
 	echo -e 'The Fibonacci series is:\n0 1 1 2 3 5 8 13 21 34'
 }
 
-@test "test of line 71" {
-	run_setup "test-of-line-71"
+@test "setup and title" {
+	run_setup "setup-and-title"
 
 	# Assertion of line 73
 	filepath=$(echo $TMP/testfile-"$$")
 	echo "this is a file content to run an example test" | sudo tee $filepath
-	print_debug "$(test-of-line-71-line73-actual)" "$(test-of-line-71-line73-expected)"
-	[ "$(test-of-line-71-line73-actual)" == "$(test-of-line-71-line73-expected)" ]
+	print_debug "$(setup-and-title-line73-actual)" "$(setup-and-title-line73-expected)"
+	[ "$(setup-and-title-line73-actual)" == "$(setup-and-title-line73-expected)" ]
 
 	run_teardown
 }
 
-function test-of-line-71-line73-actual () {
+function setup-and-title-line73-actual () {
 	cat $filepath
 }
 
-function test-of-line-71-line73-expected () {
+function setup-and-title-line73-expected () {
 	echo -e 'this is a file content to run an example test'
 }
 

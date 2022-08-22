@@ -306,7 +306,8 @@ class Lexer:
             # 1st remove not commented lines
             text = re_sub(r'^[^#]+?$', '\n', text, flags=re_MULTILINE)
             # 2nd remove comment delimiter '#' from commented lines
-            text = re_sub(r'^# *', '', text, flags=re_MULTILINE)
+            ## TODO: remove redundancy of directives
+            text = re_sub(r'^# ?(?! *(?:[Tt]est|[Cc]continue|[Cc]ontinuation|[Ss]etup|[Tt]eardown))', '', text, flags=re_MULTILINE)
             debug.trace(7, f'lexer.tokenize() => formated embedded tests to:\n{text}')
 
         # Clean global class values
