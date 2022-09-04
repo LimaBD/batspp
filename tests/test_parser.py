@@ -407,6 +407,7 @@ class TestParser:
         debug.trace(7, f'TestParser.test_parse({self})')
         parser = THE_MODULE.Parser()
 
+        # Normal parser usage test
         tokens = [
             Token(TokenType.SETUP, ''),
             Token(TokenType.PESO, '$'),
@@ -427,17 +428,26 @@ class TestParser:
             Token(TokenType.EOF, None),
             ]
         tree = parser.parse(tokens)
-        assert isinstance(tree, TestsSuite)
-
+        assert isinstance(tree, TestsSuite)\
         # Check setup
         assert tree.setup_commands == ['some global command', 'another global command']
         assert tree.setup_commands != ['wrong command!']
-
         # Check tests
         assert len(tree.tests) == 1
         assert tree.tests[0].assertions[0].setup_commands == ['local setup command']
         assert tree.tests[0].assertions[0].actual == 'some assertion command'
         assert tree.tests[0].assertions[0].expected == 'expected text line 1\nexpected text line 2\nexpected text line 3'
+
+        # Test when tokens list is empty
+        with pytest.raises(Exception):
+            parser.parse([])
+
+        # Test when tokens list not finish with EOF
+        with pytest.raises(Exception):
+            parser.parse([
+                Token(TokenType.TEXT, 'expected text line 2'),
+                Token(TokenType.TEXT, 'expected text line 3'),
+            ])
 
 
 if __name__ == '__main__':

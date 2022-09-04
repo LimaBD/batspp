@@ -518,6 +518,7 @@ class Parser:
         Builds an Abstract Syntax Tree (AST) from TOKENS list
         """
         assert tokens, 'Tokens list cannot be empty'
+        assert tokens[-1], 'Last token should be EOF'
 
         self.reset_global_state_variables()
         self.tokens = tokens
