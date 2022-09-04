@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 #
-# Tests for parser.py module
+# Tests for _parser module
 #
 # This test must be runned with the command:
 # $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_parser.py
 #
 
 
-"""Tests for parser.py module"""
+"""Tests for _parser module"""
 
 
 # Standard packages
@@ -23,11 +23,14 @@ from mezcla import debug
 # Local packages
 sys_path.insert(0, './batspp')
 from batspp._token import Token, TokenType
-from batspp._parser import Parser
 from batspp._ast_nodes import (
     AssertionType, Assertion,
     TestsSuite, Test,
     )
+
+
+# Reference to the module being tested
+import batspp._parser as THE_MODULE
 
 
 class TestParser(TestWrapper):
@@ -39,7 +42,7 @@ class TestParser(TestWrapper):
         """Test for get_current_token()"""
         debug.trace(7, f'TestParser.test_get_current_token({self})')
 
-        parser = Parser()
+        parser = THE_MODULE.Parser()
         parser.tokens = [
             Token(TokenType.PESO, '$'),
             Token(TokenType.TEXT, 'some text'),
@@ -55,7 +58,7 @@ class TestParser(TestWrapper):
         """Test for peek_token()"""
         debug.trace(7, f'TestParser.test_peek_token({self})')
 
-        parser = Parser()
+        parser = THE_MODULE.Parser()
         parser.tokens = [
             Token(TokenType.PESO, '$'),
             Token(TokenType.TEXT, 'some text'),
@@ -71,7 +74,7 @@ class TestParser(TestWrapper):
         """Test for eat()"""
         debug.trace(7, f'TestParser.test_eat({self})')
 
-        parser = Parser()
+        parser = THE_MODULE.Parser()
         parser.tokens = [
             Token(TokenType.PESO, '$'),
             Token(TokenType.TEXT, 'some text'),
@@ -88,7 +91,7 @@ class TestParser(TestWrapper):
     def test_is_command_next(self):
         """Test for is_command_next()"""
         debug.trace(7, f'TestParser.test_is_command_next({self})')
-        parser = Parser()
+        parser = THE_MODULE.Parser()
 
         # Valid command pattern
         parser.tokens = [
@@ -109,7 +112,7 @@ class TestParser(TestWrapper):
     def test_is_pure_command_next(self):
         """Test for is_pure_command_next()"""
         debug.trace(7, f'TestParser.test_is_pure_command_next({self})')
-        parser = Parser()
+        parser = THE_MODULE.Parser()
 
         # Valid setup patern
         parser.tokens = [
@@ -149,7 +152,7 @@ class TestParser(TestWrapper):
     def test_is_assertion_next(self):
         """Test for is_assertion_next()"""
         debug.trace(7, f'TestParser.test_is_assertion_next({self})')
-        parser = Parser()
+        parser = THE_MODULE.Parser()
 
         # Valid assertion pattern
         parser.tokens = [
@@ -190,7 +193,7 @@ class TestParser(TestWrapper):
     def test_build_test(self):
         """Test for build_test()"""
         debug.trace(7, f'TestParser.test_build_test({self})')
-        parser = Parser()
+        parser = THE_MODULE.Parser()
 
         # Check test pattern
         self.assertFalse(parser.test_nodes)
@@ -212,7 +215,7 @@ class TestParser(TestWrapper):
     def test_break_continuation(self):
         """Test for break_continuation()"""
         debug.trace(7, f'TestParser.test_break_continuation({self})')
-        parser = Parser()
+        parser = THE_MODULE.Parser()
 
         parser.test_nodes.append(Test(pointer='first test'))
         parser.test_nodes.append(Test(pointer='important test'))
@@ -240,7 +243,7 @@ class TestParser(TestWrapper):
         # is the responsibility of another test
 
         # If continuation has empty pointer, this should be setted to last test
-        parser = Parser()
+        parser = THE_MODULE.Parser()
         parser.last_pointer = 'important test'
         parser.test_nodes = [Test(pointer='important test', assertions=None)]
         parser.tokens = [
@@ -265,7 +268,7 @@ class TestParser(TestWrapper):
     def test_append_setup_commands(self):
         """Test for append_setup_commands()"""
         debug.trace(7, f'TestParser.test_append_setup_commands({self})')
-        parser = Parser()
+        parser = THE_MODULE.Parser()
 
         # Global setup pattern
         self.assertFalse(parser.setup_commands_stack)
@@ -287,7 +290,7 @@ class TestParser(TestWrapper):
         self.assertNotEqual(parser.setup_commands_stack[0][1], ['new wrong command'])
 
         # Check for local setup pattern
-        parser = Parser()
+        parser = THE_MODULE.Parser()
         parser.tokens = [
             Token(TokenType.SETUP, '# Setup '),
             Token(TokenType.POINTER, ' of '),
@@ -302,7 +305,7 @@ class TestParser(TestWrapper):
         self.assertNotEqual(parser.setup_commands_stack[0][0], 'wrong pointer!')
 
         # Check setup pattern without commands
-        parser = Parser()
+        parser = THE_MODULE.Parser()
         parser.tokens = [
             Token(TokenType.PESO, '$'),
             Token(TokenType.TEXT, 'some command'),
@@ -314,7 +317,7 @@ class TestParser(TestWrapper):
         self.assertEqual(parser.setup_commands_stack[0][0], 'some lonely setup')
 
         # Check for setup without pointer (should be setted to last test)
-        parser = Parser()
+        parser = THE_MODULE.Parser()
         parser.last_pointer = 'important test'
         parser.tokens = [
             Token(TokenType.SETUP, '# Setup'),
@@ -329,7 +332,7 @@ class TestParser(TestWrapper):
     def test_build_assertion(self):
         """Test for build_assertion()"""
         debug.trace(7, f'TestParser.test_build_assertion({self})')
-        parser = Parser()
+        parser = THE_MODULE.Parser()
 
         parser.test_nodes.append(Test(pointer='first test'))
         parser.test_nodes.append(Test(pointer='important test'))
@@ -365,7 +368,7 @@ class TestParser(TestWrapper):
         self.assertEqual(parser.test_nodes[1].assertions[0].setup_commands[0], 'some command')
 
         # Check for assertion eq
-        parser = Parser()
+        parser = THE_MODULE.Parser()
         parser.tokens = [
             Token(TokenType.TEXT, 'function arg1 arg2'),
             Token(TokenType.ASSERT_NE, ' =/> '),
@@ -382,7 +385,7 @@ class TestParser(TestWrapper):
     def test_pop_setup_commands(self):
         """Test for pop_setup()"""
         debug.trace(7, f'TestParser.test_pop_setup_commands({self})')
-        parser = Parser()
+        parser = THE_MODULE.Parser()
 
         parser.setup_commands_stack = [
             ('some test', ['some command']),
@@ -404,7 +407,7 @@ class TestParser(TestWrapper):
     def test_parse(self):
         """Test for parse()"""
         debug.trace(7, f'TestParser.test_parse({self})')
-        parser = Parser()
+        parser = THE_MODULE.Parser()
 
         tokens = [
             Token(TokenType.SETUP, ''),

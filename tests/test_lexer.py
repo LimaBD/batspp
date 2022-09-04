@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 #
-# Tests for lexer.py module
+# Tests for _lexer module
 #
 # This test must be runned with the command:
 # $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_lexer.py
 #
 
 
-"""Tests for lexer.py module"""
+"""Tests for _lexer module"""
 
 
 # Standard packages
@@ -22,12 +22,13 @@ from mezcla import debug
 
 # Local packages
 sys_path.insert(0, './batspp')
-from batspp._lexer import (
-    TextLiner, Lexer,
-    )
 from batspp._token import (
     Token, TokenType,
     )
+
+
+# Reference to the module being tested
+import batspp._lexer as THE_MODULE
 
 
 class TestTextLiner(TestWrapper):
@@ -40,7 +41,7 @@ class TestTextLiner(TestWrapper):
         debug.trace(debug.QUITE_DETAILED,
                     f"TestTextLiner.test_is_column_safe(); self={self}")
 
-        text = TextLiner('some text line')
+        text = THE_MODULE.TextLiner('some text line')
         text.column = 3
         self.assertTrue(text.is_column_safe())
         text.column = 13
@@ -55,7 +56,7 @@ class TestTextLiner(TestWrapper):
         debug.trace(debug.QUITE_DETAILED,
                     f"TestTextLiner.test_is_line_safe(); self={self}")
 
-        text = TextLiner('some text\nwith\nmultiple\nlines')
+        text = THE_MODULE.TextLiner('some text\nwith\nmultiple\nlines')
         self.assertEqual(text.lines, ['some text', 'with', 'multiple', 'lines'])
         self.assertTrue(text.is_line_safe())
         text.line = 3
@@ -70,7 +71,7 @@ class TestTextLiner(TestWrapper):
         debug.trace(debug.QUITE_DETAILED,
                     f"TestTextLiner.test_get_rest_line(); self={self}")
 
-        text = TextLiner('this is an line to do tests')
+        text = THE_MODULE.TextLiner('this is an line to do tests')
         text.column = 0
         self.assertEqual(text.get_rest_line(), 'this is an line to do tests')
         text.column = 13
@@ -89,7 +90,7 @@ class TestTextLiner(TestWrapper):
         debug.trace(debug.QUITE_DETAILED,
                     f"TestTextLiner.test_get_current_line(); self={self}")
 
-        text = TextLiner('some text\nwith\nmultiple\nlines')
+        text = THE_MODULE.TextLiner('some text\nwith\nmultiple\nlines')
         text.line = 0
         self.assertEqual(text.get_current_line(), 'some text')
         text.line = 2
@@ -102,7 +103,7 @@ class TestTextLiner(TestWrapper):
         debug.trace(debug.QUITE_DETAILED,
                     f"TestTextLiner.test_advance_column(); self={self}")
 
-        text = TextLiner('some text')
+        text = THE_MODULE.TextLiner('some text')
         self.assertEqual(text.column, 0)
 
         # Advance normal
@@ -124,7 +125,7 @@ class TestTextLiner(TestWrapper):
         debug.trace(debug.QUITE_DETAILED,
                     f"TestTextLiner.test_advance_line(); self={self}")
 
-        text = TextLiner('some text\nwith\nmultiple\nlines')
+        text = THE_MODULE.TextLiner('some text\nwith\nmultiple\nlines')
         self.assertEqual(text.line, 0)
         text.column = 3
         text.advance_line()
@@ -144,7 +145,7 @@ class TestLexer(TestWrapper):
         Tokenize STRING, verify tokens and returned types
         """
 
-        tokens = Lexer().tokenize(string, embedded_tests=embedded_tests)
+        tokens = THE_MODULE.Lexer().tokenize(string, embedded_tests=embedded_tests)
         self.assertTrue(tokens)
         self.assertTrue(isinstance(tokens, list))
 

@@ -22,6 +22,11 @@ from mezcla import debug
 
 
 # Local packages
+## NOTE: this is empty for now
+
+
+# Reference to the module being tested
+#
 # This and "script_module=None" solve problem:
 #     "Assertion failed: "No module named" not in help_usage"
 BATSPP_PATH = os_path.abspath('./batspp/batspp')

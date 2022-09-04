@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 #
-# Tests for exceptions.py module
+# Tests for _exceptions module
 #
 # This test must be runned with the command:
 # $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_exceptions.py
 #
 
 
-"""Tests for exceptions.py module"""
+"""Tests for _exceptions module"""
 
 
 # Standard packages
@@ -22,9 +22,10 @@ from mezcla import debug
 
 # Local packages
 sys_path.insert(0, './batspp')
-from batspp._exceptions import (
-    error, assert_type
-)
+
+
+# Reference to the module being tested
+import batspp._exceptions as THE_MODULE
 
 
 class TestExceptions(TestWrapper):

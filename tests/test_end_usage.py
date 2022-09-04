@@ -31,8 +31,15 @@ from mezcla import debug
 
 
 # Local packages
-EXAMPLES_PATH = os_path.dirname(__file__) + '/../docs/examples'
+## NOTE: this is empty for now
+
+
+# Reference to the module being tested
 SCRIPT = 'batspp'
+
+
+# Constants
+EXAMPLES_PATH = os_path.dirname(__file__) + '/../docs/examples'
 
 
 class TestEndUsage(TestWrapper):

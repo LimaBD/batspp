@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 #
-# Tests for interpreter.py module
+# Tests for _interpreter module
 #
 # This test must be runned with the command:
 # $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_interpreter.py
 #
 
 
-"""Tests for interpreter.py module"""
+"""Tests for _interpreter module"""
 
 
 # Standard packages
@@ -27,9 +27,10 @@ from batspp._ast_nodes import (
     AssertionType, Assertion,
     Test, TestsSuite,
     )
-from batspp._interpreter import (
-    NodeVisitor, Interpreter,
-    )
+
+
+# Reference to the module being tested
+import batspp._interpreter as THE_MODULE
 
 
 class TestNodeVisitor(TestWrapper):
@@ -64,7 +65,7 @@ class TestInterpreter(TestWrapper):
         debug.trace(debug.QUITE_DETAILED,
                     f"TestInterpreter.test_visit_Test(); self={self}")
         data = TokenData(text_line='some line', line=3, column=3)
-        interpreter = Interpreter()
+        interpreter = THE_MODULE.Interpreter()
 
         interpreter.stack_functions = [
             'function some_function() ...',
@@ -86,7 +87,7 @@ class TestInterpreter(TestWrapper):
         debug.trace(debug.QUITE_DETAILED,
                     f"TestInterpreter.test_visit_Assertion(); self={self}")
         data = TokenData(text_line='some line', line=3, column=3)
-        interpreter = Interpreter()
+        interpreter = THE_MODULE.Interpreter()
 
         interpreter.last_title = 'important test'
         node = Assertion(
@@ -135,7 +136,7 @@ class TestInterpreter(TestWrapper):
             data=data,
             )
 
-        actual = Interpreter().interpret(test_suite_node)
+        actual = THE_MODULE.Interpreter().interpret(test_suite_node)
 
         expected = (
             '#!/usr/bin/env bats\n'
