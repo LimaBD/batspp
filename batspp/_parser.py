@@ -121,7 +121,7 @@ class Parser:
             ))
         return result
 
-    def is_pure_command_next(self) -> bool:
+    def is_isolated_command_next(self) -> bool:
         """
         Check that the next pattern is a command NOT followed by text
         """
@@ -137,7 +137,7 @@ class Parser:
                 )
 
         debug.trace(7, (
-            'parser.is_pure_command_next() => '
+            'parser.is_isolated_command_next() => '
             f'command:{is_command} {third_token}'
             f' => {result}'
             ))
@@ -258,7 +258,7 @@ class Parser:
         assert pointer, 'Invalid empty pointer'
 
         while True:
-            if self.is_pure_command_next():
+            if self.is_isolated_command_next():
                 # Only setups can be present on a
                 # block assertion, not teardowns
                 self.append_setup_commands(pointer)
@@ -324,7 +324,7 @@ class Parser:
         """
         commands = []
 
-        while self.is_pure_command_next():
+        while self.is_isolated_command_next():
             self.eat(TokenType.PESO)
             commands.append(self.get_current_token().value)
             self.eat(TokenType.TEXT)
