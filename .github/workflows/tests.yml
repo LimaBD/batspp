@@ -34,5 +34,5 @@ jobs:
         npm install --location=global bats
     - name: Run tests and generate coverage report
       run: |
-        PYTHONPATH="$(pwd):$PYTHONPATH" coverage run -m unittest discover ./tests/
+        PYTHONPATH="$(pwd):$PYTHONPATH" coverage run -m pytest ./tests/
         coverage xml --omit="*/tests/test_*"

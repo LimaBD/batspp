@@ -12,11 +12,10 @@
 
 # Standard packages
 from sys import path as sys_path
-import unittest
 
 
 # Installed packages
-from mezcla.unittest_wrapper import TestWrapper
+import pytest
 from mezcla import debug
 
 
@@ -31,10 +30,8 @@ from batspp._token import (
 import batspp._lexer as THE_MODULE
 
 
-class TestTextLiner(TestWrapper):
+class TestTextLiner:
     """Class for testcase definition"""
-    script_module = None
-    maxDiff       = None
 
     def test_is_column_safe(self):
         """Test for is_column_safe()"""
@@ -43,13 +40,13 @@ class TestTextLiner(TestWrapper):
 
         text = THE_MODULE.TextLiner('some text line')
         text.column = 3
-        self.assertTrue(text.is_column_safe())
+        assert text.is_column_safe()
         text.column = 13
-        self.assertTrue(text.is_column_safe())
+        assert text.is_column_safe()
         text.column = 14
-        self.assertFalse(text.is_column_safe())
+        assert not text.is_column_safe()
         text.column = 49
-        self.assertFalse(text.is_column_safe())
+        assert not text.is_column_safe()
 
     def test_is_line_safe(self):
         """Test for is_line_safe()"""
@@ -57,14 +54,14 @@ class TestTextLiner(TestWrapper):
                     f"TestTextLiner.test_is_line_safe(); self={self}")
 
         text = THE_MODULE.TextLiner('some text\nwith\nmultiple\nlines')
-        self.assertEqual(text.lines, ['some text', 'with', 'multiple', 'lines'])
-        self.assertTrue(text.is_line_safe())
+        assert text.lines == ['some text', 'with', 'multiple', 'lines']
+        assert text.is_line_safe()
         text.line = 3
-        self.assertTrue(text.is_line_safe())
+        assert text.is_line_safe()
         text.line = 4
-        self.assertFalse(text.is_line_safe())
+        assert not text.is_line_safe()
         text.line = 40
-        self.assertFalse(text.is_line_safe())
+        assert not text.is_line_safe()
 
     def test_get_rest_line(self):
         """Test for get_rest_line()"""
@@ -73,17 +70,17 @@ class TestTextLiner(TestWrapper):
 
         text = THE_MODULE.TextLiner('this is an line to do tests')
         text.column = 0
-        self.assertEqual(text.get_rest_line(), 'this is an line to do tests')
+        assert text.get_rest_line() == 'this is an line to do tests'
         text.column = 13
-        self.assertEqual(text.get_rest_line(), 'ne to do tests')
+        assert text.get_rest_line() == 'ne to do tests'
         text.column = 23
-        self.assertEqual(text.get_rest_line(), 'ests')
+        assert text.get_rest_line() == 'ests'
         text.column = 26
-        self.assertEqual(text.get_rest_line(), 's')
+        assert text.get_rest_line() == 's'
         text.column = 27
-        self.assertEqual(text.get_rest_line(), None)
+        assert text.get_rest_line() == None
         text.column = 123
-        self.assertEqual(text.get_rest_line(), None)
+        assert text.get_rest_line() == None
 
     def test_get_current_line(self):
         """Test for get_current_line()"""
@@ -92,11 +89,11 @@ class TestTextLiner(TestWrapper):
 
         text = THE_MODULE.TextLiner('some text\nwith\nmultiple\nlines')
         text.line = 0
-        self.assertEqual(text.get_current_line(), 'some text')
+        assert text.get_current_line() == 'some text'
         text.line = 2
-        self.assertEqual(text.get_current_line(), 'multiple')
+        assert text.get_current_line() == 'multiple'
         text.line = 6
-        self.assertEqual(text.get_current_line(), None)
+        assert text.get_current_line() == None
 
     def test_advance_column(self):
         """Test for advance_column()"""
@@ -104,21 +101,21 @@ class TestTextLiner(TestWrapper):
                     f"TestTextLiner.test_advance_column(); self={self}")
 
         text = THE_MODULE.TextLiner('some text')
-        self.assertEqual(text.column, 0)
+        assert text.column == 0
 
         # Advance normal
         text.advance_column()
-        self.assertEqual(text.column, 1)
+        assert text.column == 1
 
         # Check arg
         text.advance_column(2)
-        self.assertEqual(text.column, 3)
+        assert text.column == 3
 
         # Check limit
-        self.assertEqual(text.line, 0)
+        assert text.line == 0
         text.advance_column(50)
-        self.assertEqual(text.column, 0)
-        self.assertEqual(text.line, 1)
+        assert text.column == 0
+        assert text.line == 1
 
     def test_advance_line(self):
         """Test for advance_line()"""
@@ -126,16 +123,16 @@ class TestTextLiner(TestWrapper):
                     f"TestTextLiner.test_advance_line(); self={self}")
 
         text = THE_MODULE.TextLiner('some text\nwith\nmultiple\nlines')
-        self.assertEqual(text.line, 0)
+        assert text.line == 0
         text.column = 3
         text.advance_line()
-        self.assertEqual(text.column, 0)
-        self.assertEqual(text.line, 1)
+        assert text.column == 0
+        assert text.line == 1
         text.advance_line()
-        self.assertEqual(text.line, 2)
+        assert text.line == 2
 
 
-class TestLexer(TestWrapper):
+class TestLexer:
     """Class for testcase definition"""
     script_module = None
     maxDiff       = None
@@ -146,13 +143,13 @@ class TestLexer(TestWrapper):
         """
 
         tokens = THE_MODULE.Lexer().tokenize(string, embedded_tests=embedded_tests)
-        self.assertTrue(tokens)
-        self.assertTrue(isinstance(tokens, list))
+        assert tokens
+        assert isinstance(tokens, list)
 
         for token in tokens:
-            self.assertTrue(isinstance(token, Token))
+            assert isinstance(token, Token)
 
-        self.assertEqual(tokens[-1].type, TokenType.EOF)
+        assert tokens[-1].type == TokenType.EOF
 
         return tokens
 
@@ -168,11 +165,11 @@ class TestLexer(TestWrapper):
         if valids:
             for valid in valids:
                 tokens = self.tokenize(valid)
-                self.assertEqual(tokens[0].type, expected_type)
+                assert tokens[0].type == expected_type
         if invalids:
             for invalid in invalids:
                 tokens = self.tokenize(invalid)
-                self.assertNotEqual(tokens[0].type, expected_type)
+                assert tokens[0].type != expected_type
 
     def tokenize_types(self, string:str, embedded_tests:bool = False) -> list:
         """Tokenize STRING and map by types"""
@@ -188,13 +185,13 @@ class TestLexer(TestWrapper):
                     f"TestLexer.test_minor(); self={self}")
 
         tokens = self.tokenize('\n')
-        self.assertEqual(len(tokens), 2) # two tokens: MINOR and EOF
-        self.assertEqual(tokens[0].type, TokenType.MINOR)
+        assert len(tokens) == 2 # two tokens: MINOR and EOF
+        assert tokens[0].type == TokenType.MINOR
 
         # N minor lines should be treat as one minor token
         tokens = self.tokenize('\n\n\n\n\n')
-        self.assertEqual(len(tokens), 2)
-        self.assertEqual(tokens[0].type, TokenType.MINOR)
+        assert len(tokens) == 2
+        assert tokens[0].type == TokenType.MINOR
 
     def test_peso(self):
         """Test for PESO token type"""
@@ -264,7 +261,7 @@ class TestLexer(TestWrapper):
                     f"TestLexer.test_pointer(); self={self}")
 
         types = self.tokenize_types('# Continuation of foobar')
-        self.assertEqual(types[:2], [TokenType.CONTINUATION, TokenType.POINTER])
+        assert types[:2] == [TokenType.CONTINUATION, TokenType.POINTER]
         self.assert_token(TokenType.POINTER, invalids=['# of foobar'])
 
     def test_assert_eq(self):
@@ -273,12 +270,12 @@ class TestLexer(TestWrapper):
                     f"TestLexer.test_assert_eq(); self={self}")
 
         types = self.tokenize_types('somefunction arg1 arg2 => expected result')
-        self.assertEqual(types, [
+        assert types == [
             TokenType.TEXT,
             TokenType.ASSERT_EQ,
             TokenType.TEXT,
             TokenType.EOF,
-            ])
+            ]
 
     def test_assert_ne(self):
         """Test for ASSERT_NE token type"""
@@ -286,36 +283,36 @@ class TestLexer(TestWrapper):
                     f"TestLexer.test_assert_ne(); self={self}")
 
         types = self.tokenize_types('somefunction arg1 arg2 =/> not expected result')
-        self.assertEqual(types, [
+        assert types == [
             TokenType.TEXT,
             TokenType.ASSERT_NE,
             TokenType.TEXT,
             TokenType.EOF,
-            ])
+            ]
 
     def test_end_eof_tags(self):
         """Test for END and EOF tags"""
         types = self.tokenize_types('$ some command\nexpected text\n<EOF>\n<END>')
-        self.assertEqual(types, [
+        assert types == [
             TokenType.PESO,
             TokenType.TEXT,
             TokenType.TEXT,
             TokenType.MINOR,
             TokenType.MINOR,
             TokenType.EOF,
-            ])
+            ]
 
     def test_blank(self):
         """Test for BLANK tag"""
         types = self.tokenize_types('$ some command\nexpected text\n<BLANK>\nwith an blank line')
-        self.assertEqual(types, [
+        assert types == [
             TokenType.PESO,
             TokenType.TEXT,
             TokenType.TEXT,
             TokenType.TEXT,
             TokenType.TEXT,
             TokenType.EOF,
-            ])
+            ]
 
     def test_text(self):
         """Test for TEXT token type"""
@@ -327,4 +324,5 @@ class TestLexer(TestWrapper):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    debug.trace_current_context()
+    pytest.main([__file__])

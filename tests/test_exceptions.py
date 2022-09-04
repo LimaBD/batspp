@@ -12,10 +12,10 @@
 
 # Standard packages
 from sys import path as sys_path
-import unittest
 
 
 # Installed packages
+import pytest
 from mezcla.unittest_wrapper import TestWrapper
 from mezcla import debug
 
@@ -28,10 +28,8 @@ sys_path.insert(0, './batspp')
 import batspp._exceptions as THE_MODULE
 
 
-class TestExceptions(TestWrapper):
+class TestExceptions:
     """Class for testcase definition"""
-    script_module = None
-    maxDiff       = None
 
     def test_error(self):
         """Test for error()"""
@@ -41,4 +39,5 @@ class TestExceptions(TestWrapper):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    debug.trace_current_context()
+    pytest.main([__file__])
