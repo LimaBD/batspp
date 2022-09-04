@@ -93,8 +93,13 @@ class Lexer:
     """
 
     def __init__(self) -> None:
+        # Global states variables
         self.text = None
         self.tokens = []
+
+    def reset_global_state_variables(self) -> None:
+        """Reset global states variables"""
+        self.__init__()
 
     def append_token(self, token: Token) -> None:
         """
@@ -310,12 +315,8 @@ class Lexer:
             text = re_sub(r'^# ?(?! *(?:[Tt]est|[Cc]continue|[Cc]ontinuation|[Ss]etup|[Tt]eardown))', '', text, flags=re_MULTILINE)
             debug.trace(7, f'lexer.tokenize() => formated embedded tests to:\n{text}')
 
-        # Clean global class values
-        #
-        # This is useful if is needed to reuse
-        # the same instance of this class
+        self.reset_global_state_variables()
         self.text = TextLiner(text)
-        self.tokens = []
 
         # Tokenize text
         self.extract_tokens()

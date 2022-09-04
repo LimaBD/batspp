@@ -43,6 +43,7 @@ class Parser:
     """
 
     def __init__(self) -> None:
+        # Global states variables
         self.tokens = []
         self.index = 0
         self.last_pointer = ''
@@ -50,6 +51,10 @@ class Parser:
         self.setup_commands_stack = []
         self.teardown_commands_stack = []
         self.embedded_tests = False
+
+    def reset_global_state_variables(self) -> None:
+        """Reset global states variables"""
+        self.__init__()
 
     def get_current_token(self) -> Token:
         """Returns current token"""
@@ -512,21 +517,12 @@ class Parser:
         """
         Builds an Abstract Syntax Tree (AST) from TOKENS list
         """
-
-        # Clean global class values
-        #
-        # This is useful if is needed to reuse
-        # the same instance of this class
         assert tokens, 'Tokens list cannot be empty'
+
+        self.reset_global_state_variables()
         self.tokens = tokens
-        self.index = 0
-        self.last_pointer = ''
-        self.test_nodes = []
-        self.setup_commands_stack = []
-        self.teardown_commands_stack = []
         self.embedded_tests = embedded_tests
 
-        # build AST
         result = self.build_tests_suite()
 
         debug.trace(7, f'Parser.parse() => {result}')
