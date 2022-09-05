@@ -107,9 +107,9 @@ class TestParser:
             ]
         assert not parser.is_command_next()
 
-    def test_is_isolated_command_next(self):
-        """Test for is_isolated_command_next()"""
-        debug.trace(7, f'TestParser.test_is_isolated_command_next({self})')
+    def test_is_setup_command_next(self):
+        """Test for is_setup_command_next()"""
+        debug.trace(7, f'TestParser.test_is_setup_command_next({self})')
         parser = THE_MODULE.Parser()
 
         # Valid setup patern
@@ -118,7 +118,7 @@ class TestParser:
             Token(TokenType.TEXT, 'some text'),
             Token(TokenType.EOF, None),
             ]
-        assert parser.is_isolated_command_next()
+        assert parser.is_setup_command_next()
 
         # Multiple setup patterns
         parser.tokens = [
@@ -128,7 +128,7 @@ class TestParser:
             Token(TokenType.TEXT, 'some text'),
             Token(TokenType.EOF, None),
             ]
-        assert parser.is_isolated_command_next()
+        assert parser.is_setup_command_next()
 
         # Not a command pattern
         parser.tokens = [
@@ -136,7 +136,7 @@ class TestParser:
             Token(TokenType.TEXT, 'some text'),
             Token(TokenType.EOF, None),
             ]
-        assert not parser.is_isolated_command_next()
+        assert not parser.is_setup_command_next()
 
         # Extra text token
         parser.tokens = [
@@ -145,7 +145,7 @@ class TestParser:
             Token(TokenType.TEXT, 'more text'),
             Token(TokenType.EOF, None),
             ]
-        assert not parser.is_isolated_command_next()
+        assert not parser.is_setup_command_next()
 
     def test_is_assertion_next(self):
         """Test for is_assertion_next()"""

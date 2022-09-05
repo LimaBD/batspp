@@ -121,9 +121,9 @@ class Parser:
             ))
         return result
 
-    def is_isolated_command_next(self) -> bool:
+    def is_setup_command_next(self) -> bool:
         """
-        Check that the next pattern is a command NOT followed by text
+        Check for setup command token pattern next
         """
 
         result = False
@@ -137,7 +137,7 @@ class Parser:
                 )
 
         debug.trace(7, (
-            'parser.is_isolated_command_next() => '
+            'parser.is_setup_command_next() => '
             f'command:{is_command} {third_token}'
             f' => {result}'
             ))
@@ -258,7 +258,7 @@ class Parser:
         assert pointer, 'Invalid empty pointer'
 
         while True:
-            if self.is_isolated_command_next():
+            if self.is_setup_command_next():
                 # Only setups can be present on a
                 # block assertion, not teardowns
                 self.append_setup_commands(pointer)
@@ -296,7 +296,7 @@ class Parser:
             else:
                 pass
 
-        commands = self.extract_pure_commands(data)
+        commands = self.extract_setup_commands(data)
 
         # Push new setup commands to the stack,
         # this must contains an pointer to later
@@ -313,18 +313,18 @@ class Parser:
         data = self.get_current_token().data
 
         self.eat(TokenType.TEARDOWN)
-        commands = self.extract_pure_commands(data)
+        commands = self.extract_setup_commands(data)
 
         self.teardown_commands_stack.append(commands)
 
-    def extract_pure_commands(self, data):
+    def extract_setup_commands(self, data):
         """
-        Extract pure commands from blocks of pure commands,
+        Extract setup commands from blocks of setup commands,
         also raise exception if block of commands are empty.
         """
         commands = []
 
-        while self.is_isolated_command_next():
+        while self.is_setup_command_next():
             self.eat(TokenType.PESO)
             commands.append(self.get_current_token().value)
             self.eat(TokenType.TEXT)
