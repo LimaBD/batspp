@@ -24,5 +24,6 @@ tqdm
 # and verified connection between your system and PyPi over HTTPS.
 twine
 
-# This is useful to generate tests coverage reports
+# This is useful to run tests and coverage reports
+pytest
 coverage

@@ -1,36 +1,35 @@
 #!/usr/bin/env python3
 #
-# Tests for exceptions.py module
+# Tests for _exceptions module
 #
 # This test must be runned with the command:
 # $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_exceptions.py
 #
 
 
-"""Tests for exceptions.py module"""
+"""Tests for _exceptions module"""
 
 
 # Standard packages
 from sys import path as sys_path
-import unittest
 
 
 # Installed packages
+import pytest
 from mezcla.unittest_wrapper import TestWrapper
 from mezcla import debug
 
 
 # Local packages
 sys_path.insert(0, './batspp')
-from batspp._exceptions import (
-    error, assert_type
-)
 
 
-class TestExceptions(TestWrapper):
+# Reference to the module being tested
+import batspp._exceptions as THE_MODULE
+
+
+class TestExceptions:
     """Class for testcase definition"""
-    script_module = None
-    maxDiff       = None
 
     def test_error(self):
         """Test for error()"""
@@ -40,4 +39,5 @@ class TestExceptions(TestWrapper):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    debug.trace_current_context()
+    pytest.main([__file__])

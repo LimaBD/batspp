@@ -43,6 +43,7 @@ class Parser:
     """
 
     def __init__(self) -> None:
+        # Global states variables
         self.tokens = []
         self.index = 0
         self.last_pointer = ''
@@ -50,6 +51,10 @@ class Parser:
         self.setup_commands_stack = []
         self.teardown_commands_stack = []
         self.embedded_tests = False
+
+    def reset_global_state_variables(self) -> None:
+        """Reset global states variables"""
+        self.__init__()
 
     def get_current_token(self) -> Token:
         """Returns current token"""
@@ -116,25 +121,51 @@ class Parser:
             ))
         return result
 
-    def is_pure_command_next(self) -> bool:
+    def is_setup_command_next(self) -> bool:
         """
-        Check that the next pattern is a command NOT followed by text
+        Check for setup command token pattern next
+        setup : command ^[TEXT]
         """
+        result = self.is_command_next() and not self.is_command_assertion_next()
+        debug.trace(7, (
+            f'parser.is_setup_command_next() => {result}'
+            ))
+        return result
 
+    def is_command_assertion_next(self) -> bool:
+        """
+        Check if a command assertion tokens pattern is next
+        command_assertion : command TEXT
+        """
         result = False
-        is_command = self.is_command_next()
         third_token = self.peek_token(2)
 
-        if third_token is not None:
-            result = (
-                is_command
-                and third_token.type is not TokenType.TEXT
-                )
+        if third_token:
+            result = self.is_command_next() and third_token.type is TokenType.TEXT
 
         debug.trace(7, (
-            'parser.is_pure_command_next() => '
-            f'command:{is_command} {third_token}'
-            f' => {result}'
+            f'parser.is_command_assertion_next() => {result}'
+            ))
+        return result
+
+    def is_arrow_assertion_next(self) -> bool:
+        """
+        Check if a arrow assertion tokens pattern is next
+        arrow_assertion : TEXT (ASSERT_EQ|ASSERT_NE) TEXT
+        """
+        result = False
+        first_token = self.get_current_token()
+        second_token = self.peek_token(1)
+        third_token = self.peek_token(2)
+
+        if first_token and second_token and third_token:
+            result = (
+                first_token.type is TokenType.TEXT
+                and second_token.type in [TokenType.ASSERT_EQ, TokenType.ASSERT_NE]
+                and third_token.type is TokenType.TEXT
+                )
+        debug.trace(7, (
+            f'parser.is_arrow_assertion_next() => {result}'
             ))
         return result
 
@@ -142,33 +173,9 @@ class Parser:
         """
         Check if a assertion tokens pattern is next
         """
-
-        result = False
-
-        first_token = self.get_current_token()
-        second_token = self.peek_token(1)
-        third_token = self.peek_token(2)
-
-        if first_token and second_token and third_token:
-
-            # Check for command assertion
-            if first_token.type is TokenType.PESO:
-                result = (
-                    second_token.type is TokenType.TEXT
-                    and third_token.type is TokenType.TEXT
-                    )
-
-            # Check for assert eq or ne
-            elif first_token.type is TokenType.TEXT:
-                result = (
-                    second_token.type in [TokenType.ASSERT_EQ, TokenType.ASSERT_NE]
-                    and third_token.type is TokenType.TEXT
-                    )
-
+        result = self.is_command_assertion_next() or self.is_arrow_assertion_next()
         debug.trace(7, (
-            'parser.is_assertion_next() => '
-            f'command:{first_token} {second_token} {third_token}'
-            f' => {result}'
+            f'parser.is_assertion_next() => {result}'
             ))
         return result
 
@@ -253,7 +260,7 @@ class Parser:
         assert pointer, 'Invalid empty pointer'
 
         while True:
-            if self.is_pure_command_next():
+            if self.is_setup_command_next():
                 # Only setups can be present on a
                 # block assertion, not teardowns
                 self.append_setup_commands(pointer)
@@ -291,7 +298,7 @@ class Parser:
             else:
                 pass
 
-        commands = self.extract_pure_commands(data)
+        commands = self.extract_setup_commands(data)
 
         # Push new setup commands to the stack,
         # this must contains an pointer to later
@@ -308,18 +315,18 @@ class Parser:
         data = self.get_current_token().data
 
         self.eat(TokenType.TEARDOWN)
-        commands = self.extract_pure_commands(data)
+        commands = self.extract_setup_commands(data)
 
         self.teardown_commands_stack.append(commands)
 
-    def extract_pure_commands(self, data):
+    def extract_setup_commands(self, data):
         """
-        Extract pure commands from blocks of pure commands,
+        Extract setup commands from blocks of setup commands,
         also raise exception if block of commands are empty.
         """
         commands = []
 
-        while self.is_pure_command_next():
+        while self.is_setup_command_next():
             self.eat(TokenType.PESO)
             commands.append(self.get_current_token().value)
             self.eat(TokenType.TEXT)
@@ -512,21 +519,13 @@ class Parser:
         """
         Builds an Abstract Syntax Tree (AST) from TOKENS list
         """
-
-        # Clean global class values
-        #
-        # This is useful if is needed to reuse
-        # the same instance of this class
         assert tokens, 'Tokens list cannot be empty'
+        assert tokens[-1], 'Last token should be EOF'
+
+        self.reset_global_state_variables()
         self.tokens = tokens
-        self.index = 0
-        self.last_pointer = ''
-        self.test_nodes = []
-        self.setup_commands_stack = []
-        self.teardown_commands_stack = []
         self.embedded_tests = embedded_tests
 
-        # build AST
         result = self.build_tests_suite()
 
         debug.trace(7, f'Parser.parse() => {result}')

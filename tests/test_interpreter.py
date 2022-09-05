@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 #
-# Tests for interpreter.py module
+# Tests for _interpreter module
 #
 # This test must be runned with the command:
 # $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_interpreter.py
 #
 
 
-"""Tests for interpreter.py module"""
+"""Tests for _interpreter module"""
 
 
 # Standard packages
 from sys import path as sys_path
-import unittest
 
 
 # Installed packages
+import pytest
 from mezcla.unittest_wrapper import TestWrapper
 from mezcla import debug
 
@@ -27,15 +27,14 @@ from batspp._ast_nodes import (
     AssertionType, Assertion,
     Test, TestsSuite,
     )
-from batspp._interpreter import (
-    NodeVisitor, Interpreter,
-    )
 
 
-class TestNodeVisitor(TestWrapper):
+# Reference to the module being tested
+import batspp._interpreter as THE_MODULE
+
+
+class TestNodeVisitor:
     """Class for testcase definition"""
-    script_module = None
-    maxDiff       = None
 
     ## TODO: implement stub classes to test visitors
 
@@ -48,10 +47,8 @@ class TestNodeVisitor(TestWrapper):
         ## TODO: WORK-IN-PROGRESS
 
 
-class TestInterpreter(TestWrapper):
+class TestInterpreter:
     """Class for testcase definition"""
-    script_module = None
-    maxDiff       = None
 
     def test_visit_TestsSuite(self):
         """Test for visit_TestsSuite()"""
@@ -64,7 +61,7 @@ class TestInterpreter(TestWrapper):
         debug.trace(debug.QUITE_DETAILED,
                     f"TestInterpreter.test_visit_Test(); self={self}")
         data = TokenData(text_line='some line', line=3, column=3)
-        interpreter = Interpreter()
+        interpreter = THE_MODULE.Interpreter()
 
         interpreter.stack_functions = [
             'function some_function() ...',
@@ -73,20 +70,20 @@ class TestInterpreter(TestWrapper):
         node = Test(pointer='important test', assertions=[], data=data)
         actual = interpreter.visit_Test(node)
 
-        self.assertEqual(interpreter.last_title, 'important test')
-        self.assertTrue('@test "important test"' in actual)
+        assert interpreter.last_title == 'important test'
+        assert '@test "important test"' in actual
 
         # Check functions
-        self.assertFalse(interpreter.stack_functions)
-        self.assertTrue('function some_function() ...' in actual)
-        self.assertTrue('function another_function() ...' in actual)
+        assert not interpreter.stack_functions
+        assert 'function some_function() ...' in actual
+        assert 'function another_function() ...' in actual
 
     def test_visit_Assertion(self):
         """Test for visit_Assertion()"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestInterpreter.test_visit_Assertion(); self={self}")
         data = TokenData(text_line='some line', line=3, column=3)
-        interpreter = Interpreter()
+        interpreter = THE_MODULE.Interpreter()
 
         interpreter.last_title = 'important test'
         node = Assertion(
@@ -97,16 +94,15 @@ class TestInterpreter(TestWrapper):
             )
         actual = interpreter.visit_Assertion(node)
 
-        self.assertEqual(len(interpreter.stack_functions), 2)
-        self.assertTrue('echo "some text"' in interpreter.stack_functions[0])
-        self.assertTrue('some text' in interpreter.stack_functions[1])
+        assert len(interpreter.stack_functions) == 2
+        assert 'echo "some text"' in interpreter.stack_functions[0]
+        assert 'some text' in interpreter.stack_functions[1]
 
         actual_assertion = actual.splitlines()[-1]
-        self.assertTrue(actual_assertion.startswith('\t[ '))
-        self.assertTrue(' == ' in actual_assertion)
-        self.assertTrue(actual_assertion.endswith(' ]'))
-
-        self.assertTrue(interpreter.debug_required)
+        assert actual_assertion.startswith('\t[ ')
+        assert ' == ' in actual_assertion
+        assert actual_assertion.endswith(' ]')
+        assert interpreter.debug_required
 
     def test_interpret(self):
         """Test for interpret()"""
@@ -135,7 +131,7 @@ class TestInterpreter(TestWrapper):
             data=data,
             )
 
-        actual = Interpreter().interpret(test_suite_node)
+        actual = THE_MODULE.Interpreter().interpret(test_suite_node)
 
         expected = (
             '#!/usr/bin/env bats\n'
@@ -206,8 +202,9 @@ class TestInterpreter(TestWrapper):
             '\n'
             )
 
-        self.assertEqual(actual, expected)
+        assert actual == expected
 
 
 if __name__ == '__main__':
-    unittest.main()
+    debug.trace_current_context()
+    pytest.main([__file__])

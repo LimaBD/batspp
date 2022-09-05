@@ -69,14 +69,16 @@ class Interpreter(NodeVisitor):
     ##       also builds a full tests content.
 
     def __init__(self) -> None:
-        # Test related options and constants
+        # Global states variables
         self.opts = BatsppOpts()
         self.args = BatsppArgs()
-
-        # Global state
         self.stack_functions = []
         self.last_title = ''
         self.debug_required = False
+
+    def reset_global_state_variables(self) -> None:
+        """Reset global states variables"""
+        self.__init__()
 
     # pylint: disable=invalid-name
     def visit_TestsSuite(self, node: TestsSuite) -> str:
@@ -269,15 +271,9 @@ class Interpreter(NodeVisitor):
 
         assert tree, 'invalid tree node'
 
-        # Clean global class values
-        #
-        # This is useful if is needed to reuse
-        # the same instance of this class
+        self.reset_global_state_variables()
         self.opts = opts
         self.args = args
-        self.stack_functions = []
-        self.last_title = ''
-        self.debug_required = False
 
         # Append commands passed by arguments
         # (not in test file) to a setup global

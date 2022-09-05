@@ -11,17 +11,22 @@
 
 
 # Standard packages
-import unittest
 from os import path as os_path
 
 
 # Installed packages
+import pytest
 from mezcla.unittest_wrapper import TestWrapper
 from mezcla import glue_helpers as gh
 from mezcla import debug
 
 
 # Local packages
+## NOTE: this is empty for now
+
+
+# Reference to the module being tested
+#
 # This and "script_module=None" solve problem:
 #     "Assertion failed: "No module named" not in help_usage"
 BATSPP_PATH = os_path.abspath('./batspp/batspp')
@@ -247,4 +252,5 @@ class TestBatspp(TestWrapper):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    debug.trace_current_context()
+    pytest.main([__file__])

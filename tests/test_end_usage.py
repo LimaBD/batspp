@@ -20,19 +20,26 @@
 
 # Standard packages
 from re import sub as re_sub
-import unittest
 from os import path as os_path
 
 
 # Installed packages
+import pytest
 from mezcla.unittest_wrapper import TestWrapper
 from mezcla import glue_helpers as gh
 from mezcla import debug
 
 
 # Local packages
-EXAMPLES_PATH = os_path.dirname(__file__) + '/../docs/examples'
+## NOTE: this is empty for now
+
+
+# Reference to the module being tested
 SCRIPT = 'batspp'
+
+
+# Constants
+EXAMPLES_PATH = os_path.dirname(__file__) + '/../docs/examples'
 
 
 class TestEndUsage(TestWrapper):
@@ -98,4 +105,5 @@ class TestEndUsage(TestWrapper):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    debug.trace_current_context()
+    pytest.main([__file__])
