@@ -126,22 +126,9 @@ class Parser:
         Check for setup command token pattern next
         setup : command ^[TEXT]
         """
-        ## TODO: refactor using not is_command_assertion_next
-
-        result = False
-        is_command = self.is_command_next()
-        third_token = self.peek_token(2)
-
-        if third_token is not None:
-            result = (
-                is_command
-                and third_token.type is not TokenType.TEXT
-                )
-
+        result = self.is_command_next() and not self.is_command_assertion_next()
         debug.trace(7, (
-            'parser.is_setup_command_next() => '
-            f'command:{is_command} {third_token}'
-            f' => {result}'
+            f'parser.is_setup_command_next() => {result}'
             ))
         return result
 
