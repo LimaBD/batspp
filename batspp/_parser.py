@@ -124,7 +124,9 @@ class Parser:
     def is_setup_command_next(self) -> bool:
         """
         Check for setup command token pattern next
+        setup : command ^[TEXT]
         """
+        ## TODO: refactor using not is_command_assertion_next
 
         result = False
         is_command = self.is_command_next()
@@ -143,37 +145,50 @@ class Parser:
             ))
         return result
 
-    def is_assertion_next(self) -> bool:
+    def is_command_assertion_next(self) -> bool:
         """
-        Check if a assertion tokens pattern is next
+        Check if a command assertion tokens pattern is next
+        command_assertion : command TEXT
         """
-
         result = False
+        third_token = self.peek_token(2)
 
+        if third_token:
+            result = self.is_command_next() and third_token.type is TokenType.TEXT
+
+        debug.trace(7, (
+            f'parser.is_command_assertion_next() => {result}'
+            ))
+        return result
+
+    def is_arrow_assertion_next(self) -> bool:
+        """
+        Check if a arrow assertion tokens pattern is next
+        arrow_assertion : TEXT (ASSERT_EQ|ASSERT_NE) TEXT
+        """
+        result = False
         first_token = self.get_current_token()
         second_token = self.peek_token(1)
         third_token = self.peek_token(2)
 
         if first_token and second_token and third_token:
-
-            # Check for command assertion
-            if first_token.type is TokenType.PESO:
-                result = (
-                    second_token.type is TokenType.TEXT
-                    and third_token.type is TokenType.TEXT
-                    )
-
-            # Check for assert eq or ne
-            elif first_token.type is TokenType.TEXT:
-                result = (
-                    second_token.type in [TokenType.ASSERT_EQ, TokenType.ASSERT_NE]
-                    and third_token.type is TokenType.TEXT
-                    )
-
+            result = (
+                first_token.type is TokenType.TEXT
+                and second_token.type in [TokenType.ASSERT_EQ, TokenType.ASSERT_NE]
+                and third_token.type is TokenType.TEXT
+                )
         debug.trace(7, (
-            'parser.is_assertion_next() => '
-            f'command:{first_token} {second_token} {third_token}'
-            f' => {result}'
+            f'parser.is_arrow_assertion_next() => {result}'
+            ))
+        return result
+
+    def is_assertion_next(self) -> bool:
+        """
+        Check if a assertion tokens pattern is next
+        """
+        result = self.is_command_assertion_next() or self.is_arrow_assertion_next()
+        debug.trace(7, (
+            f'parser.is_assertion_next() => {result}'
             ))
         return result
 
