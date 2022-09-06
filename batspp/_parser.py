@@ -315,6 +315,21 @@ class Parser:
         # assign this to an assertion
         self.setup_commands_stack.append((pointer, commands))
 
+    def pop_setup_commands(self, pointer: str) -> list:
+        """
+        Pop setup commands from stack with same POINTER,
+        if several setups commands blocks are founded, unify all into one
+        """
+        result = []
+
+        # Get commands from stack with same pointer
+        for stack_pointer, commands in self.setup_commands_stack:
+            if stack_pointer == pointer:
+                result += commands
+                self.setup_commands_stack.remove((stack_pointer, commands))
+
+        return result
+
     def append_teardown_commands(self) -> None:
         """
         Append teardown commands to stack
@@ -504,21 +519,6 @@ class Parser:
             teardown_commands = self.teardown_commands_stack,
             )
         debug.trace(7, f'parser.build_tests_suite() => {result}')
-        return result
-
-    def pop_setup_commands(self, pointer: str) -> list:
-        """
-        Pop setup commands from stack with same POINTER,
-        if several setups commands blocks are founded, unify all into one
-        """
-        result = []
-
-        # Get commands from stack with same pointer
-        for stack_pointer, commands in self.setup_commands_stack:
-            if stack_pointer == pointer:
-                result += commands
-                self.setup_commands_stack.remove((stack_pointer, commands))
-
         return result
 
     def parse(
