@@ -46,7 +46,7 @@ class Parser:
         # Global states variables
         self.tokens = []
         self.index = 0
-        self.last_pointer = ''
+        self.last_reference = ''
         self.tests_ast_nodes_stack = []
         self.setup_commands_stack = []
         self.teardown_commands_stack = []
@@ -179,28 +179,28 @@ class Parser:
             ))
         return result
 
-    def push_test_ast_node(self, pointer:str='') -> None:
+    def push_test_ast_node(self, reference:str='') -> None:
         """
         Push test AST node to tests stack,
-        Set POINTER as pointer, otherwise (if empty), search for TEST TEXT tokens
+        Set REFERENCE as reference, otherwise (if empty), search for TEST TEXT tokens
         """
-        debug.trace(7, f'parser.push_test_ast_node(pointer={pointer})')
+        debug.trace(7, f'parser.push_test_ast_node(reference={reference})')
 
         # Set debug data
         data = self.get_current_token().data
 
-        # Check for pointer
-        if not pointer:
+        # Check for reference
+        if not reference:
             self.eat(TokenType.TEST)
-            pointer = self.get_current_token().value.strip()
-            self.last_pointer = pointer
+            reference = self.get_current_token().value.strip()
+            self.last_reference = reference
             self.eat(TokenType.TEXT)
 
         # Push new test node to stack
-        node = Test(pointer=pointer, assertions=None, data=data)
+        node = Test(reference=reference, assertions=None, data=data)
         self.tests_ast_nodes_stack.append(node)
 
-        self.break_setup_assertion(pointer)
+        self.break_setup_assertion(reference)
 
     def pop_tests_ast_nodes(self):
         """
@@ -228,24 +228,24 @@ class Parser:
         #
         # Are break into setup commands or assertion nodes
         #
-        # If continuation has no pointer token,
-        # set pointer to the last test
+        # If continuation has no reference token,
+        # set reference to the last test
 
         data = self.get_current_token().data
 
         self.eat(TokenType.CONTINUATION)
 
-        pointer = ''
+        reference = ''
 
-        # Check for pointer
+        # Check for reference
         if self.get_current_token().type is TokenType.POINTER:
             self.eat(TokenType.POINTER)
-            pointer = self.get_current_token().value.strip()
+            reference = self.get_current_token().value.strip()
             self.eat(TokenType.TEXT)
 
         # Assign continuation to last test
-        elif self.last_pointer:
-            pointer = self.last_pointer
+        elif self.last_reference:
+            reference = self.last_reference
 
         # Otherwise the continuation is invalid
         else:
@@ -256,77 +256,77 @@ class Parser:
                 column=data.column,
                 )
 
-        self.break_setup_assertion(pointer)
+        self.break_setup_assertion(reference)
 
-    def break_setup_assertion(self, pointer:int = '') -> None:
+    def break_setup_assertion(self, reference:int = '') -> None:
         """
         Process and break block test
-        into setup commands and assertion AST nodes and set POINTER as pointer
+        into setup commands and assertion AST nodes and set REFERENCE as reference
         """
-        debug.trace(7, f'parser.break_setup_assertion(pointer={pointer})')
+        debug.trace(7, f'parser.break_setup_assertion(reference={reference})')
 
         # Separate/break blocks into setup commands and assertion nodes
 
-        assert pointer, 'Invalid empty pointer'
+        assert reference, 'Invalid empty reference'
 
         while True:
             if self.is_setup_command_next():
                 # Only setups can be present on a
                 # block assertion, not teardowns
-                self.push_setup_commands(pointer)
+                self.push_setup_commands(reference)
             elif self.is_assertion_next():
-                self.build_assertion(pointer)
+                self.build_assertion(reference)
             else:
                 break
 
-    def push_setup_commands(self, pointer:str='') -> None:
+    def push_setup_commands(self, reference:str='') -> None:
         """
-        Push Setup commands to stack and set POINTER as pointer
+        Push Setup commands to stack and set REFERENCE as reference
         """
-        debug.trace(7, f'parser.push_setup_commands(pointer={pointer})')
+        debug.trace(7, f'parser.push_setup_commands(reference={reference})')
 
         # Set debug data
         data = self.get_current_token().data
 
-        # Check pointer
-        if not pointer:
+        # Check reference
+        if not reference:
             self.eat(TokenType.SETUP)
 
-            # Local setups contains pointer
+            # Local setups contains reference
             if self.get_current_token().type is TokenType.POINTER:
                 self.eat(TokenType.POINTER)
-                pointer = self.get_current_token().value.strip()
+                reference = self.get_current_token().value.strip()
                 self.eat(TokenType.TEXT)
 
             # If there are a previus test to the setup,
             # we assign the setup to that test
-            elif self.last_pointer:
-                pointer = self.last_pointer
+            elif self.last_reference:
+                reference = self.last_reference
 
             # Otherwise we treat the setup as a
-            # global setup (empty pointer)
+            # global setup (empty reference)
             else:
                 pass
 
         commands = self.extract_setup_commands(data)
 
         # Push new setup commands to the stack,
-        # this must contains an pointer to later
+        # this must contains an reference to later
         # assign this to an assertion
-        self.setup_commands_stack.append((pointer, commands))
+        self.setup_commands_stack.append((reference, commands))
 
-    def pop_setup_commands(self, pointer: str) -> list:
+    def pop_setup_commands(self, reference: str) -> list:
         """
-        Pop setup commands from stack with same POINTER,
+        Pop setup commands from stack with same REFERENCE,
         if several setups commands blocks are founded, unify all into one
         """
         result = []
 
-        # Get commands from stack with same pointer
-        for stack_pointer, commands in self.setup_commands_stack:
-            if stack_pointer == pointer:
+        # Get commands from stack with same reference
+        for stack_reference, commands in self.setup_commands_stack:
+            if stack_reference == reference:
                 result += commands
-                self.setup_commands_stack.remove((stack_pointer, commands))
+                self.setup_commands_stack.remove((stack_reference, commands))
 
         return result
 
@@ -366,14 +366,14 @@ class Parser:
 
         return commands
 
-    def build_assertion(self, pointer:str='') -> None:
+    def build_assertion(self, reference:str='') -> None:
         """
-        Build and append Assertion AST node and set POINTER as pointer
+        Build and append Assertion AST node and set REFERENCE as reference
         """
-        debug.trace(7, f'parser.build_assertion(pointer={pointer})')
+        debug.trace(7, f'parser.build_assertion(reference={reference})')
 
-        # Check pointer
-        assert pointer, 'Invalid empty pointer'
+        # Check reference
+        assert reference, 'Invalid empty reference'
 
         # Set data
         data = self.get_current_token().data
@@ -418,30 +418,30 @@ class Parser:
         # New assertion node
         node = Assertion(
             atype=atype,
-            setup_commands=self.pop_setup_commands(pointer=pointer),
+            setup_commands=self.pop_setup_commands(reference=reference),
             actual=actual,
             expected=expected,
             data=data,
             )
 
-        self.assign_child_assertion_to_parent_test(node, pointer)
+        self.assign_child_assertion_to_parent_test(node, reference)
 
     def assign_child_assertion_to_parent_test(
             self,
             assertion_node: Assertion,
-            pointer: str
+            reference: str
             ) -> None:
         """
         Assign child assertion ast node into parent test ast node
         """
         for test in reversed(self.tests_ast_nodes_stack):
-            if test.pointer == pointer:
+            if test.reference == reference:
                 test.assertions.append(assertion_node)
                 assertion_node = None
                 break
         if assertion_node is not None:
             error(
-                message=f'Assertion "{pointer}" referenced before assignment.',
+                message=f'Assertion "{reference}" referenced before assignment.',
                 text_line=assertion_node.data.text_line,
                 line=assertion_node.data.line,
                 column=None,
@@ -497,13 +497,13 @@ class Parser:
         self.eat(TokenType.EOF)
 
         # Set global global setup for test suite
-        setup_commands = self.pop_setup_commands(pointer='')
+        setup_commands = self.pop_setup_commands(reference='')
 
         # Finishing the parsing, cannot be remaining setups on stack
         if self.setup_commands_stack:
             first_invalid = self.setup_commands_stack[0]
             error(
-                message=f'Setup "{first_invalid.pointer}" referenced before assignment.',
+                message=f'Setup "{first_invalid.reference}" referenced before assignment.',
                 text_line=first_invalid.data.text_line,
                 line=first_invalid.data.line,
                 column=None,
