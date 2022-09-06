@@ -188,9 +188,9 @@ class TestParser:
             ]
         assert not parser.is_assertion_next()
 
-    def test_push_test_ast(self):
-        """Test for push_test_ast()"""
-        debug.trace(7, f'TestParser.test_push_test_ast({self})')
+    def test_push_test_ast_node(self):
+        """Test for push_test_ast_node"""
+        debug.trace(7, f'TestParser.test_push_test_ast_node({self})')
         parser = THE_MODULE.Parser()
 
         # Check test pattern
@@ -200,13 +200,13 @@ class TestParser:
             Token(TokenType.TEXT, 'some test title'),
             Token(TokenType.EOF, None),
             ]
-        parser.push_test_ast()
+        parser.push_test_ast_node()
         assert len(parser.test_nodes) == 1
         assert parser.test_nodes[0].pointer == 'some test title'
         assert parser.test_nodes[0].pointer != 'wrong pointer!'
 
         # A new test with pointer
-        parser.push_test_ast(pointer='a new forced test')
+        parser.push_test_ast_node(pointer='a new forced test')
         assert len(parser.test_nodes) == 2
         assert parser.test_nodes[1].pointer == 'a new forced test'
 
