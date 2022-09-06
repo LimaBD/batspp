@@ -179,12 +179,12 @@ class Parser:
             ))
         return result
 
-    def build_test(self, pointer:str='') -> None:
+    def push_test_ast(self, pointer:str='') -> None:
         """
-        Build and append Test AST node,
+        Push test AST node to tests stack,
         Set POINTER as pointer, otherwise (if empty), search for TEST TEXT tokens
         """
-        debug.trace(7, f'parser.build_test(pointer={pointer})')
+        debug.trace(7, f'parser.push_test_ast(pointer={pointer})')
 
         # Set debug data
         data = self.get_current_token().data
@@ -196,7 +196,7 @@ class Parser:
             self.last_pointer = pointer
             self.eat(TokenType.TEXT)
 
-        # Add new test node
+        # Push new test node to stack
         node = Test(pointer=pointer, assertions=None, data=data)
         self.test_nodes.append(node)
 
@@ -443,7 +443,7 @@ class Parser:
 
             # Process next tokens as a test directive pattern
             elif token_type is TokenType.TEST:
-                self.build_test()
+                self.push_test_ast()
 
             # Process next tokens as a continuation directive pattern
             #
@@ -462,7 +462,7 @@ class Parser:
 
             # Create new test node for standlone commands and assertions
             elif self.is_command_next() or self.is_assertion_next():
-                self.build_test(f'test of line {current_token.data.line}')
+                self.push_test_ast(f'test of line {current_token.data.line}')
 
             # (Only when embedded_tests!) skip standlone text tokens
             elif self.embedded_tests and token_type is TokenType.TEXT:
