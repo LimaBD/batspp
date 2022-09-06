@@ -330,11 +330,11 @@ class Parser:
 
         return result
 
-    def append_teardown_commands(self) -> None:
+    def push_teardown_commands(self) -> None:
         """
-        Append teardown commands to stack
+        Push teardown commands to stack
         """
-        debug.trace(7, 'parser.append_teardown_commands()')
+        debug.trace(7, 'parser.push_teardown_commands()')
 
         # Set debug data
         data = self.get_current_token().data
@@ -479,7 +479,7 @@ class Parser:
 
             # Process next tokens as teardown directive pattern
             elif token_type is TokenType.TEARDOWN:
-                self.append_teardown_commands()
+                self.push_teardown_commands()
 
             # Create new test node for standlone commands and assertions
             elif self.is_command_next() or self.is_assertion_next():
