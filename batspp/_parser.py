@@ -263,17 +263,17 @@ class Parser:
             if self.is_setup_command_next():
                 # Only setups can be present on a
                 # block assertion, not teardowns
-                self.append_setup_commands(pointer)
+                self.push_setup_commands(pointer)
             elif self.is_assertion_next():
                 self.build_assertion(pointer)
             else:
                 break
 
-    def append_setup_commands(self, pointer:str='') -> None:
+    def push_setup_commands(self, pointer:str='') -> None:
         """
-        Append Setup commands and set POINTER as pointer
+        Push Setup commands to stack and set POINTER as pointer
         """
-        debug.trace(7, f'parser.append_setup_commands(pointer={pointer})')
+        debug.trace(7, f'parser.push_setup_commands(pointer={pointer})')
 
         # Set debug data
         data = self.get_current_token().data
@@ -454,7 +454,7 @@ class Parser:
 
             # Process next tokens as a setup directive pattern
             elif token_type is TokenType.SETUP:
-                self.append_setup_commands()
+                self.push_setup_commands()
 
             # Process next tokens as teardown directive pattern
             elif token_type is TokenType.TEARDOWN:

@@ -263,9 +263,9 @@ class TestParser:
         debug.trace(7, f'TestParser.test_break_setup_assertion({self})')
         ## TODO: WORK-IN-PROGRESS
 
-    def test_append_setup_commands(self):
-        """Test for append_setup_commands()"""
-        debug.trace(7, f'TestParser.test_append_setup_commands({self})')
+    def test_push_setup_commands(self):
+        """Test for push_setup_commands()"""
+        debug.trace(7, f'TestParser.test_push_setup_commands({self})')
         parser = THE_MODULE.Parser()
 
         # Global setup pattern
@@ -278,7 +278,7 @@ class TestParser:
             Token(TokenType.TEXT, 'another command'),
             Token(TokenType.EOF, None),
             ]
-        parser.append_setup_commands()
+        parser.push_setup_commands()
         assert len(parser.setup_commands_stack) == 1
         assert parser.setup_commands_stack[0][0] == ''
         assert parser.setup_commands_stack[0][0] != 'wrong pointer!'
@@ -297,7 +297,7 @@ class TestParser:
             Token(TokenType.TEXT, 'some command'),
             Token(TokenType.EOF, None),
             ]
-        parser.append_setup_commands()
+        parser.push_setup_commands()
         assert len(parser.setup_commands_stack) == 1
         assert parser.setup_commands_stack[0][0] == 'important test'
         assert parser.setup_commands_stack[0][0] != 'wrong pointer!'
@@ -310,7 +310,7 @@ class TestParser:
             Token(TokenType.EOF, None),
             ]
         assert not parser.setup_commands_stack
-        parser.append_setup_commands(pointer='some lonely setup')
+        parser.push_setup_commands(pointer='some lonely setup')
         assert len(parser.setup_commands_stack) == 1
         assert parser.setup_commands_stack[0][0] == 'some lonely setup'
 
@@ -323,7 +323,7 @@ class TestParser:
             Token(TokenType.TEXT, 'some command'),
             Token(TokenType.EOF, None),
             ]
-        parser.append_setup_commands()
+        parser.push_setup_commands()
         assert len(parser.setup_commands_stack) == 1
         assert parser.setup_commands_stack[0][0] == 'important test'
 
