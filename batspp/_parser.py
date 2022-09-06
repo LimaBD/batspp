@@ -207,7 +207,6 @@ class Parser:
         Pop all tests ast nodes in stack
         """
         debug.trace(7, f'parser.pop_tests_ast_nodes()')
-        # This is a bureaucratic, every stack should have push and pop methods.
         result = self.tests_ast_nodes_stack
         self.tests_ast_nodes_stack = []
         return result
@@ -343,6 +342,15 @@ class Parser:
         commands = self.extract_setup_commands(data)
 
         self.teardown_commands_stack.append(commands)
+
+    def pop_teardown_commands(self) -> None:
+        """
+        Pop teardown commands from stack
+        """
+        debug.trace(7, f'parser.pop_teardown_commands()')
+        result = self.teardown_commands_stack
+        self.teardown_commands_stack = []
+        return result
 
     def extract_setup_commands(self, data):
         """
@@ -512,7 +520,7 @@ class Parser:
         result = TestsSuite(
             self.pop_tests_ast_nodes(),
             setup_commands = setup_commands,
-            teardown_commands = self.teardown_commands_stack,
+            teardown_commands = self.pop_teardown_commands(),
             )
         debug.trace(7, f'parser.build_tests_suite() => {result}')
         return result
