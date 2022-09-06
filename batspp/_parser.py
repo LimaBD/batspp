@@ -47,7 +47,7 @@ class Parser:
         self.tokens = []
         self.index = 0
         self.last_pointer = ''
-        self.test_nodes = []
+        self.tests_ast_nodes_stack = []
         self.setup_commands_stack = []
         self.teardown_commands_stack = []
         self.embedded_tests = False
@@ -198,7 +198,7 @@ class Parser:
 
         # Push new test node to stack
         node = Test(pointer=pointer, assertions=None, data=data)
-        self.test_nodes.append(node)
+        self.tests_ast_nodes_stack.append(node)
 
         self.break_setup_assertion(pointer)
 
@@ -411,7 +411,7 @@ class Parser:
         # We loop in reverse because is more probably
         # that the assertion is from the last test,
         # this reduce the number of needed iterations.
-        for test in reversed(self.test_nodes):
+        for test in reversed(self.tests_ast_nodes_stack):
             if test.pointer == pointer:
                 test.assertions.append(node)
                 node = None
@@ -489,7 +489,7 @@ class Parser:
                 )
 
         result = TestsSuite(
-            self.test_nodes,
+            self.tests_ast_nodes_stack,
             setup_commands = setup_commands,
             teardown_commands = self.teardown_commands_stack,
             )
