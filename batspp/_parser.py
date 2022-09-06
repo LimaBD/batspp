@@ -202,6 +202,16 @@ class Parser:
 
         self.break_setup_assertion(pointer)
 
+    def pop_tests_ast_nodes(self):
+        """
+        Pop all tests ast nodes in stack
+        """
+        debug.trace(7, f'parser.pop_tests_ast_nodes()')
+        # This is a bureaucratic, every stack should have push and pop methods.
+        result = self.tests_ast_nodes_stack
+        self.tests_ast_nodes_stack = []
+        return result
+
     def break_continuation(self) -> None:
         """
         Process and break continuation block tokens
@@ -489,7 +499,7 @@ class Parser:
                 )
 
         result = TestsSuite(
-            self.tests_ast_nodes_stack,
+            self.pop_tests_ast_nodes(),
             setup_commands = setup_commands,
             teardown_commands = self.teardown_commands_stack,
             )
