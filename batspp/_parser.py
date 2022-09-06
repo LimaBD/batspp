@@ -186,19 +186,17 @@ class Parser:
         """
         debug.trace(7, f'parser.push_test_ast_node(reference={reference})')
 
-        # Set debug data
         data = self.get_current_token().data
 
-        # Check for reference
         if not reference:
             self.eat(TokenType.TEST)
             reference = self.get_current_token().value.strip()
             self.last_reference = reference
             self.eat(TokenType.TEXT)
 
-        # Push new test node to stack
-        node = Test(reference=reference, assertions=None, data=data)
-        self.tests_ast_nodes_stack.append(node)
+        self.tests_ast_nodes_stack.append(
+            Test(reference=reference, assertions=None, data=data)
+            )
 
         self.break_setup_assertion(reference)
 
@@ -263,14 +261,11 @@ class Parser:
         into setup commands and assertion AST nodes and set REFERENCE as reference
         """
         debug.trace(7, f'parser.break_setup_assertion(reference={reference})')
-
-        # Separate/break blocks into setup commands and assertion nodes
-
         assert reference, 'Invalid empty reference'
 
         while True:
             if self.is_setup_command_next():
-                # Only setups can be present on a
+                # Only setups commands can be present on a
                 # block assertion, not teardowns
                 self.push_setup_commands(reference)
             elif self.is_assertion_next():
@@ -284,7 +279,6 @@ class Parser:
         """
         debug.trace(7, f'parser.push_setup_commands(reference={reference})')
 
-        # Set debug data
         data = self.get_current_token().data
 
         # Check reference
@@ -307,12 +301,9 @@ class Parser:
             else:
                 pass
 
-        commands = self.extract_setup_commands(data)
-
-        # Push new setup commands to the stack,
-        # this must contains an reference to later
-        # assign this to an assertion
-        self.setup_commands_stack.append((reference, commands))
+        self.setup_commands_stack.append(
+            (reference, self.extract_setup_commands(data))
+            )
 
     def pop_setup_commands(self, reference: str) -> list:
         """
@@ -335,10 +326,10 @@ class Parser:
         """
         debug.trace(7, 'parser.push_teardown_commands()')
 
-        # Set debug data
         data = self.get_current_token().data
 
         self.eat(TokenType.TEARDOWN)
+        ## TODO: rename extract_setup_commands to a common name
         commands = self.extract_setup_commands(data)
 
         self.teardown_commands_stack.append(commands)
@@ -379,20 +370,18 @@ class Parser:
         Build and append Assertion AST node and set REFERENCE as reference
         """
         debug.trace(7, f'parser.build_assertion(reference={reference})')
-
-        # Check reference
         assert reference, 'Invalid empty reference'
 
-        # Set data
         data = self.get_current_token().data
-
         atype = None
         actual = ''
 
-        # Check for command style assertion
-        #
-        # These could be:
-        # PESO TEXT
+        # BAD:
+        #   Do not use is_command_assertion_next or is_arrow_assertion_next here.
+        #   because we need to check only the first token to ensure what assertion is next.
+
+        # Check for command assertion
+        ## TODO: move this to a different method (e.g. eat_command_assertion???)
         if self.get_current_token().type is TokenType.PESO:
             atype = AssertionType.OUTPUT
             self.eat(TokenType.PESO)
@@ -400,10 +389,7 @@ class Parser:
             self.eat(TokenType.TEXT)
 
         # Check for arrow assertion
-        #
-        # These could be:
-        # assertion: TEXT ASSERT_EQ TEXT
-        # assertion: TEXT ASSERT_NE TEXT
+        ## TODO: move this to a different method (e.g. eat_arrow_assertion???)
         elif self.get_current_token().type is TokenType.TEXT:
             actual = self.get_current_token().value
             self.eat(TokenType.TEXT)
@@ -417,6 +403,7 @@ class Parser:
                 self.eat(TokenType.ASSERT_NE)
 
         # Check expected text tokens
+        ## TODO: move this to a different method
         expected = ''
         while self.get_current_token().type is TokenType.TEXT:
             expected += f'{self.get_current_token().value}\n'
@@ -508,6 +495,7 @@ class Parser:
         setup_commands = self.pop_setup_commands(reference='')
 
         # Finishing the parsing, cannot be remaining setups on stack
+        ## TODO: move this to a different class method (e.g. ensure_setup_stack_clean????).
         if self.setup_commands_stack:
             first_invalid = self.setup_commands_stack[0]
             error(
