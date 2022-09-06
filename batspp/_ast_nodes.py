@@ -67,12 +67,12 @@ class Test(AST):
 
     def __init__(
             self,
-            pointer: str = '',
+            reference: str = '',
             assertions: list = None,
             data: TokenData = TokenData(),
             ) -> None:
         super().__init__(data)
-        self.pointer = pointer
+        self.reference = reference
         self.assertions = assertions if assertions else []
 
 

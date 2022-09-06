@@ -91,12 +91,14 @@ class TestEndUsage(TestWrapper):
 
         self.assertEqual(actual_content, expected_content)
 
+    @pytest.mark.slow
     def test_batspp_example(self):
         """End test docs/examples/batspp_example.batspp"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestInterpreter.test_batspp_example(); self={self}")
         self.run_test_example(file='batspp_example', extension='batspp')
 
+    @pytest.mark.slow
     def test_bash_example(self):
         """End test docs/examples/bash_example.bash"""
         debug.trace(debug.QUITE_DETAILED,

@@ -188,36 +188,36 @@ class TestParser:
             ]
         assert not parser.is_assertion_next()
 
-    def test_build_test(self):
-        """Test for build_test()"""
-        debug.trace(7, f'TestParser.test_build_test({self})')
+    def test_push_test_ast_node(self):
+        """Test for push_test_ast_node"""
+        debug.trace(7, f'TestParser.test_push_test_ast_node({self})')
         parser = THE_MODULE.Parser()
 
         # Check test pattern
-        assert not parser.test_nodes
+        assert not parser.tests_ast_nodes_stack
         parser.tokens = [
             Token(TokenType.TEST, '# Test '),
             Token(TokenType.TEXT, 'some test title'),
             Token(TokenType.EOF, None),
             ]
-        parser.build_test()
-        assert len(parser.test_nodes) == 1
-        assert parser.test_nodes[0].pointer == 'some test title'
-        assert parser.test_nodes[0].pointer != 'wrong pointer!'
+        parser.push_test_ast_node()
+        assert len(parser.tests_ast_nodes_stack) == 1
+        assert parser.tests_ast_nodes_stack[0].reference == 'some test title'
+        assert parser.tests_ast_nodes_stack[0].reference != 'wrong reference!'
 
-        # A new test with pointer
-        parser.build_test(pointer='a new forced test')
-        assert len(parser.test_nodes) == 2
-        assert parser.test_nodes[1].pointer == 'a new forced test'
+        # A new test with reference
+        parser.push_test_ast_node(reference='a new forced test')
+        assert len(parser.tests_ast_nodes_stack) == 2
+        assert parser.tests_ast_nodes_stack[1].reference == 'a new forced test'
 
     def test_break_continuation(self):
         """Test for break_continuation()"""
         debug.trace(7, f'TestParser.test_break_continuation({self})')
         parser = THE_MODULE.Parser()
 
-        parser.test_nodes.append(Test(pointer='first test'))
-        parser.test_nodes.append(Test(pointer='important test'))
-        parser.test_nodes.append(Test(pointer='another test'))
+        parser.tests_ast_nodes_stack.append(Test(reference='first test'))
+        parser.tests_ast_nodes_stack.append(Test(reference='important test'))
+        parser.tests_ast_nodes_stack.append(Test(reference='another test'))
         parser.tokens = [
             Token(TokenType.CONTINUATION, '# Continuation'),
             Token(TokenType.POINTER, ' of '),
@@ -230,20 +230,20 @@ class TestParser:
 
         # Continuation pattern content should
         # be added to the test pointed
-        assert not parser.test_nodes[0].assertions
-        assert not parser.test_nodes[1].assertions
-        assert not parser.test_nodes[2].assertions
+        assert not parser.tests_ast_nodes_stack[0].assertions
+        assert not parser.tests_ast_nodes_stack[1].assertions
+        assert not parser.tests_ast_nodes_stack[2].assertions
         parser.break_continuation()
-        assert not parser.test_nodes[0].assertions
-        assert parser.test_nodes[1].assertions
-        assert not parser.test_nodes[2].assertions
+        assert not parser.tests_ast_nodes_stack[0].assertions
+        assert parser.tests_ast_nodes_stack[1].assertions
+        assert not parser.tests_ast_nodes_stack[2].assertions
         # NOTE: about the assetion content, it
         # is the responsibility of another test
 
-        # If continuation has empty pointer, this should be setted to last test
+        # If continuation has empty reference, this should be setted to last test
         parser = THE_MODULE.Parser()
-        parser.last_pointer = 'important test'
-        parser.test_nodes = [Test(pointer='important test', assertions=None)]
+        parser.last_reference = 'important test'
+        parser.tests_ast_nodes_stack = [Test(reference='important test', assertions=None)]
         parser.tokens = [
             Token(TokenType.CONTINUATION, '# Continuation'),
             Token(TokenType.PESO, '$'),
@@ -251,9 +251,9 @@ class TestParser:
             Token(TokenType.TEXT, 'some text'),
             Token(TokenType.MINOR, ''),
             ]
-        assert len(parser.test_nodes[0].assertions) == 0
+        assert len(parser.tests_ast_nodes_stack[0].assertions) == 0
         parser.break_continuation()
-        assert len(parser.test_nodes[0].assertions) == 1
+        assert len(parser.tests_ast_nodes_stack[0].assertions) == 1
 
         ## TODO: test exception
 
@@ -263,9 +263,9 @@ class TestParser:
         debug.trace(7, f'TestParser.test_break_setup_assertion({self})')
         ## TODO: WORK-IN-PROGRESS
 
-    def test_append_setup_commands(self):
-        """Test for append_setup_commands()"""
-        debug.trace(7, f'TestParser.test_append_setup_commands({self})')
+    def test_push_setup_commands(self):
+        """Test for push_setup_commands()"""
+        debug.trace(7, f'TestParser.test_push_setup_commands({self})')
         parser = THE_MODULE.Parser()
 
         # Global setup pattern
@@ -278,10 +278,10 @@ class TestParser:
             Token(TokenType.TEXT, 'another command'),
             Token(TokenType.EOF, None),
             ]
-        parser.append_setup_commands()
+        parser.push_setup_commands()
         assert len(parser.setup_commands_stack) == 1
         assert parser.setup_commands_stack[0][0] == ''
-        assert parser.setup_commands_stack[0][0] != 'wrong pointer!'
+        assert parser.setup_commands_stack[0][0] != 'wrong reference!'
 
         # Check setup commands
         assert parser.setup_commands_stack[0][1] == ['some command', 'another command']
@@ -297,10 +297,10 @@ class TestParser:
             Token(TokenType.TEXT, 'some command'),
             Token(TokenType.EOF, None),
             ]
-        parser.append_setup_commands()
+        parser.push_setup_commands()
         assert len(parser.setup_commands_stack) == 1
         assert parser.setup_commands_stack[0][0] == 'important test'
-        assert parser.setup_commands_stack[0][0] != 'wrong pointer!'
+        assert parser.setup_commands_stack[0][0] != 'wrong reference!'
 
         # Check setup pattern without commands
         parser = THE_MODULE.Parser()
@@ -310,20 +310,20 @@ class TestParser:
             Token(TokenType.EOF, None),
             ]
         assert not parser.setup_commands_stack
-        parser.append_setup_commands(pointer='some lonely setup')
+        parser.push_setup_commands(reference='some lonely setup')
         assert len(parser.setup_commands_stack) == 1
         assert parser.setup_commands_stack[0][0] == 'some lonely setup'
 
-        # Check for setup without pointer (should be setted to last test)
+        # Check for setup without reference (should be setted to last test)
         parser = THE_MODULE.Parser()
-        parser.last_pointer = 'important test'
+        parser.last_reference = 'important test'
         parser.tokens = [
             Token(TokenType.SETUP, '# Setup'),
             Token(TokenType.PESO, '$'),
             Token(TokenType.TEXT, 'some command'),
             Token(TokenType.EOF, None),
             ]
-        parser.append_setup_commands()
+        parser.push_setup_commands()
         assert len(parser.setup_commands_stack) == 1
         assert parser.setup_commands_stack[0][0] == 'important test'
 
@@ -332,9 +332,9 @@ class TestParser:
         debug.trace(7, f'TestParser.test_build_assertion({self})')
         parser = THE_MODULE.Parser()
 
-        parser.test_nodes.append(Test(pointer='first test'))
-        parser.test_nodes.append(Test(pointer='important test'))
-        parser.test_nodes.append(Test(pointer='another test'))
+        parser.tests_ast_nodes_stack.append(Test(reference='first test'))
+        parser.tests_ast_nodes_stack.append(Test(reference='important test'))
+        parser.tests_ast_nodes_stack.append(Test(reference='another test'))
         parser.setup_commands_stack.append(('some test', []))
         parser.setup_commands_stack.append(('important test', ['some command']))
         parser.setup_commands_stack.append(('another test', []))
@@ -346,24 +346,24 @@ class TestParser:
             ]
 
         # Check that the assertion is added to the corresponding test
-        assert len(parser.test_nodes[0].assertions) == 0
-        assert len(parser.test_nodes[1].assertions) == 0
-        assert len(parser.test_nodes[2].assertions) == 0
-        parser.build_assertion(pointer='important test')
-        assert len(parser.test_nodes[0].assertions) == 0
-        assert len(parser.test_nodes[1].assertions) == 1
-        assert len(parser.test_nodes[2].assertions) == 0
+        assert len(parser.tests_ast_nodes_stack[0].assertions) == 0
+        assert len(parser.tests_ast_nodes_stack[1].assertions) == 0
+        assert len(parser.tests_ast_nodes_stack[2].assertions) == 0
+        parser.build_assertion(reference='important test')
+        assert len(parser.tests_ast_nodes_stack[0].assertions) == 0
+        assert len(parser.tests_ast_nodes_stack[1].assertions) == 1
+        assert len(parser.tests_ast_nodes_stack[2].assertions) == 0
 
         # Check actual and expected values
-        assert parser.test_nodes[1].assertions[0].actual == 'some command'
-        assert parser.test_nodes[1].assertions[0].expected == 'some text'
-        assert parser.test_nodes[1].assertions[0].expected != 'wrong text!'
+        assert parser.tests_ast_nodes_stack[1].assertions[0].actual == 'some command'
+        assert parser.tests_ast_nodes_stack[1].assertions[0].expected == 'some text'
+        assert parser.tests_ast_nodes_stack[1].assertions[0].expected != 'wrong text!'
 
         # Check setup stack and assertion
         assert len(parser.setup_commands_stack) == 2
         assert parser.setup_commands_stack[0][0] == 'some test'
         assert parser.setup_commands_stack[1][0] == 'another test'
-        assert parser.test_nodes[1].assertions[0].setup_commands[0] == 'some command'
+        assert parser.tests_ast_nodes_stack[1].assertions[0].setup_commands[0] == 'some command'
 
         # Check for assertion eq
         parser = THE_MODULE.Parser()
@@ -373,9 +373,9 @@ class TestParser:
             Token(TokenType.TEXT, 'not expected text'),
             Token(TokenType.EOF, None),
             ]
-        parser.test_nodes.append(Test(pointer='important test'))
-        parser.build_assertion(pointer='important test')
-        assertion = parser.test_nodes[0].assertions[0]
+        parser.tests_ast_nodes_stack.append(Test(reference='important test'))
+        parser.build_assertion(reference='important test')
+        assertion = parser.tests_ast_nodes_stack[0].assertions[0]
         assert assertion.atype == AssertionType.NOT_EQUAL
         assert assertion.actual == 'function arg1 arg2'
         assert assertion.expected == 'not expected text'
@@ -391,7 +391,7 @@ class TestParser:
             ('another test', ['some command']),
             ('important test', ['another important command']),
             ]
-        result = parser.pop_setup_commands(pointer='important test')
+        result = parser.pop_setup_commands(reference='important test')
 
         assert isinstance(result, list)
         assert result == ['some important command', 'another important command']

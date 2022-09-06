@@ -67,7 +67,7 @@ class TestInterpreter:
             'function some_function() ...',
             'function another_function() ...',
             ]
-        node = Test(pointer='important test', assertions=[], data=data)
+        node = Test(reference='important test', assertions=[], data=data)
         actual = interpreter.visit_Test(node)
 
         assert interpreter.last_title == 'important test'
@@ -123,7 +123,12 @@ class TestInterpreter:
             expected='11',
             data=data,
             )
-        test = Test(pointer='important test', assertions=[first_assertion, second_assertion], data=data)
+        test = Test(
+            reference='important test',
+            assertions=[first_assertion,
+            second_assertion],
+            data=data,
+            )
         test_suite_node = TestsSuite(
             tests=[test],
             setup_commands=['echo "hello world" > file.txt'],

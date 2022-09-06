@@ -109,7 +109,7 @@ class Interpreter(NodeVisitor):
         Visit Test NODE, also updates global class test title
         """
 
-        self.last_title = node.pointer
+        self.last_title = node.reference
 
         # Test header
         result = (
