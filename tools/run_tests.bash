@@ -1,6 +1,8 @@
 #!/bin/bash
 #
-# Run tests and generate coverage
+# Run tests and generate HTML coverage
+#
+# Usage $ run_tests.bash "<PYTEST-MARKER-EXPRESSION>"
 #
 ## TODO: save older runned htmlcovs.
 
@@ -9,5 +11,5 @@ tests=$base/tests
 
 echo -e "Running tests on $tests\n"
 export PYTHONPATH="$base/:$PYTHONPATH"
-coverage run -m pytest $tests
+coverage run -m pytest $tests -m "$@"
 coverage html --directory $tests/htmlcov --omit="*/tests/test_*","*/__init__.py"
