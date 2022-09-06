@@ -418,36 +418,32 @@ class Parser:
         # New assertion node
         node = Assertion(
             atype=atype,
-            setup_commands=None,
+            setup_commands=self.pop_setup_commands(pointer=pointer),
             actual=actual,
             expected=expected,
             data=data,
             )
 
-        # Assign setups from the stack with
-        # the same pointer as the assertion
-        node.setup_commands = self.pop_setup_commands(pointer=pointer)
+        self.assign_child_assertion_to_parent_test(node, pointer)
 
-        # Assign assertion node to test suite
-        #
-        # Note that a previus test node should
-        # exist to append the new assertion.
-        #
-        # We loop in reverse because is more probably
-        # that the assertion is from the last test,
-        # this reduce the number of needed iterations.
+    def assign_child_assertion_to_parent_test(
+            self,
+            assertion_node: Assertion,
+            pointer: str
+            ) -> None:
+        """
+        Assign child assertion ast node into parent test ast node
+        """
         for test in reversed(self.tests_ast_nodes_stack):
             if test.pointer == pointer:
-                test.assertions.append(node)
-                node = None
+                test.assertions.append(assertion_node)
+                assertion_node = None
                 break
-
-        # The node cannot remain alone without being assigned to a test
-        if node is not None:
+        if assertion_node is not None:
             error(
                 message=f'Assertion "{pointer}" referenced before assignment.',
-                text_line=node.data.text_line,
-                line=node.data.line,
+                text_line=assertion_node.data.text_line,
+                line=assertion_node.data.line,
                 column=None,
                 )
 
