@@ -97,10 +97,6 @@ class Lexer:
         self.text = None
         self.tokens_stack = []
 
-    def reset_global_state_variables(self) -> None:
-        """Reset global states variables"""
-        self.__init__()
-
     def push_token(self, token: Token) -> None:
         """
         Push TOKEN to stack, this provides a debug trace
@@ -315,7 +311,6 @@ class Lexer:
         if embedded_tests:
             text = normalize_embedded_tests(text)
 
-        self.reset_global_state_variables()
         self.text = TextLiner(text)
 
         # Tokenize text
