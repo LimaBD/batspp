@@ -95,7 +95,7 @@ class Lexer:
     def __init__(self) -> None:
         # Global states variables
         self.text = None
-        self.tokens = []
+        self.tokens_stack = []
 
     def reset_global_state_variables(self) -> None:
         """Reset global states variables"""
@@ -106,7 +106,7 @@ class Lexer:
         Appends TOKEN, this provides a debug trace
         """
         debug.trace(7, f'Lexer.append_token(\ntoken={token}\n)')
-        self.tokens.append(token)
+        self.tokens_stack.append(token)
 
     def append_minor_token(self, token: Token) -> None:
         """
@@ -116,7 +116,7 @@ class Lexer:
 
         assert token.type is TokenType.MINOR, 'wrong token type, must be a MINOR'
 
-        if self.tokens and self.tokens[-1].type is TokenType.MINOR:
+        if self.tokens_stack and self.tokens_stack[-1].type is TokenType.MINOR:
             debug.trace(7, f'Lexer.append_minor_token(token={token}) -> kicked!')
             return
 
@@ -318,7 +318,7 @@ class Lexer:
         debug.trace(7,
             f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests})'
             )
-        return self.tokens
+        return self.tokens_stack
 
 
 def normalize_embedded_tests(embedded_tests: str) -> str:
