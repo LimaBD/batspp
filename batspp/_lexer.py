@@ -108,6 +108,13 @@ class Lexer:
         debug.trace(7, f'Lexer.push_token(\ntoken={token}\n)')
         self.tokens_stack.append(token)
 
+    def pop_tokens(self) -> list:
+        """Pop all tokens from the stack"""
+        result = self.tokens_stack
+        self.tokens_stack = []
+        debug.trace(7, f'lexer.pop_tokens => {result}')
+        return result
+
     def push_minor_token(self, token: Token) -> None:
         """
         Push minor TOKEN to stack only if these are not a previus MINOR token.
@@ -317,7 +324,7 @@ class Lexer:
         debug.trace(7,
             f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests})'
             )
-        return self.tokens_stack
+        return self.pop_tokens()
 
 
 def normalize_embedded_tests(embedded_tests: str) -> str:
