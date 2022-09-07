@@ -101,26 +101,25 @@ class Lexer:
         """Reset global states variables"""
         self.__init__()
 
-    def append_token(self, token: Token) -> None:
+    def push_token(self, token: Token) -> None:
         """
-        Appends TOKEN, this provides a debug trace
+        Push TOKEN to stack, this provides a debug trace
         """
-        debug.trace(7, f'Lexer.append_token(\ntoken={token}\n)')
+        debug.trace(7, f'Lexer.push_token(\ntoken={token}\n)')
         self.tokens_stack.append(token)
 
-    def append_minor_token(self, token: Token) -> None:
+    def push_minor_token(self, token: Token) -> None:
         """
-        appends minor TOKEN only if these are not a previus MINOR token.
+        Push minor TOKEN to stack only if these are not a previus MINOR token.
         this avoids have N unnecesary MINOR tokens.
         """
-
         assert token.type is TokenType.MINOR, 'wrong token type, must be a MINOR'
 
         if self.tokens_stack and self.tokens_stack[-1].type is TokenType.MINOR:
-            debug.trace(7, f'Lexer.append_minor_token(token={token}) -> kicked!')
+            debug.trace(7, f'Lexer.push_minor_token(token={token}) -> kicked!')
             return
 
-        self.append_token(token)
+        self.push_token(token)
 
     def extract_tokens(self):
         """Extract all tokens from text"""
@@ -145,7 +144,7 @@ class Lexer:
             match = re_match(r'^##', self.text.get_current_line())
             if match:
                 self.text.advance_line()
-                self.append_minor_token(Token(
+                self.push_minor_token(Token(
                     TokenType.MINOR,
                     match.group(),
                     data,
@@ -156,7 +155,7 @@ class Lexer:
             match = re_match(r'^ *$', self.text.get_current_line())
             if match:
                 self.text.advance_line()
-                self.append_minor_token(Token(
+                self.push_minor_token(Token(
                     TokenType.MINOR,
                     match.group(),
                     data,
@@ -167,7 +166,7 @@ class Lexer:
             match = re_match(r' *\$', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(
+                self.push_token(Token(
                     TokenType.PESO,
                     match.group(),
                     data,
@@ -178,7 +177,7 @@ class Lexer:
             match = re_match(r'^# *[Tt]est(?: +|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(
+                self.push_token(Token(
                     TokenType.TEST,
                     match.group(),
                     data,
@@ -189,7 +188,7 @@ class Lexer:
             match = re_match(r'^# *[Ss]etup(?: +|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(
+                self.push_token(Token(
                     TokenType.SETUP,
                     match.group(),
                     data,
@@ -200,7 +199,7 @@ class Lexer:
             match = re_match(r'^# *[Tt]eardown(?: +|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(
+                self.push_token(Token(
                     TokenType.TEARDOWN,
                     match.group(),
                     data,
@@ -211,7 +210,7 @@ class Lexer:
             match = re_match(r'^# *(?:[Cc]ontinue|[Cc]ontinuation)(?: +|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(
+                self.push_token(Token(
                     TokenType.CONTINUATION,
                     match.group(),
                     data,
@@ -221,7 +220,7 @@ class Lexer:
             # Tokenize tags EOF and END
             if self.text.get_rest_line().startswith((Tags.END.value, Tags.EOF.value)):
                 self.text.advance_column(5)
-                self.append_token(Token(
+                self.push_token(Token(
                     TokenType.MINOR,
                     None,
                     data,
@@ -231,7 +230,7 @@ class Lexer:
             # Tokenize BLANK tag
             if self.text.get_rest_line().startswith(Tags.BLANK.value):
                 self.text.advance_column(len(Tags.BLANK.value))
-                self.append_token(Token(
+                self.push_token(Token(
                     TokenType.TEXT,
                     '\n',
                     data,
@@ -242,7 +241,7 @@ class Lexer:
             match = re_match(r'^ *of', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(
+                self.push_token(Token(
                     TokenType.POINTER,
                     match.group(),
                     data,
@@ -253,7 +252,7 @@ class Lexer:
             match= re_match(r' *=> *', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(
+                self.push_token(Token(
                     TokenType.ASSERT_EQ,
                     match.group(),
                     data,
@@ -264,7 +263,7 @@ class Lexer:
             match = re_match(r' *=\/> *', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(
+                self.push_token(Token(
                     TokenType.ASSERT_NE,
                     match.group(),
                     data,
@@ -275,7 +274,7 @@ class Lexer:
             match = re_match(r'^[^#]+?(?==>|=/>|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
-                self.append_token(Token(
+                self.push_token(Token(
                     TokenType.TEXT,
                     match.group(),
                     data,
@@ -286,7 +285,7 @@ class Lexer:
             match = re_match(r'^ *#.*?$', self.text.get_current_line())
             if match:
                 self.text.advance_line()
-                self.append_minor_token(Token(
+                self.push_minor_token(Token(
                     TokenType.MINOR,
                     None,
                     data,
@@ -301,7 +300,7 @@ class Lexer:
                 )
 
         # Tokenize End of file
-        self.append_token(Token(TokenType.EOF, None, None))
+        self.push_token(Token(TokenType.EOF, None, None))
 
     def tokenize(self, text: str, embedded_tests:bool=False) -> list:
         """Tokenize text"""
