@@ -124,11 +124,11 @@ class Lexer:
 
         self.push_token(token)
 
-    def extract_tokens(self):
-        """Extract all tokens from text"""
+    def run_extraction_of_tokens(self):
+        """Run extraction of all tokens from text"""
         ## TODO: refactor this copypaste caos
         ## TODO: analyze how much execution time takes regex
-        ## TODO; implement usage of extra_indent to comments embedded tests
+        ## TODO: implement usage of extra_indent to comments embedded tests
 
         # For convention each token is responsible
         # (at least) for the space that precedes it
@@ -307,15 +307,10 @@ class Lexer:
 
     def tokenize(self, text: str, embedded_tests:bool=False) -> list:
         """Tokenize text"""
-
         if embedded_tests:
             text = normalize_embedded_tests(text)
-
         self.text = TextLiner(text)
-
-        # Tokenize text
-        self.extract_tokens()
-
+        self.run_extraction_of_tokens()
         debug.trace(7,
             f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests})'
             )
