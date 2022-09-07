@@ -19,7 +19,7 @@ a sentence/text apart into tokens for Batspp
 from re import (
     match as re_match,
     sub as re_sub,
-    MULTILINE as re_MULTILINE,    
+    MULTILINE as re_MULTILINE,
     )
 from enum import Enum
 
@@ -306,14 +306,8 @@ class Lexer:
     def tokenize(self, text: str, embedded_tests:bool=False) -> list:
         """Tokenize text"""
 
-        # Format embedded comment tests into normal batspp tests
         if embedded_tests:
-            # 1st remove not commented lines
-            text = re_sub(r'^[^#]+?$', '\n', text, flags=re_MULTILINE)
-            # 2nd remove comment delimiter '#' from commented lines
-            ## TODO: remove redundancy of directives
-            text = re_sub(r'^# ?(?! *(?:[Tt]est|[Cc]continue|[Cc]ontinuation|[Ss]etup|[Tt]eardown))', '', text, flags=re_MULTILINE)
-            debug.trace(7, f'lexer.tokenize() => formated embedded tests to:\n{text}')
+            text = normalize_embedded_tests(text)
 
         self.reset_global_state_variables()
         self.text = TextLiner(text)
@@ -325,3 +319,23 @@ class Lexer:
             f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests})'
             )
         return self.tokens
+
+
+def normalize_embedded_tests(embedded_tests: str) -> str:
+    """Normalize embedded comment tests into tests"""
+    result = embedded_tests
+
+    # 1st remove not commented lines
+    result = re_sub(r'^[^#]+?$', '\n', result, flags=re_MULTILINE)
+
+    # 2nd remove comment delimiter '#' from commented lines
+    ## TODO: remove redundancy of directives
+    result = re_sub(
+        r'^# ?(?! *(?:[Tt]est|[Cc]continue|[Cc]ontinuation|[Ss]etup|[Tt]eardown))',
+        '',
+        result,
+        flags=re_MULTILINE,
+        )
+
+    debug.trace(7, f'normalize_embedded_tests({embedded_tests}) => \n{result}')
+    return result
