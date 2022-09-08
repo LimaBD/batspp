@@ -39,7 +39,8 @@ SCRIPT = 'batspp'
 
 
 # Constants
-EXAMPLES_PATH = os_path.dirname(__file__) + '/../docs/examples'
+TESTS_PATH = os_path.dirname(__file__)
+EXAMPLES_PATH = f'{TESTS_PATH}/../docs/examples'
 
 
 class TestEndUsage(TestWrapper):
@@ -51,7 +52,7 @@ class TestEndUsage(TestWrapper):
     # times the same package.
     is_package_installed = False
 
-    def run_test_example(self, file: str, extension: str) -> None:
+    def run_test_example(self, dir_path:str, file: str, extension: str) -> None:
         """
         Run end test FILE example,
         this installs Batspp package using pip
@@ -69,15 +70,15 @@ class TestEndUsage(TestWrapper):
                 )
             self.is_package_installed = True
 
-        output = gh.run(f'cd {EXAMPLES_PATH} && {SCRIPT} --hexdump_debug --save {actual_filename} ./{file}.{extension}')
+        output = gh.run(f'cd {dir_path} && {SCRIPT} --hexdump_debug --save {actual_filename} ./{file}.{extension}')
         output += '\n' if output else '' # Compensate the new line added by gh.read_lines()
 
         # Check output
-        expected_output = gh.read_file(f'{EXAMPLES_PATH}/output_{file}.txt')
+        expected_output = gh.read_file(f'{dir_path}/output_{file}.txt')
         self.assertEqual(output, expected_output)
 
         # Check file content
-        expected_content = gh.read_file(f'{EXAMPLES_PATH}/generated_{file}.bats')
+        expected_content = gh.read_file(f'{dir_path}/generated_{file}.bats')
         actual_content = gh.read_file(actual_filename)
 
         # Manipulate a little the output to make equal the random number
@@ -96,14 +97,14 @@ class TestEndUsage(TestWrapper):
         """End test docs/examples/batspp_example.batspp"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestInterpreter.test_batspp_example(); self={self}")
-        self.run_test_example(file='batspp_example', extension='batspp')
+        self.run_test_example(dir_path=EXAMPLES_PATH, file='batspp_example', extension='batspp')
 
     @pytest.mark.slow
     def test_bash_example(self):
         """End test docs/examples/bash_example.bash"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestInterpreter.test_bash_example(); self={self}")
-        self.run_test_example(file='bash_example', extension='bash')
+        self.run_test_example(dir_path=EXAMPLES_PATH, file='bash_example', extension='bash')
 
 
 if __name__ == '__main__':
