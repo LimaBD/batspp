@@ -491,11 +491,21 @@ class Parser:
         # The last token always should be an EOF
         self.eat(TokenType.EOF)
 
-        # Set global global setup for test suite
-        setup_commands = self.pop_setup_commands(reference='')
+        result = TestsSuite(
+            self.pop_tests_ast_nodes(),
+            setup_commands = self.pop_setup_commands(reference=''),
+            teardown_commands = self.pop_teardown_commands(),
+            )
 
-        # Finishing the parsing, cannot be remaining setups on stack
-        ## TODO: move this to a different class method (e.g. ensure_setup_stack_clean????).
+        self.check_if_setup_commands_stack_is_empty()
+
+        debug.trace(7, f'parser.build_tests_suite() => {result}')
+        return result
+
+    def check_if_setup_commands_stack_is_empty(self) -> None:
+        """
+        Check if setup stack is empty, otherwise raises exception
+        """
         if self.setup_commands_stack:
             first_invalid = self.setup_commands_stack[0]
             error(
@@ -504,14 +514,7 @@ class Parser:
                 line=first_invalid.data.line,
                 column=None,
                 )
-
-        result = TestsSuite(
-            self.pop_tests_ast_nodes(),
-            setup_commands = setup_commands,
-            teardown_commands = self.pop_teardown_commands(),
-            )
-        debug.trace(7, f'parser.build_tests_suite() => {result}')
-        return result
+        debug.trace(7, 'parser.check_setup_stack_is_empty() => passed!')
 
     def parse(
             self,
