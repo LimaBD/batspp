@@ -3,6 +3,7 @@
 # Run Batspp and save examples
 # output and content
 #
+## TODO: run update of tests/cases/* also
 
 tools=$(dirname $(realpath -s $0))
 base=$tools/..

@@ -72,7 +72,7 @@ class BatsppTest:
         self.result_tests = self.interpreter.interpret(tree, opts=self.opts, args=self.args)
 
         if self.initial_path:
-            assert self.result_tests, f'Not founded tests in file {self.initial_path}'
+            assert self.result_tests, f'Not founded tests on file {self.initial_path}'
         assert self.result_tests, 'Not founded tests'
 
     def parse_file(self, file: str) -> None:

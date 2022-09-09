@@ -491,27 +491,28 @@ class Parser:
         # The last token always should be an EOF
         self.eat(TokenType.EOF)
 
-        # Set global global setup for test suite
-        setup_commands = self.pop_setup_commands(reference='')
-
-        # Finishing the parsing, cannot be remaining setups on stack
-        ## TODO: move this to a different class method (e.g. ensure_setup_stack_clean????).
-        if self.setup_commands_stack:
-            first_invalid = self.setup_commands_stack[0]
-            error(
-                message=f'Setup "{first_invalid.reference}" referenced before assignment.',
-                text_line=first_invalid.data.text_line,
-                line=first_invalid.data.line,
-                column=None,
-                )
-
         result = TestsSuite(
             self.pop_tests_ast_nodes(),
-            setup_commands = setup_commands,
+            setup_commands = self.pop_setup_commands(reference=''),
             teardown_commands = self.pop_teardown_commands(),
             )
+
+        self.check_if_setup_commands_stack_is_empty()
+
         debug.trace(7, f'parser.build_tests_suite() => {result}')
         return result
+
+    def check_if_setup_commands_stack_is_empty(self) -> None:
+        """
+        Check if setup stack is empty, otherwise raises exception
+        """
+        if self.setup_commands_stack:
+            ## TODO: print text and line when raise exception
+            first_setup_reference, _ = self.setup_commands_stack[0]
+            error(
+                message=f'Setup "{first_setup_reference}" referenced before assignment.',
+                )
+        debug.trace(7, 'parser.check_setup_stack_is_empty() => passed!')
 
     def parse(
             self,
@@ -522,7 +523,7 @@ class Parser:
         Builds an Abstract Syntax Tree (AST) from TOKENS list
         """
         assert tokens, 'Tokens list cannot be empty'
-        assert tokens[-1], 'Last token should be EOF'
+        assert tokens[-1].type is TokenType.EOF, 'Last token should be EOF'
 
         self.reset_global_state_variables()
         self.tokens = tokens

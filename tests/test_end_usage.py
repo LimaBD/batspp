@@ -2,7 +2,7 @@
 #
 # Tests for Batspp end usage
 #
-# Thins install the package/script
+# This install the package/script
 # and runs regression tests with
 # the docs/examples
 #
@@ -39,21 +39,23 @@ SCRIPT = 'batspp'
 
 
 # Constants
-EXAMPLES_PATH = os_path.dirname(__file__) + '/../docs/examples'
+TESTS_PATH = os_path.dirname(__file__)
+EXAMPLES_PATH = f'{TESTS_PATH}/../docs/examples'
+CASES_PATH = f'{TESTS_PATH}/cases'
 
 
 class TestEndUsage(TestWrapper):
     """Class for testcase definition"""
     script_module = None
-    maxDiff       = None
+    maxDiff = None
 
     # This avoids install multiples
     # times the same package.
     is_package_installed = False
 
-    def run_test_example(self, file: str, extension: str) -> None:
+    def run_regression_test(self, dir_path:str, file: str, extension: str) -> None:
         """
-        Run end test FILE example,
+        Run end test FILE with EXTENSION on DIR_PATH,
         this installs Batspp package using pip
         """
         debug.trace(debug.QUITE_DETAILED,
@@ -69,15 +71,15 @@ class TestEndUsage(TestWrapper):
                 )
             self.is_package_installed = True
 
-        output = gh.run(f'cd {EXAMPLES_PATH} && {SCRIPT} --hexdump_debug --save {actual_filename} ./{file}.{extension}')
+        output = gh.run(f'cd {dir_path} && {SCRIPT} --hexdump_debug --save {actual_filename} ./{file}.{extension}')
         output += '\n' if output else '' # Compensate the new line added by gh.read_lines()
 
         # Check output
-        expected_output = gh.read_file(f'{EXAMPLES_PATH}/output_{file}.txt')
+        expected_output = gh.read_file(f'{dir_path}/output_{file}.txt')
         self.assertEqual(output, expected_output)
 
         # Check file content
-        expected_content = gh.read_file(f'{EXAMPLES_PATH}/generated_{file}.bats')
+        expected_content = gh.read_file(f'{dir_path}/generated_{file}.bats')
         actual_content = gh.read_file(actual_filename)
 
         # Manipulate a little the output to make equal the random number
@@ -96,14 +98,21 @@ class TestEndUsage(TestWrapper):
         """End test docs/examples/batspp_example.batspp"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestInterpreter.test_batspp_example(); self={self}")
-        self.run_test_example(file='batspp_example', extension='batspp')
+        self.run_regression_test(dir_path=EXAMPLES_PATH, file='batspp_example', extension='batspp')
 
     @pytest.mark.slow
     def test_bash_example(self):
         """End test docs/examples/bash_example.bash"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestInterpreter.test_bash_example(); self={self}")
-        self.run_test_example(file='bash_example', extension='bash')
+        self.run_regression_test(dir_path=EXAMPLES_PATH, file='bash_example', extension='bash')
+
+    @pytest.mark.slow
+    def test_no_setup_directive(self):
+        """End test tests/cases/no_setup_directive.batspp"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestInterpreter.test_no_setup_directive(); self={self}")
+        self.run_regression_test(dir_path=CASES_PATH, file='no_setup_directive', extension='batspp')
 
 
 if __name__ == '__main__':
