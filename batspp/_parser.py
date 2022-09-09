@@ -507,12 +507,10 @@ class Parser:
         Check if setup stack is empty, otherwise raises exception
         """
         if self.setup_commands_stack:
-            first_invalid = self.setup_commands_stack[0]
+            ## TODO: print text and line when raise exception
+            first_setup_reference, _ = self.setup_commands_stack[0]
             error(
-                message=f'Setup "{first_invalid.reference}" referenced before assignment.',
-                text_line=first_invalid.data.text_line,
-                line=first_invalid.data.line,
-                column=None,
+                message=f'Setup "{first_setup_reference}" referenced before assignment.',
                 )
         debug.trace(7, 'parser.check_setup_stack_is_empty() => passed!')
 

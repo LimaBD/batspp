@@ -7,6 +7,7 @@
 ## TODO: add timer and print execution time
 ## TODO: use a separate pass of the test source to fill in the missing test names.
 ## TODO: implement --discover flag to discover all tests file in a folder.
+## TODO: beautify exceptions, catch and hide python traceback, only show batspp traceback.
 
 
 """
@@ -141,13 +142,7 @@ class Batspp(Main):
 
         test.set_options(opts)
         test.set_arguments(args)
-
-        try:
-            test.parse_file(self.file)
-        except: # pylint: disable=bare-except
-            print(f'Not founded tests on file {self.file}')
-            return
-
+        test.parse_file(self.file)
         test.save(self.save_path)
 
         # STDOUT
