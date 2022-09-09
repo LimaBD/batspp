@@ -1,3 +1,4 @@
+# Setup
 $ bind 'set enable-bracketed-paste off'
 
 $ echo "Hi Mom!"
