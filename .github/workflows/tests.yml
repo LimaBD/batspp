@@ -35,4 +35,4 @@ jobs:
     - name: Run tests and generate coverage report
       run: |
         PYTHONPATH="$(pwd):$PYTHONPATH" coverage run -m pytest ./tests/
-        coverage xml --omit="*/tests/test_*"
+        coverage xml

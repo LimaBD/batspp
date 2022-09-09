@@ -1,0 +1,14 @@
+[run]
+branch = True
+
+[report]
+omit = 
+  # Omit test files and init
+  */tests/test_*
+  */__init__.py
+
+[html]
+directory = tests/htmlcov
+
+[xml]
+output = tests/coverage.xml
