@@ -19,10 +19,8 @@ bats-core tests from abstract syntax trees for Batspp
 # Standard packages
 from re import sub as re_sub
 
-
 # Installed packages
 from mezcla import debug
-
 
 # Local packages
 from batspp.batspp_opts import BatsppOpts
@@ -30,6 +28,9 @@ from batspp.batspp_args import BatsppArgs
 from batspp._ast_nodes import (
     TestsSuite, Test,
     Assertion, AssertionType,
+    )
+from batspp._exceptions import (
+    warning_not_intended_for_cmd,
     )
 
 
@@ -422,3 +423,7 @@ def build_debug_function() -> str:
 
     debug.trace(7, 'interpreter.build_debug()')
     return result
+
+
+if __name__ == '__main__':
+    warning_not_intended_for_cmd()

@@ -10,13 +10,13 @@
 # Standard packages
 ## NOTE: this is empty for now
 
-
 # Installed packages
 ## NOTE: this is empty for now
 
-
 # Local packages
-from batspp._exceptions import assert_type
+from batspp._exceptions import (
+    assert_type, warning_not_intended_for_cmd,
+    )
 
 
 class BatsppOpts:
@@ -50,3 +50,7 @@ class BatsppOpts:
         # Check for disable_aliases
         assert_type(disable_aliases, bool)
         self.disable_aliases = disable_aliases
+
+
+if __name__ == '__main__':
+    warning_not_intended_for_cmd()

@@ -10,13 +10,13 @@
 # Standard packages
 ## NOTE: this is empty for now
 
-
 # Installed packages
 ## NOTE: this is empty for now
 
-
 # Local packages
-from batspp._exceptions import assert_type
+from batspp._exceptions import (
+    assert_type, warning_not_intended_for_cmd,
+    )
 
 
 class BatsppArgs:
@@ -59,3 +59,7 @@ class BatsppArgs:
         # Check for debug
         assert_type(debug, str)
         self.debug = debug
+
+
+if __name__ == '__main__':
+    warning_not_intended_for_cmd()

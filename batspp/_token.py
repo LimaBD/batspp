@@ -10,13 +10,13 @@
 # Standard packages
 from enum import Enum
 
-
 # Installed packages
 ## NOTE: this is empty for now
 
-
 # Local packages
-## NOTE: this is empty for now
+from batspp._exceptions import (
+    warning_not_intended_for_cmd,
+    )
 
 
 class TokenData:
@@ -81,3 +81,7 @@ class Token:
             f'      value={self.value},\n'
             f'      data={self.data})'
             )
+
+
+if __name__ == '__main__':
+    warning_not_intended_for_cmd()

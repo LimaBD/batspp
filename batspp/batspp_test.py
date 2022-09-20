@@ -12,12 +12,10 @@ from re import search as re_search
 from os import path as os_path
 from datetime import datetime
 
-
 # Installed packages
 from mezcla import debug
 from mezcla import glue_helpers as gh
 from mezcla import system
-
 
 # Local packages
 from batspp._lexer import Lexer
@@ -28,6 +26,9 @@ from batspp._settings import (
 )
 from batspp.batspp_opts import BatsppOpts
 from batspp.batspp_args import BatsppArgs
+from batspp._exceptions import (
+    warning_not_intended_for_cmd,
+    )
 
 
 class BatsppTest:
@@ -143,3 +144,7 @@ class BatsppTest:
         sudo = 'sudo' if 'sudo' in self.result_tests else ''
 
         return gh.run(f'{sudo} bats {self.args.run_opts} {self.final_path}')
+
+
+if __name__ == '__main__':
+    warning_not_intended_for_cmd()

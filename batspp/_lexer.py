@@ -23,13 +23,13 @@ from re import (
     )
 from enum import Enum
 
-
 # Installed packages
 from mezcla import debug
 
-
 # Local packages
-from batspp._exceptions import error
+from batspp._exceptions import (
+    error, warning_not_intended_for_cmd,
+    )
 from batspp._token import (
     TokenData, TokenType, Token,
     )
@@ -335,3 +335,7 @@ def normalize_embedded_tests(embedded_tests: str) -> str:
 
     debug.trace(7, f'normalize_embedded_tests({embedded_tests}) => \n{result}')
     return result
+
+
+if __name__ == '__main__':
+    warning_not_intended_for_cmd()
