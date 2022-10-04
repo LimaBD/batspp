@@ -6,7 +6,7 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-19810"
+TEMP_DIR="/tmp/batspp-19902"
 
 # Setup function
 # $1 -> test name
@@ -24,23 +24,11 @@ function run_teardown () {
 @test "test of line 1" {
 	run_setup "test-of-line-1"
 
-	# Assertion of line 14
-	function fibonacci () {
-	result=""
-	a=0
-	b=1
-	for (( i=0; i<=$1; i++ ))
-	do
-	result="$result$a "
-	fn=$((a + b))
-	a=$b
-	b=$fn
-	done
-	echo $result
-	}
+	# Assertion of line 2
+	alias hello='echo "Hello user!"'
 	shopt -s expand_aliases
-	print_debug "$(fibonacci 9)" "$(echo -e '0 1 1 2 3 5 8 13 21 34')"
-	[ "$(fibonacci 9)" == "$(echo -e '0 1 1 2 3 5 8 13 21 34')" ]
+	print_debug "$(hello)" "$(echo -e 'Hello user!')"
+	[ "$(hello)" == "$(echo -e 'Hello user!')" ]
 
 	run_teardown
 }

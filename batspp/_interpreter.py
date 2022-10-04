@@ -158,6 +158,7 @@ class Interpreter(NodeVisitor):
         result = (
             f'\n\t# Assertion of line {node.data.line}\n'
             f'{setup}'
+            '\tshopt -s expand_aliases\n'
             f'{debug_cmd}'
             f'\t[ "$({node.actual.strip()})" {operator} "$(echo -e {repr(node.expected)})" ]\n'
             )
@@ -224,10 +225,7 @@ class Interpreter(NodeVisitor):
         # Check for sources files
         if (self.args.sources and
             not self.opts.disable_aliases):
-            source_commands = [f'source {src}' for src in self.args.sources]
-            if source_commands:
-                commands.append('shopt -s expand_aliases\n')
-                commands += source_commands
+            commands += [f'source {src}' for src in self.args.sources]
 
         return commands
 

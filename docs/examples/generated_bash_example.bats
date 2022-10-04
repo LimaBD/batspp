@@ -6,10 +6,9 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-48034"
+TEMP_DIR="/tmp/batspp-19455"
 
 # One time global setup
-shopt -s expand_aliases
 source /home/angrygingy/Desktop/work-repos/batspp/docs/examples/bash_example.bash
 
 # Setup function
@@ -29,6 +28,7 @@ function run_teardown () {
 	run_setup "test-of-line-14"
 
 	# Assertion of line 14
+	shopt -s expand_aliases
 	print_debug "$(echo -e "hello\nworld")" "$(echo -e 'hello\nworld')"
 	[ "$(echo -e "hello\nworld")" == "$(echo -e 'hello\nworld')" ]
 
@@ -39,6 +39,7 @@ function run_teardown () {
 	run_setup "test-of-line-22"
 
 	# Assertion of line 22
+	shopt -s expand_aliases
 	print_debug "$(fibonacci 9)" "$(echo -e '0 1 1 2 3 5 8 13 21 34')"
 	[ "$(fibonacci 9)" == "$(echo -e '0 1 1 2 3 5 8 13 21 34')" ]
 
@@ -49,6 +50,7 @@ function run_teardown () {
 	run_setup "test-of-line-25"
 
 	# Assertion of line 25
+	shopt -s expand_aliases
 	print_debug "$(fibonacci 3)" "$(echo -e '8 2 45 34 3 5')"
 	[ "$(fibonacci 3)" != "$(echo -e '8 2 45 34 3 5')" ]
 
@@ -59,6 +61,7 @@ function run_teardown () {
 	run_setup "test-of-line-56"
 
 	# Assertion of line 56
+	shopt -s expand_aliases
 	print_debug "$(run-fibonacci 9)" "$(echo -e 'The Fibonacci series is:\n0 1 1 2 3 5 8 13 21 34')"
 	[ "$(run-fibonacci 9)" == "$(echo -e 'The Fibonacci series is:\n0 1 1 2 3 5 8 13 21 34')" ]
 
@@ -71,6 +74,7 @@ function run_teardown () {
 	# Assertion of line 69
 	filepath=$(echo $TMP/testfile-"$$")
 	echo "this is a file content to run an example test" | sudo tee $filepath
+	shopt -s expand_aliases
 	print_debug "$(cat $filepath)" "$(echo -e 'this is a file content to run an example test')"
 	[ "$(cat $filepath)" == "$(echo -e 'this is a file content to run an example test')" ]
 
@@ -83,10 +87,12 @@ function run_teardown () {
 	# Assertion of line 76
 	filepath=$(echo $TMP/testfile-"$$")
 	echo -e "in this test\nwe are using\nmultiple assertions" | sudo tee $filepath
+	shopt -s expand_aliases
 	print_debug "$(cat $filepath | wc -l)" "$(echo -e '3')"
 	[ "$(cat $filepath | wc -l)" == "$(echo -e '3')" ]
 
 	# Assertion of line 78
+	shopt -s expand_aliases
 	print_debug "$(cat $filepath | wc -c)" "$(echo -e '46')"
 	[ "$(cat $filepath | wc -c)" == "$(echo -e '46')" ]
 

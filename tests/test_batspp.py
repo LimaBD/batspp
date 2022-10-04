@@ -5,6 +5,8 @@
 # This test must be runned with the command:
 # $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_batspp.py
 #
+# TODO: implement TestWrapper.run_script() to get coverage of tested subprocess
+#
 
 
 """Tests for batspp script"""
@@ -213,7 +215,7 @@ class TestBatspp(TestWrapper):
         test_file = f'{self.temp_file}.batspp'
         gh.write_file(test_file, self.simple_test)
 
-        expected_assert = '# Assertion of line 3\n\t[ "$(test-of-line-3-line3-actual)" == "$(test-of-line-3-line3-expected)" ]'
+        expected_assert = '# Assertion of line 3\n\tshopt -s expand_aliases\n\t[ "$(echo "hello world")" == "$(echo -e \'hello world\')" ]'
         expected_function = 'function print_debug() {'
 
         # Test command-line argument

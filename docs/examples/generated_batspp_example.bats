@@ -6,7 +6,7 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-47753"
+TEMP_DIR="/tmp/batspp-19204"
 
 # One time global setup
 shopt -s expand_aliases
@@ -29,6 +29,7 @@ function run_teardown () {
 	run_setup "test-of-line-15"
 
 	# Assertion of line 15
+	shopt -s expand_aliases
 	print_debug "$(echo -e "hello\nworld")" "$(echo -e 'hello\nworld')"
 	[ "$(echo -e "hello\nworld")" == "$(echo -e 'hello\nworld')" ]
 
@@ -39,6 +40,7 @@ function run_teardown () {
 	run_setup "test-of-line-20"
 
 	# Assertion of line 20
+	shopt -s expand_aliases
 	print_debug "$(run-fibonacci 9)" "$(echo -e 'The Fibonacci series is:\n0 1 1 2 3 5 8 13 21 34')"
 	[ "$(run-fibonacci 9)" == "$(echo -e 'The Fibonacci series is:\n0 1 1 2 3 5 8 13 21 34')" ]
 
@@ -49,6 +51,7 @@ function run_teardown () {
 	run_setup "test-of-line-27"
 
 	# Assertion of line 27
+	shopt -s expand_aliases
 	print_debug "$(fibonacci 9)" "$(echo -e '0 1 1 2 3 5 8 13 21 34')"
 	[ "$(fibonacci 9)" == "$(echo -e '0 1 1 2 3 5 8 13 21 34')" ]
 
@@ -59,6 +62,7 @@ function run_teardown () {
 	run_setup "test-of-line-30"
 
 	# Assertion of line 30
+	shopt -s expand_aliases
 	print_debug "$(fibonacci 3)" "$(echo -e '8 2 45 34 3 5')"
 	[ "$(fibonacci 3)" != "$(echo -e '8 2 45 34 3 5')" ]
 
@@ -71,12 +75,14 @@ function run_teardown () {
 	# Assertion of line 38
 	filepath=$(echo $TMP/testfile-"$$")
 	echo -n "this is a file content to run an example test" | sudo tee $filepath
+	shopt -s expand_aliases
 	print_debug "$(cat $filepath)" "$(echo -e 'this is a file content to run an example test')"
 	[ "$(cat $filepath)" == "$(echo -e 'this is a file content to run an example test')" ]
 
 	# Assertion of line 48
 	echo -n " using setup" >> $filepath
 	echo -n " and continue directives" >> $filepath
+	shopt -s expand_aliases
 	print_debug "$(cat $filepath)" "$(echo -e 'this is a file content to run an example test using setup and continue directives')"
 	[ "$(cat $filepath)" == "$(echo -e 'this is a file content to run an example test using setup and continue directives')" ]
 
@@ -89,10 +95,12 @@ function run_teardown () {
 	# Assertion of line 54
 	filepath=$(echo $TMP/testfile-"$$")
 	echo -e "in this test\nwe are using\nmultiple assertions" | sudo tee $filepath
+	shopt -s expand_aliases
 	print_debug "$(cat $filepath | wc -l)" "$(echo -e '3')"
 	[ "$(cat $filepath | wc -l)" == "$(echo -e '3')" ]
 
 	# Assertion of line 56
+	shopt -s expand_aliases
 	print_debug "$(cat $filepath | wc -c)" "$(echo -e '46')"
 	[ "$(cat $filepath | wc -c)" == "$(echo -e '46')" ]
 
