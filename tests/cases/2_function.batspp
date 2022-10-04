@@ -11,7 +11,5 @@ $        b=$fn
 $    done
 $    echo $result
 $ }
-$ alias run-fibonacci='echo "The Fibonacci series is:"; fibonacci'
-$ run-fibonacci 9
-The Fibonacci series is:
+$ fibonacci 9
 0 1 1 2 3 5 8 13 21 34
