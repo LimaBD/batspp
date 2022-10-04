@@ -64,7 +64,7 @@ class TestEndUsage(TestWrapper):
         this installs Batspp package using pip
         """
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestInterpreter.run_example(); self={self}")
+                    f"TestEndUsage.run_example(); self={self}")
 
         # Check installation of Batspp
         if not self.is_package_installed:
@@ -101,7 +101,7 @@ class TestEndUsage(TestWrapper):
     def test_batspp_example(self):
         """End test docs/examples/batspp_example.batspp"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestInterpreter.test_batspp_example(); self={self}")
+                    f"TestEndUsage.test_batspp_example(); self={self}")
         self.run_regression_test(
             dir_path=EXAMPLES_PATH,
             test_file='batspp_example', extension='batspp',
@@ -113,7 +113,7 @@ class TestEndUsage(TestWrapper):
     def test_bash_example(self):
         """End test docs/examples/bash_example.bash"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestInterpreter.test_bash_example(); self={self}")
+                    f"TestEndUsage.test_bash_example(); self={self}")
         self.run_regression_test(
             dir_path=EXAMPLES_PATH,
             test_file='bash_example', extension='bash',
@@ -123,14 +123,26 @@ class TestEndUsage(TestWrapper):
 
     @pytest.mark.slow
     def test_no_setup_directive(self):
-        """End test tests/cases/no_setup_directive.batspp"""
+        """End test tests/cases/1_no_setup_directive.batspp"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestInterpreter.test_no_setup_directive(); self={self}")
+                    f"TestTestEndUsageInterpreter.test_no_setup_directive(); self={self}")
         self.run_regression_test(
             dir_path=CASES_PATH,
             test_file='1_no_setup_directive', extension='batspp',
             generated_file='1_generated_no_setup_directive',
             output_file='1_output_no_setup_directive'
+            )
+
+    @pytest.mark.slow
+    def test_function(self):
+        """End test tests/cases/2_test_function.batspp"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestEndUsage.test_no_setup_directive(); self={self}")
+        self.run_regression_test(
+            dir_path=CASES_PATH,
+            test_file='2_function', extension='batspp',
+            generated_file='2_generated_function',
+            output_file='2_output_function'
             )
 
 
