@@ -135,14 +135,26 @@ class TestEndUsage(TestWrapper):
 
     @pytest.mark.slow
     def test_function(self):
-        """End test tests/cases/2_test_function.batspp"""
+        """End test tests/cases/2_function.batspp"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestEndUsage.test_no_setup_directive(); self={self}")
+                    f"TestEndUsage.test_function(); self={self}")
         self.run_regression_test(
             dir_path=CASES_PATH,
             test_file='2_function', extension='batspp',
             generated_file='2_generated_function',
             output_file='2_output_function'
+            )
+
+    @pytest.mark.slow
+    def test_aliases(self):
+        """End test tests/cases/2_aliases.batspp"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestEndUsage.test_aliases(); self={self}")
+        self.run_regression_test(
+            dir_path=CASES_PATH,
+            test_file='3_aliases', extension='batspp',
+            generated_file='3_generated_aliases',
+            output_file='3_output_aliases'
             )
 
 
