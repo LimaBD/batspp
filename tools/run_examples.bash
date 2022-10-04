@@ -9,6 +9,8 @@ tools=$(dirname $(realpath -s $0))
 base=$tools/..
 examples=$base/docs/examples
 
+export PYTHONPATH="$base/:$PYTHONPATH"
+
 function run_eg () {
 
     # Args
