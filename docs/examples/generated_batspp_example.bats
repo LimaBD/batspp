@@ -6,7 +6,7 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-163912"
+TEMP_DIR="/tmp/batspp-19204"
 
 # One time global setup
 shopt -s expand_aliases
@@ -25,142 +25,86 @@ function run_teardown () {
 	: # Nothing here...
 }
 
-@test "test of line 17" {
-	run_setup "test-of-line-17"
+@test "test of line 15" {
+	run_setup "test-of-line-15"
 
-	# Assertion of line 17
-	print_debug "$(test-of-line-17-line17-actual)" "$(test-of-line-17-line17-expected)"
-	[ "$(test-of-line-17-line17-actual)" == "$(test-of-line-17-line17-expected)" ]
-
-	run_teardown
-}
-
-function test-of-line-17-line17-actual () {
-	echo -e "hello\nworld"
-}
-
-function test-of-line-17-line17-expected () {
-	echo -e 'hello\nworld'
-}
-
-@test "test of line 23" {
-	run_setup "test-of-line-23"
-
-	# Assertion of line 23
-	print_debug "$(test-of-line-23-line23-actual)" "$(test-of-line-23-line23-expected)"
-	[ "$(test-of-line-23-line23-actual)" == "$(test-of-line-23-line23-expected)" ]
+	# Assertion of line 15
+	shopt -s expand_aliases
+	print_debug "$(echo -e "hello\nworld")" "$(echo -e 'hello\nworld')"
+	[ "$(echo -e "hello\nworld")" == "$(echo -e 'hello\nworld')" ]
 
 	run_teardown
 }
 
-function test-of-line-23-line23-actual () {
-	run-fibonacci 9
-}
+@test "test of line 20" {
+	run_setup "test-of-line-20"
 
-function test-of-line-23-line23-expected () {
-	echo -e 'The Fibonacci series is:\n0 1 1 2 3 5 8 13 21 34'
-}
-
-@test "test of line 31" {
-	run_setup "test-of-line-31"
-
-	# Assertion of line 31
-	print_debug "$(test-of-line-31-line31-actual)" "$(test-of-line-31-line31-expected)"
-	[ "$(test-of-line-31-line31-actual)" == "$(test-of-line-31-line31-expected)" ]
+	# Assertion of line 20
+	shopt -s expand_aliases
+	print_debug "$(run-fibonacci 9)" "$(echo -e 'The Fibonacci series is:\n0 1 1 2 3 5 8 13 21 34')"
+	[ "$(run-fibonacci 9)" == "$(echo -e 'The Fibonacci series is:\n0 1 1 2 3 5 8 13 21 34')" ]
 
 	run_teardown
 }
 
-function test-of-line-31-line31-actual () {
-	fibonacci 9
-}
+@test "test of line 27" {
+	run_setup "test-of-line-27"
 
-function test-of-line-31-line31-expected () {
-	echo -e '0 1 1 2 3 5 8 13 21 34'
-}
-
-@test "test of line 34" {
-	run_setup "test-of-line-34"
-
-	# Assertion of line 34
-	print_debug "$(test-of-line-34-line34-actual)" "$(test-of-line-34-line34-expected)"
-	[ "$(test-of-line-34-line34-actual)" != "$(test-of-line-34-line34-expected)" ]
+	# Assertion of line 27
+	shopt -s expand_aliases
+	print_debug "$(fibonacci 9)" "$(echo -e '0 1 1 2 3 5 8 13 21 34')"
+	[ "$(fibonacci 9)" == "$(echo -e '0 1 1 2 3 5 8 13 21 34')" ]
 
 	run_teardown
 }
 
-function test-of-line-34-line34-actual () {
-	fibonacci 3
-}
+@test "test of line 30" {
+	run_setup "test-of-line-30"
 
-function test-of-line-34-line34-expected () {
-	echo -e '8 2 45 34 3 5'
+	# Assertion of line 30
+	shopt -s expand_aliases
+	print_debug "$(fibonacci 3)" "$(echo -e '8 2 45 34 3 5')"
+	[ "$(fibonacci 3)" != "$(echo -e '8 2 45 34 3 5')" ]
+
+	run_teardown
 }
 
 @test "setup and title" {
 	run_setup "setup-and-title"
 
-	# Assertion of line 43
+	# Assertion of line 38
 	filepath=$(echo $TMP/testfile-"$$")
 	echo -n "this is a file content to run an example test" | sudo tee $filepath
-	print_debug "$(setup-and-title-line43-actual)" "$(setup-and-title-line43-expected)"
-	[ "$(setup-and-title-line43-actual)" == "$(setup-and-title-line43-expected)" ]
+	shopt -s expand_aliases
+	print_debug "$(cat $filepath)" "$(echo -e 'this is a file content to run an example test')"
+	[ "$(cat $filepath)" == "$(echo -e 'this is a file content to run an example test')" ]
 
-	# Assertion of line 54
+	# Assertion of line 48
 	echo -n " using setup" >> $filepath
 	echo -n " and continue directives" >> $filepath
-	print_debug "$(setup-and-title-line54-actual)" "$(setup-and-title-line54-expected)"
-	[ "$(setup-and-title-line54-actual)" == "$(setup-and-title-line54-expected)" ]
+	shopt -s expand_aliases
+	print_debug "$(cat $filepath)" "$(echo -e 'this is a file content to run an example test using setup and continue directives')"
+	[ "$(cat $filepath)" == "$(echo -e 'this is a file content to run an example test using setup and continue directives')" ]
 
 	run_teardown
 }
 
-function setup-and-title-line43-actual () {
-	cat $filepath
-}
+@test "test of line 52" {
+	run_setup "test-of-line-52"
 
-function setup-and-title-line43-expected () {
-	echo -e 'this is a file content to run an example test'
-}
-
-function setup-and-title-line54-actual () {
-	cat $filepath
-}
-
-function setup-and-title-line54-expected () {
-	echo -e 'this is a file content to run an example test using setup and continue directives'
-}
-
-@test "test of line 59" {
-	run_setup "test-of-line-59"
-
-	# Assertion of line 61
+	# Assertion of line 54
 	filepath=$(echo $TMP/testfile-"$$")
 	echo -e "in this test\nwe are using\nmultiple assertions" | sudo tee $filepath
-	print_debug "$(test-of-line-59-line61-actual)" "$(test-of-line-59-line61-expected)"
-	[ "$(test-of-line-59-line61-actual)" == "$(test-of-line-59-line61-expected)" ]
+	shopt -s expand_aliases
+	print_debug "$(cat $filepath | wc -l)" "$(echo -e '3')"
+	[ "$(cat $filepath | wc -l)" == "$(echo -e '3')" ]
 
-	# Assertion of line 63
-	print_debug "$(test-of-line-59-line63-actual)" "$(test-of-line-59-line63-expected)"
-	[ "$(test-of-line-59-line63-actual)" == "$(test-of-line-59-line63-expected)" ]
+	# Assertion of line 56
+	shopt -s expand_aliases
+	print_debug "$(cat $filepath | wc -c)" "$(echo -e '46')"
+	[ "$(cat $filepath | wc -c)" == "$(echo -e '46')" ]
 
 	run_teardown
-}
-
-function test-of-line-59-line61-actual () {
-	cat $filepath | wc -l
-}
-
-function test-of-line-59-line61-expected () {
-	echo -e '3'
-}
-
-function test-of-line-59-line63-actual () {
-	cat $filepath | wc -c
-}
-
-function test-of-line-59-line63-expected () {
-	echo -e '46'
 }
 
 # This prints debug data when an assertion fail

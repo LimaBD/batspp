@@ -8,7 +8,6 @@
 # - save bats file: $ batspp --save ./result.bats ./batspp_example.batspp
 #
 
-
 # You can run simple output assertions using the command line
 # With '$ [command]' followed by the expected output.
 #
@@ -16,7 +15,6 @@
 # hello
 # world
 #
-
 
 # Also you can test functions:
 #
@@ -42,7 +40,6 @@ function fibonacci () {
     echo $result
 }
 
-
 # You can test aliases too:
 #
 # $ run-fibonacci 9
@@ -50,7 +47,6 @@ function fibonacci () {
 # 0 1 1 2 3 5 8 13 21 34
 #
 alias run-fibonacci='echo "The Fibonacci series is:"; fibonacci'
-
 
 # Local setups for specific test can be done with
 # command lines too and you can also add optional titles:
@@ -61,7 +57,6 @@ alias run-fibonacci='echo "The Fibonacci series is:"; fibonacci'
 # $ cat $filepath
 # this is a file content to run an example test
 
-
 # Also every test could have multiple assertions:
 #
 # $ filepath=$(echo $TMP/testfile-"$$")
@@ -70,7 +65,6 @@ alias run-fibonacci='echo "The Fibonacci series is:"; fibonacci'
 # 3
 # $ cat $filepath | wc -c
 # 46
-
 
 ## Tests with simple '#' on tests files are ignored
 ## and with double # on shell scripts too.

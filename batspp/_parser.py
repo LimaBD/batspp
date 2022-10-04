@@ -20,13 +20,13 @@ an Abstract Syntax Tree (AST) for Batspp
 # Standard packages
 ## NOTE: this is empty for now
 
-
 # Installed packages
 from mezcla import debug
 
-
 # Local packages
-from batspp._exceptions import error
+from batspp._exceptions import (
+    error, warning_not_intended_for_cmd,
+    )
 from batspp._token import (
     TokenType, Token,
     )
@@ -533,3 +533,7 @@ class Parser:
 
         debug.trace(7, f'Parser.parse() => {result}')
         return result
+
+
+if __name__ == '__main__':
+    warning_not_intended_for_cmd()

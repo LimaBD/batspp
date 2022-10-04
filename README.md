@@ -33,6 +33,7 @@ Batspp grew out of work for [Thomas O'Hara](https://github.com/tomasohara) on [s
 - [Writing tests](./docs/writing_tests.md)
 - [Writing setups and teardowns](./docs/writing_setups_and_teardowns.md)
 - [Tests examples](./docs/tests_examples.md)
+- [Coverage reports](./docs/coverage_report.md)
 - [Batspp internals](./docs/batspp_internals.md)
 - [Contributing](./docs/contributing.md)
 

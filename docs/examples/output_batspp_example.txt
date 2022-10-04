@@ -1,7 +1,7 @@
 1..6
-ok 1 test of line 17
-ok 2 test of line 23
-ok 3 test of line 31
-ok 4 test of line 34
+ok 1 test of line 15
+ok 2 test of line 20
+ok 3 test of line 27
+ok 4 test of line 30
 ok 5 setup and title
-ok 6 test of line 59
+ok 6 test of line 52

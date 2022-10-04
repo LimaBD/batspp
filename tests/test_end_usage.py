@@ -22,13 +22,11 @@
 from re import sub as re_sub
 from os import path as os_path
 
-
 # Installed packages
 import pytest
 from mezcla.unittest_wrapper import TestWrapper
 from mezcla import glue_helpers as gh
 from mezcla import debug
-
 
 # Local packages
 ## NOTE: this is empty for now
@@ -53,16 +51,22 @@ class TestEndUsage(TestWrapper):
     # times the same package.
     is_package_installed = False
 
-    def run_regression_test(self, dir_path:str, file: str, extension: str) -> None:
+    def run_regression_test(
+            self,
+            dir_path: str,
+            test_file: str, extension: str,
+            generated_file: str,
+            output_file: str,
+            ) -> None:
         """
-        Run end test FILE with EXTENSION on DIR_PATH,
+        Run end TEST_FILE with EXTENSION on DIR_PATH and
+        check actual and expected GENERATED_FILE and OUTPUT_FILE,
         this installs Batspp package using pip
         """
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestInterpreter.run_example(); self={self}")
+                    f"TestEndUsage.run_example(); self={self}")
 
-        actual_filename = f'{self.temp_file}.bats'
-
+        # Check installation of Batspp
         if not self.is_package_installed:
             print(
                 '=========== installing ==========='
@@ -71,48 +75,87 @@ class TestEndUsage(TestWrapper):
                 )
             self.is_package_installed = True
 
-        output = gh.run(f'cd {dir_path} && {SCRIPT} --hexdump_debug --save {actual_filename} ./{file}.{extension}')
-        output += '\n' if output else '' # Compensate the new line added by gh.read_lines()
+        # Run Batspp
+        temp_filename = f'{self.temp_file}.bats'
+        actual_output = gh.run(f'cd {dir_path} && {SCRIPT} --hexdump_debug --save {temp_filename} ./{test_file}.{extension}')
+        assert actual_output
+        actual_generated = gh.read_file(temp_filename)[:-1]
+        assert actual_generated
 
-        # Check output
-        expected_output = gh.read_file(f'{dir_path}/output_{file}.txt')
-        self.assertEqual(output, expected_output)
+        # Get expected values
+        expected_generated = gh.read_file(f'{dir_path}/{generated_file}.bats')[:-1]
+        expected_output = gh.read_file(f'{dir_path}/{output_file}.txt')[:-1]
 
-        # Check file content
-        expected_content = gh.read_file(f'{dir_path}/generated_{file}.bats')
-        actual_content = gh.read_file(actual_filename)
-
-        # Manipulate a little the output to make equal the random number
+        # Make equal the random number and paths
         temp_dir_pattern = r'TEMP_DIR=.+'
-        actual_content = re_sub(temp_dir_pattern, '', actual_content)
-        expected_content = re_sub(temp_dir_pattern, '', expected_content)
-
+        actual_generated = re_sub(temp_dir_pattern, '', actual_generated)
+        expected_generated = re_sub(temp_dir_pattern, '', expected_generated)
         source_pattern = r'source .+'
-        actual_content = re_sub(source_pattern, '', actual_content)
-        expected_content = re_sub(source_pattern, '', expected_content)
+        actual_generated = re_sub(source_pattern, '', actual_generated)
+        expected_generated = re_sub(source_pattern, '', expected_generated)
 
-        self.assertEqual(actual_content, expected_content)
+        assert actual_generated == expected_generated
+        assert actual_output == expected_output
 
     @pytest.mark.slow
     def test_batspp_example(self):
         """End test docs/examples/batspp_example.batspp"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestInterpreter.test_batspp_example(); self={self}")
-        self.run_regression_test(dir_path=EXAMPLES_PATH, file='batspp_example', extension='batspp')
+                    f"TestEndUsage.test_batspp_example(); self={self}")
+        self.run_regression_test(
+            dir_path=EXAMPLES_PATH,
+            test_file='batspp_example', extension='batspp',
+            generated_file='generated_batspp_example',
+            output_file='output_batspp_example'
+            )
 
     @pytest.mark.slow
     def test_bash_example(self):
         """End test docs/examples/bash_example.bash"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestInterpreter.test_bash_example(); self={self}")
-        self.run_regression_test(dir_path=EXAMPLES_PATH, file='bash_example', extension='bash')
+                    f"TestEndUsage.test_bash_example(); self={self}")
+        self.run_regression_test(
+            dir_path=EXAMPLES_PATH,
+            test_file='bash_example', extension='bash',
+            generated_file='generated_bash_example',
+            output_file='output_bash_example'
+            )
 
     @pytest.mark.slow
     def test_no_setup_directive(self):
-        """End test tests/cases/no_setup_directive.batspp"""
+        """End test tests/cases/1_no_setup_directive.batspp"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestInterpreter.test_no_setup_directive(); self={self}")
-        self.run_regression_test(dir_path=CASES_PATH, file='no_setup_directive', extension='batspp')
+                    f"TestTestEndUsageInterpreter.test_no_setup_directive(); self={self}")
+        self.run_regression_test(
+            dir_path=CASES_PATH,
+            test_file='1_no_setup_directive', extension='batspp',
+            generated_file='1_generated_no_setup_directive',
+            output_file='1_output_no_setup_directive'
+            )
+
+    @pytest.mark.slow
+    def test_function(self):
+        """End test tests/cases/2_function.batspp"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestEndUsage.test_function(); self={self}")
+        self.run_regression_test(
+            dir_path=CASES_PATH,
+            test_file='2_function', extension='batspp',
+            generated_file='2_generated_function',
+            output_file='2_output_function'
+            )
+
+    @pytest.mark.slow
+    def test_aliases(self):
+        """End test tests/cases/2_aliases.batspp"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestEndUsage.test_aliases(); self={self}")
+        self.run_regression_test(
+            dir_path=CASES_PATH,
+            test_file='3_aliases', extension='batspp',
+            generated_file='3_generated_aliases',
+            output_file='3_output_aliases'
+            )
 
 
 if __name__ == '__main__':

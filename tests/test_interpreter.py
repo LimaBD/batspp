@@ -50,12 +50,14 @@ class TestNodeVisitor:
 class TestInterpreter:
     """Class for testcase definition"""
 
+    # pylint: disable=invalid-name
     def test_visit_TestsSuite(self):
         """Test for visit_TestsSuite()"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestInterpreter.test_visit_TestsSuite(); self={self}")
         ## TODO: WORK-IN-PROGRESS
 
+    # pylint: disable=invalid-name
     def test_visit_Test(self):
         """Test for visit_Test()"""
         debug.trace(debug.QUITE_DETAILED,
@@ -63,21 +65,13 @@ class TestInterpreter:
         data = TokenData(text_line='some line', line=3, column=3)
         interpreter = THE_MODULE.Interpreter()
 
-        interpreter.stack_functions = [
-            'function some_function() ...',
-            'function another_function() ...',
-            ]
         node = Test(reference='important test', assertions=[], data=data)
         actual = interpreter.visit_Test(node)
 
         assert interpreter.last_title == 'important test'
         assert '@test "important test"' in actual
 
-        # Check functions
-        assert not interpreter.stack_functions
-        assert 'function some_function() ...' in actual
-        assert 'function another_function() ...' in actual
-
+    # pylint: disable=invalid-name
     def test_visit_Assertion(self):
         """Test for visit_Assertion()"""
         debug.trace(debug.QUITE_DETAILED,
@@ -93,10 +87,6 @@ class TestInterpreter:
             data=data,
             )
         actual = interpreter.visit_Assertion(node)
-
-        assert len(interpreter.stack_functions) == 2
-        assert 'echo "some text"' in interpreter.stack_functions[0]
-        assert 'some text' in interpreter.stack_functions[1]
 
         actual_assertion = actual.splitlines()[-1]
         assert actual_assertion.startswith('\t[ ')
@@ -168,30 +158,16 @@ class TestInterpreter:
             '\n'
             '\t# Assertion of line 3\n'
             '\techo "hello world" > file.txt\n'
-            '\tprint_debug "$(important-test-line3-actual)" "$(important-test-line3-expected)"\n'
-            '\t[ "$(important-test-line3-actual)" == "$(important-test-line3-expected)" ]\n'
+            '\tshopt -s expand_aliases\n'
+            '\tprint_debug "$(cat file.txt)" "$(echo -e \'hello world\')"\n'
+            '\t[ "$(cat file.txt)" == "$(echo -e \'hello world\')" ]\n'
             '\n'
             '\t# Assertion of line 3\n'
-            '\tprint_debug "$(important-test-line3-actual)" "$(important-test-line3-expected)"\n'
-            '\t[ "$(important-test-line3-actual)" == "$(important-test-line3-expected)" ]\n'
+            '\tshopt -s expand_aliases\n'
+            '\tprint_debug "$(cat file.txt | wc -m)" "$(echo -e \'11\')"\n'
+            '\t[ "$(cat file.txt | wc -m)" == "$(echo -e \'11\')" ]\n'
             '\n'
             '\trun_teardown\n'
-            '}\n'
-            '\n'
-            'function important-test-line3-actual () {\n'
-            '\tcat file.txt\n'
-            '}\n'
-            '\n'
-            'function important-test-line3-expected () {\n'
-            '\techo -e \'hello world\'\n'
-            '}\n'
-            '\n'
-            'function important-test-line3-actual () {\n'
-            '\tcat file.txt | wc -m\n'
-            '}\n'
-            '\n'
-            'function important-test-line3-expected () {\n'
-            '\techo -e \'11\'\n'
             '}\n'
             '\n'
             '# This prints debug data when an assertion fail\n'

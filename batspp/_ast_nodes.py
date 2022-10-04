@@ -10,12 +10,13 @@
 # Standard packages
 from enum import Enum
 
-
 # Installed packages
 ## NOTE: this is empty for now
 
-
 # Local packages
+from batspp._exceptions import (
+    warning_not_intended_for_cmd,
+    )
 from batspp._token import TokenData
 
 
@@ -92,3 +93,7 @@ class TestsSuite(AST):
         self.tests = tests
         self.setup_commands = setup_commands
         self.teardown_commands = teardown_commands
+
+
+if __name__ == '__main__':
+    warning_not_intended_for_cmd()
