@@ -73,7 +73,6 @@ class Interpreter(NodeVisitor):
         # Global states variables
         self.opts = BatsppOpts()
         self.args = BatsppArgs()
-        self.stack_functions = []
         self.last_title = ''
         self.debug_required = False
 
@@ -128,10 +127,6 @@ class Interpreter(NodeVisitor):
             '}\n\n'
             )
 
-        # Pop functions from stack
-        result += ''.join(self.stack_functions)
-        self.stack_functions = []
-
         debug.trace(7, f'interpreter.visit_Test(node={node}) => {result}')
         return result
 
@@ -141,11 +136,6 @@ class Interpreter(NodeVisitor):
         Visit Assertion NODE, also push functions
         to stack for actual and expected values
         """
-
-        # Set function names for
-        # actual and expected values
-        actual_function = f'{flatten_str(self.last_title)}-line{node.data.line}-actual'
-        expected_function = f'{flatten_str(self.last_title)}-line{node.data.line}-expected'
 
         # Set setup
         setup = build_commands_block(node.setup_commands) if node.setup_commands else ''
@@ -161,7 +151,7 @@ class Interpreter(NodeVisitor):
         debug_cmd = ''
         if not self.opts.omit_trace:
             debug_cmd = (
-                f'\tprint_debug "$({actual_function})" "$({expected_function})"\n'
+                f'\tprint_debug "$({node.actual.strip()})" "$(echo -e {repr(node.expected)})"\n'
                 )
 
         # Unify everything
@@ -169,31 +159,12 @@ class Interpreter(NodeVisitor):
             f'\n\t# Assertion of line {node.data.line}\n'
             f'{setup}'
             f'{debug_cmd}'
-            f'\t[ "$({actual_function})" {operator} "$({expected_function})" ]\n'
+            f'\t[ "$({node.actual.strip()})" {operator} "$(echo -e {repr(node.expected)})" ]\n'
             )
 
         # Check global class option to
         # later implement a debug function
         self.debug_required = True
-
-        # NOTE: we use functions to avoid sanitization
-        #       poblems with '(' and ')'
-
-        # Push to stack function for the actual value
-        function = (
-            f'function {actual_function} () {{\n'
-            f'\t{node.actual.strip()}\n'
-            '}\n\n'
-            )
-        self.stack_functions.append(function)
-
-        # Push to stack function for the expected value
-        function = (
-            f'function {expected_function} () {{\n'
-            f'\techo -e {repr(node.expected)}\n'
-            '}\n\n'
-            )
-        self.stack_functions.append(function)
 
         debug.trace(7, f'interpreter.visit_Assertion(node={node}) => {result}')
         return result

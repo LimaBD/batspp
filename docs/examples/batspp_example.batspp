@@ -7,23 +7,19 @@
 # - save bats file: $ batspp --save ./result.bats ./batspp_example.batspp
 #
 
-
 # Setup
 $ shopt -s expand_aliases
 $ source ./bash_example.bash
-
 
 # This is a simple output assertion
 $ echo -e "hello\nworld"
 hello
 world
 
-
 # You can test aliases too:
 $ run-fibonacci 9
 The Fibonacci series is:
 0 1 1 2 3 5 8 13 21 34
-
 
 # Also you can test functions:
 #
@@ -33,7 +29,6 @@ fibonacci 9 => 0 1 1 2 3 5 8 13 21 34
 # This is a negative test:
 fibonacci 3 =/> 8 2 45 34 3 5
 
-
 # Local setups for specific test can be done with
 # command lines too and you can also add optional titles:
 #
@@ -42,7 +37,6 @@ $ filepath=$(echo $TMP/testfile-"$$")
 $ echo -n "this is a file content to run an example test" | sudo tee $filepath
 $ cat $filepath
 this is a file content to run an example test
-
 
 # If you want to continue the last test, you can use the 'Continue'
 # and 'setup' directives, for example:
@@ -54,7 +48,6 @@ $ echo -n " and continue directives" >> $filepath
 $ cat $filepath
 this is a file content to run an example test using setup and continue directives
 
-
 # Also every test could have multiple assertions:
 $ filepath=$(echo $TMP/testfile-"$$")
 $ echo -e "in this test\nwe are using\nmultiple assertions" | sudo tee $filepath
@@ -62,7 +55,6 @@ $ cat $filepath | wc -l
 3
 $ cat $filepath | wc -c
 46
-
 
 # Tests with simple '#' on tests files are ignored 
 # and with double # on shell scripts too.

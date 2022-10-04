@@ -6,7 +6,7 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-164148"
+TEMP_DIR="/tmp/batspp-48034"
 
 # One time global setup
 shopt -s expand_aliases
@@ -25,128 +25,72 @@ function run_teardown () {
 	: # Nothing here...
 }
 
-@test "test of line 15" {
-	run_setup "test-of-line-15"
+@test "test of line 14" {
+	run_setup "test-of-line-14"
 
-	# Assertion of line 15
-	print_debug "$(test-of-line-15-line15-actual)" "$(test-of-line-15-line15-expected)"
-	[ "$(test-of-line-15-line15-actual)" == "$(test-of-line-15-line15-expected)" ]
-
-	run_teardown
-}
-
-function test-of-line-15-line15-actual () {
-	echo -e "hello\nworld"
-}
-
-function test-of-line-15-line15-expected () {
-	echo -e 'hello\nworld'
-}
-
-@test "test of line 24" {
-	run_setup "test-of-line-24"
-
-	# Assertion of line 24
-	print_debug "$(test-of-line-24-line24-actual)" "$(test-of-line-24-line24-expected)"
-	[ "$(test-of-line-24-line24-actual)" == "$(test-of-line-24-line24-expected)" ]
+	# Assertion of line 14
+	print_debug "$(echo -e "hello\nworld")" "$(echo -e 'hello\nworld')"
+	[ "$(echo -e "hello\nworld")" == "$(echo -e 'hello\nworld')" ]
 
 	run_teardown
 }
 
-function test-of-line-24-line24-actual () {
-	fibonacci 9
-}
+@test "test of line 22" {
+	run_setup "test-of-line-22"
 
-function test-of-line-24-line24-expected () {
-	echo -e '0 1 1 2 3 5 8 13 21 34'
-}
-
-@test "test of line 27" {
-	run_setup "test-of-line-27"
-
-	# Assertion of line 27
-	print_debug "$(test-of-line-27-line27-actual)" "$(test-of-line-27-line27-expected)"
-	[ "$(test-of-line-27-line27-actual)" != "$(test-of-line-27-line27-expected)" ]
+	# Assertion of line 22
+	print_debug "$(fibonacci 9)" "$(echo -e '0 1 1 2 3 5 8 13 21 34')"
+	[ "$(fibonacci 9)" == "$(echo -e '0 1 1 2 3 5 8 13 21 34')" ]
 
 	run_teardown
 }
 
-function test-of-line-27-line27-actual () {
-	fibonacci 3
-}
+@test "test of line 25" {
+	run_setup "test-of-line-25"
 
-function test-of-line-27-line27-expected () {
-	echo -e '8 2 45 34 3 5'
-}
-
-@test "test of line 59" {
-	run_setup "test-of-line-59"
-
-	# Assertion of line 59
-	print_debug "$(test-of-line-59-line59-actual)" "$(test-of-line-59-line59-expected)"
-	[ "$(test-of-line-59-line59-actual)" == "$(test-of-line-59-line59-expected)" ]
+	# Assertion of line 25
+	print_debug "$(fibonacci 3)" "$(echo -e '8 2 45 34 3 5')"
+	[ "$(fibonacci 3)" != "$(echo -e '8 2 45 34 3 5')" ]
 
 	run_teardown
 }
 
-function test-of-line-59-line59-actual () {
-	run-fibonacci 9
-}
+@test "test of line 56" {
+	run_setup "test-of-line-56"
 
-function test-of-line-59-line59-expected () {
-	echo -e 'The Fibonacci series is:\n0 1 1 2 3 5 8 13 21 34'
+	# Assertion of line 56
+	print_debug "$(run-fibonacci 9)" "$(echo -e 'The Fibonacci series is:\n0 1 1 2 3 5 8 13 21 34')"
+	[ "$(run-fibonacci 9)" == "$(echo -e 'The Fibonacci series is:\n0 1 1 2 3 5 8 13 21 34')" ]
+
+	run_teardown
 }
 
 @test "setup and title" {
 	run_setup "setup-and-title"
 
-	# Assertion of line 73
+	# Assertion of line 69
 	filepath=$(echo $TMP/testfile-"$$")
 	echo "this is a file content to run an example test" | sudo tee $filepath
-	print_debug "$(setup-and-title-line73-actual)" "$(setup-and-title-line73-expected)"
-	[ "$(setup-and-title-line73-actual)" == "$(setup-and-title-line73-expected)" ]
+	print_debug "$(cat $filepath)" "$(echo -e 'this is a file content to run an example test')"
+	[ "$(cat $filepath)" == "$(echo -e 'this is a file content to run an example test')" ]
 
 	run_teardown
 }
 
-function setup-and-title-line73-actual () {
-	cat $filepath
-}
+@test "test of line 74" {
+	run_setup "test-of-line-74"
 
-function setup-and-title-line73-expected () {
-	echo -e 'this is a file content to run an example test'
-}
-
-@test "test of line 79" {
-	run_setup "test-of-line-79"
-
-	# Assertion of line 81
+	# Assertion of line 76
 	filepath=$(echo $TMP/testfile-"$$")
 	echo -e "in this test\nwe are using\nmultiple assertions" | sudo tee $filepath
-	print_debug "$(test-of-line-79-line81-actual)" "$(test-of-line-79-line81-expected)"
-	[ "$(test-of-line-79-line81-actual)" == "$(test-of-line-79-line81-expected)" ]
+	print_debug "$(cat $filepath | wc -l)" "$(echo -e '3')"
+	[ "$(cat $filepath | wc -l)" == "$(echo -e '3')" ]
 
-	# Assertion of line 83
-	print_debug "$(test-of-line-79-line83-actual)" "$(test-of-line-79-line83-expected)"
-	[ "$(test-of-line-79-line83-actual)" == "$(test-of-line-79-line83-expected)" ]
+	# Assertion of line 78
+	print_debug "$(cat $filepath | wc -c)" "$(echo -e '46')"
+	[ "$(cat $filepath | wc -c)" == "$(echo -e '46')" ]
 
 	run_teardown
-}
-
-function test-of-line-79-line81-actual () {
-	cat $filepath | wc -l
-}
-
-function test-of-line-79-line81-expected () {
-	echo -e '3'
-}
-
-function test-of-line-79-line83-actual () {
-	cat $filepath | wc -c
-}
-
-function test-of-line-79-line83-expected () {
-	echo -e '46'
 }
 
 # This prints debug data when an assertion fail
