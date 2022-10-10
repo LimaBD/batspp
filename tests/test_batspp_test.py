@@ -7,7 +7,7 @@
 #
 
 
-"""Tests for _interpreter module"""
+"""Tests for batspp_test module"""
 
 
 # Standard packages
