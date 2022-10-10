@@ -13,15 +13,17 @@
 
 
 # Standard packages
-from os import path as os_path
-
+from os import (
+    path as os_path,
+    makedirs as os_makedirs,
+    )
 
 # Installed packages
 import pytest
 from mezcla.unittest_wrapper import TestWrapper
 from mezcla import glue_helpers as gh
 from mezcla import debug
-
+from mezcla import system
 
 # Local packages
 ## NOTE: this is empty for now
@@ -61,27 +63,26 @@ class TestBatspp(TestWrapper):
         debug.trace(debug.DETAILED, f"TestBatspp.test_save_path({self})")
 
         test_file = f'{self.temp_file}.batspp'
-        save_file = f'{self.temp_file}.bats'
+        output_file = f'{self.temp_file}.bats'
 
         # Generated test with content should be saved
         gh.write_file(test_file, self.simple_test)
-        result = gh.run(f'python3 {BATSPP_PATH} --save {save_file} {test_file}')
-        self.assertEqual(result, '1..1\nok 1 test of line 3')
-        self.assertTrue(gh.read_file(save_file))
-
-        # Generated empty test should not be saved
-        another_file = f'{self.temp_file}-another.bats'
-        gh.write_file(test_file, '')
-        result = gh.run(f'python3 {BATSPP_PATH} --save {another_file} {test_file}')
-        self.assertTrue(gh.read_file(save_file)) # File from the last run should keep unmodified
-        self.assertFalse(gh.file_exists(another_file))
+        gh.run(f'python3 {BATSPP_PATH} --save {output_file} {test_file}')
+        self.assertTrue('echo "hello world"' in gh.read_file(output_file))
 
         # Test argument as enviroment variable
-        another_file = f'{self.temp_file}-another1.bats'
+        output_file = f'{gh.get_temp_file()}.bats'
         gh.write_file(test_file, self.simple_test)
-        result = gh.run(f'SAVE={another_file} python3 {BATSPP_PATH} {test_file}')
-        self.assertEqual(result, '1..1\nok 1 test of line 3')
-        self.assertTrue(gh.read_file(another_file))
+        gh.run(f'SAVE="{output_file}" python3 {BATSPP_PATH} {test_file}')
+        self.assertTrue('echo "hello world"' in gh.read_file(output_file))
+
+        # Dir paths should have a default file name
+        test_file = gh.get_temp_file()
+        save_dir_path = '/tmp/'
+        gh.write_file(test_file + '.batspp', self.simple_test)
+        gh.run(f'python3 {BATSPP_PATH} --save {save_dir_path} {test_file}.batspp')
+        output_file = f'{save_dir_path}generated_{gh.basename(test_file)}.bats'
+        self.assertTrue('echo "hello world' in gh.read_file(output_file))
 
     def test_output(self):
         """Test --output argument"""
