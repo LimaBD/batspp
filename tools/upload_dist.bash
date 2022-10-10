@@ -12,7 +12,7 @@ base=$(dirname $(realpath -s $0))/..
 
 
 function install_dependencies () {
-    echo "build - checking dependencies..."
+    echo "==========================> build - checking dependencies... <=========================="
     pip install -r $base/requirements/development.txt
     pip install -r $base/requirements/production.txt
 }
@@ -22,11 +22,11 @@ function install_dependencies () {
 #
 # $1 -> "test" or "main"
 function upload_pypi () {
-    echo "build - compiling package..."
+    echo "==========================> build - compiling package... <=========================="
     # This will create build, dist and project.egg.info folders
-    python3 $base/setup.py $base/bdist_wheel
+    python3 $base/setup.py bdist_wheel
 
-    echo "build - uploading to PyPi..."
+    echo "==========================> build - uploading to PyPi... <=========================="
 
     # Uploading to Test Pypi
     #
@@ -45,7 +45,7 @@ function upload_pypi () {
 
 
 function clean () {
-    echo "build - cleaning"
+    echo "==========================> build - cleaning <=========================="
     rm -rf $base/build/ $base/dist/ $base/batspp/batspp.egg-info
 }
 
@@ -66,4 +66,5 @@ function main () {
     fi
 }
 
+cd $base
 main $@

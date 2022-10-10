@@ -140,16 +140,13 @@ class Batspp(Main):
             debug = self.debug,
             )
 
-        test.set_options(opts)
-        test.set_arguments(args)
-        test.parse_file(self.file)
-        test.save(self.save_path)
+        if self.save_path:
+            test.transpile_and_save_bats(self.file, self.save_path, args=args, opts=opts)
 
-        # STDOUT
         if self.output:
-            print(test.get_tests())
+            print(test.transpile_to_bats(self.file, args=args, opts=opts))
         elif not self.skip_run:
-            print(test.run())
+            print(test.run(self.file, args=args, opts=opts))
 
     def get_entered_bool(
             self,

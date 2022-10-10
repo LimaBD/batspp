@@ -9,13 +9,9 @@
 
 # Standard packages
 from re import search as re_search
-from os import path as os_path
-from datetime import datetime
 
 # Installed packages
-from mezcla import debug
 from mezcla import glue_helpers as gh
-from mezcla import system
 
 # Local packages
 from batspp._lexer import Lexer
@@ -29,6 +25,40 @@ from batspp.batspp_args import BatsppArgs
 from batspp._exceptions import (
     warning_not_intended_for_cmd,
     )
+
+
+def add_prefix_to_filename(file:str, prefix:str) -> str:
+    """Adds PREFIX to FILE path"""
+    return f'{gh.dir_path(file)}/{prefix}{gh.basename(file)}'
+
+
+def merge_filename_into_path(filename:str, path:str) -> str:
+    """Merge FILENAME into PATH, e.g. /etc/passwd /home/ => /home/passwd """
+    assert filename and path, 'FILENAME or PATH cannot be empty'
+    assert path.endswith('/'), 'PATH must end with "/".'
+    return f'{path}{gh.basename(filename)}'
+
+
+def replace_extension(filename:str, extension:str) -> str:
+    """Replace current FILENAME extension with EXTENSION"""
+    current_extension = re_search(r'(?:\.\w+)+', filename).group()
+    filename = gh.remove_extension(filename, current_extension)
+    return f'{filename}.{extension}'
+
+
+def resolve_path(path:str, alternative:str) -> str:
+    """Resolve PATH based on ALTERNATIVE filename"""
+    result = ''
+    if not path:
+        result = add_prefix_to_filename(alternative, 'generated_')
+        result = replace_extension(result, BATS_EXTENSION)
+    elif path.endswith('/'):
+        result = merge_filename_into_path(alternative, path)
+        result = add_prefix_to_filename(result, 'generated_')
+        result = replace_extension(result, BATS_EXTENSION)
+    else:
+        result = path
+    return result
 
 
 class BatsppTest:
@@ -45,105 +75,65 @@ class BatsppTest:
         self.parser = Parser()
         self.interpreter = Interpreter()
 
-        # Global states
-        self.opts = BatsppOpts()
-        self.args = BatsppArgs()
-        self.result_tests = ''
-        self.initial_path = ''
-        self.final_path = ''
+    def _is_not_batspp_file(self, file:str) -> bool:
+        """Whether is FILE is a batspp test file"""
+        return not file.endswith(f'.{BATSPP_EXTENSION}')
 
-    def set_options(self, opts: BatsppOpts) -> None:
-        """Set options OPTS"""
-        self.opts = opts
-
-    def set_arguments(self, args: BatsppArgs) -> None:
-        """Set arguments ARGS"""
-        self.args = args
-
-    def parse(self, text: str) -> None:
-        """
-        parse tests from TEXT
-        """
-        debug.trace(7, f'BatsppTest.parse({text})')
-
-        assert text, 'TEXT cannot be empty'
-
-        tokens = self.lexer.tokenize(text, self.opts.embedded_tests)
-        tree = self.parser.parse(tokens, self.opts.embedded_tests)
-        self.result_tests = self.interpreter.interpret(tree, opts=self.opts, args=self.args)
-
-        if self.initial_path:
-            assert self.result_tests, f'Not founded tests on file {self.initial_path}'
-        assert self.result_tests, 'Not founded tests'
-
-    def parse_file(self, file: str) -> None:
-        """
-        Open and parse FILE
-        """
-        debug.trace(7, f'BatsppTest.parse_file({file})')
-
-        assert file, 'FILE cannot be empty'
-        file = os_path.abspath(file)
+    def transpile_to_bats(
+            self,
+            file: str,
+            args: BatsppArgs = BatsppArgs(),
+            opts: BatsppOpts = BatsppOpts()
+            ) -> str:
+        """Return transpiled Bats content from Batspp test FILE"""
+        assert file, 'File path cannot be empty'
 
         # Check for embedded tests
-        #
-        # Source the test file to load aliases and functions
-        if not file.endswith(f'.{BATSPP_EXTENSION}'):
-            if not self.opts.embedded_tests:
-                self.opts.embedded_tests = True
-            if self.args.sources:
-                self.args.sources.append(file)
+        if not opts.embedded_tests:
+            opts.embedded_tests = self._is_not_batspp_file(file)
+
+        # Check for sources files
+        if self._is_not_batspp_file(file):
+            if args.sources:
+                args.sources.append(file)
             else:
-                self.args.sources = [file]
+                args.sources = [file]
 
-        self.parse(system.read_file(file))
-        self.initial_path = file
+        # Transpilation
+        content = gh.read_file(file)
+        tokens = self.lexer.tokenize(content, opts.embedded_tests)
+        tree = self.parser.parse(tokens, opts.embedded_tests)
+        result = self.interpreter.interpret(tree, opts=opts, args=args)
 
-    def get_tests(self) -> str:
-        """Return tests"""
-        debug.trace(7, 'BatsppTest.get_tests()')
-        return self.result_tests
+        return result
 
-    def save(self, path: str) -> None:
-        """
-        Save tests on PATH,
-        this could be an file name or directory (ending with [/])
-        """
-        debug.trace(7, f'Test.save({path})')
+    def transpile_and_save_bats(
+            self,
+            file:str,
+            output:str='',
+            args: BatsppArgs = BatsppArgs(),
+            opts: BatsppOpts = BatsppOpts()
+            ) -> None:
+        """Save Batspp transiled test FILE to OUTPUT path,
+           if OUTPUT is not provided or is a dir, a default is used 'generated_<file>.bats'"""
+        assert file, 'File path cannot be empty'
+        output = resolve_path(output, file)
+        transpiled_text = self.transpile_to_bats(file, args=args, opts=opts)
+        gh.write_file(output, transpiled_text)
+        gh.run(f'chmod +x {output}')
 
-        assert path, 'PATH string cannot be empty'
-        assert self.result_tests, 'no tests to save, try parse() or parse_file() methods'
-
-        # Check if path is a folder
-        #
-        # By default the file name can be
-        # - generated_<file>.bats
-        # - generated_file_<timestamp>.bats
-        if path.endswith('/'):
-            file_name = ''
-            if self.initial_path:
-                file_name = re_search(r"\/(\w+)\.", self.initial_path).group(0)
-            else:
-                file_name = f'file_{datetime.now()}'
-            path += f'generated_{file_name}.{BATS_EXTENSION}'
-
-        self.final_path = path
-
-        gh.write_file(self.final_path, self.result_tests)
-        gh.run(f'chmod +x {self.final_path}')
-
-    def run(self) -> str:
-        """
-        Run tests and return stdout
-        """
-        debug.trace(7, f'BatsppTest.run() on path={self.final_path}')
-
-        assert self.final_path, 'Tests must be saved, try save() method'
-
-        # Check for root permissions
-        sudo = 'sudo' if 'sudo' in self.result_tests else ''
-
-        return gh.run(f'{sudo} bats {self.args.run_opts} {self.final_path}')
+    def run(
+            self,
+            file:str,
+            args: BatsppArgs = BatsppArgs(),
+            opts: BatsppOpts = BatsppOpts()
+            ) -> str:
+        """Run Batspp test FILE and return result"""
+        assert file, 'File path cannot be empty'
+        temp_bats = f'{gh.get_temp_file()}.{BATS_EXTENSION}'
+        self.transpile_and_save_bats(file, temp_bats, args=args, opts=opts)
+        sudo = 'sudo' if 'sudo' in gh.read_file(temp_bats) else ''
+        return gh.run(f'{sudo} bats {args.run_opts} {temp_bats}')
 
 
 if __name__ == '__main__':
