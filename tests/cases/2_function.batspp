@@ -1,4 +1,7 @@
 $ function fibonacci () {
+$
+$    # this prints the first N Fibonacci numbers
+$
 $    result=""
 $    a=0
 $    b=1
