@@ -157,6 +157,18 @@ class TestEndUsage(TestWrapper):
             output_file='3_output_aliases'
             )
 
+    @pytest.mark.slow
+    def test_comments(self):
+        """End test tests/cases/4_comments.batspp"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestEndUsage.test_comments(); self={self}")
+        self.run_regression_test(
+            dir_path=CASES_PATH,
+            test_file='4_comments', extension='batspp',
+            generated_file='4_generated_comments',
+            output_file='4_output_comments'
+            )
+
 
 if __name__ == '__main__':
     debug.trace_current_context()

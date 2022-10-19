@@ -6,7 +6,7 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-19204"
+TEMP_DIR="/tmp/batspp-10437"
 
 # One time global setup
 shopt -s expand_aliases

@@ -6,10 +6,10 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-19455"
+TEMP_DIR="/tmp/batspp-10679"
 
 # One time global setup
-source /home/angrygingy/Desktop/work-repos/batspp/docs/examples/bash_example.bash
+source /home/angrygingy/Desktop/work-repos/batspp/tools/../docs/examples/bash_example.bash
 
 # Setup function
 # $1 -> test name
