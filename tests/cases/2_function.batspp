@@ -21,3 +21,10 @@ $ function line-wc () { perl -n -e '@_ = split; printf("%d\t%s", 1 + $#_, $_);' 
 $ echo -e "hello\nworld!" | line-wc
 1       hello
 1       world!
+
+
+$ function hello () {
+>    echo "hello world!"
+> }
+$ hello
+hello world!
