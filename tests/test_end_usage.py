@@ -169,6 +169,18 @@ class TestEndUsage(TestWrapper):
             output_file='4_output_comments'
             )
 
+    @pytest.mark.slow
+    def test_long_outputs(self):
+        """End test tests/cases/5_long_outputs.batspp"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestEndUsage.test_comments(); self={self}")
+        self.run_regression_test(
+            dir_path=CASES_PATH,
+            test_file='5_long_outputs', extension='batspp',
+            generated_file='5_generated_long_outputs',
+            output_file='5_output_long_outputs'
+            )
+
 
 if __name__ == '__main__':
     debug.trace_current_context()
