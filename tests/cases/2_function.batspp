@@ -17,7 +17,7 @@ $ }
 $ fibonacci 9
 0 1 1 2 3 5 8 13 21 34
 
-$ function line-wc () { perl -n -e '@_ = split; printf("%d\t%s", 1 + $#_, $_);' "$@"; }
+$ function line-wc () { perl -n -e '@_ = split; printf("%d\t%s", 1 + $\#_, $_);' "$@"; }
 $ echo -e "hello\nworld!" | line-wc
 1       hello
 1       world!

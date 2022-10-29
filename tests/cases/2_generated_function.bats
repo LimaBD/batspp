@@ -6,7 +6,7 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-19810"
+TEMP_DIR="/tmp/batspp-183309"
 
 # Setup function
 # $1 -> test name
@@ -24,7 +24,7 @@ function run_teardown () {
 @test "test of line 1" {
 	run_setup "test-of-line-1"
 
-	# Assertion of line 14
+	# Assertion of line 17
 	function fibonacci () {
 	result=""
 	a=0
@@ -39,8 +39,34 @@ function run_teardown () {
 	echo $result
 	}
 	shopt -s expand_aliases
-	print_debug "$(fibonacci 9)" "$(echo -e '0 1 1 2 3 5 8 13 21 34')"
-	[ "$(fibonacci 9)" == "$(echo -e '0 1 1 2 3 5 8 13 21 34')" ]
+	print_debug "$(fibonacci 9)" "$(echo -e '0 1 1 2 3 5 8 13 21 34\n')"
+	[ "$(fibonacci 9)" == "$(echo -e '0 1 1 2 3 5 8 13 21 34\n')" ]
+
+	run_teardown
+}
+
+@test "test of line 20" {
+	run_setup "test-of-line-20"
+
+	# Assertion of line 21
+	function line-wc () { perl -n -e '@_ = split; printf("%d\t%s", 1 + $\#_, $_);' "$@"; }
+	shopt -s expand_aliases
+	print_debug "$(echo -e "hello\nworld!" | line-wc)" "$(echo -e '1       hello\n1       world!\n')"
+	[ "$(echo -e "hello\nworld!" | line-wc)" == "$(echo -e '1       hello\n1       world!\n')" ]
+
+	run_teardown
+}
+
+@test "test of line 26" {
+	run_setup "test-of-line-26"
+
+	# Assertion of line 29
+	function hello () {
+	echo "hello world!"
+	}
+	shopt -s expand_aliases
+	print_debug "$(hello)" "$(echo -e 'hello world!\n')"
+	[ "$(hello)" == "$(echo -e 'hello world!\n')" ]
 
 	run_teardown
 }

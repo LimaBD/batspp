@@ -6,7 +6,7 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-19902"
+TEMP_DIR="/tmp/batspp-183451"
 
 # Setup function
 # $1 -> test name
@@ -27,8 +27,8 @@ function run_teardown () {
 	# Assertion of line 2
 	alias hello='echo "Hello user!"'
 	shopt -s expand_aliases
-	print_debug "$(hello)" "$(echo -e 'Hello user!')"
-	[ "$(hello)" == "$(echo -e 'Hello user!')" ]
+	print_debug "$(hello)" "$(echo -e 'Hello user!\n')"
+	[ "$(hello)" == "$(echo -e 'Hello user!\n')" ]
 
 	run_teardown
 }

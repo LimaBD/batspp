@@ -6,7 +6,7 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-19694"
+TEMP_DIR="/tmp/batspp-183192"
 
 # Setup function
 # $1 -> test name
@@ -26,9 +26,10 @@ function run_teardown () {
 	run_setup "test-of-line-4"
 
 	# Assertion of line 4
+
 	shopt -s expand_aliases
-	print_debug "$(echo "Hi Mom!")" "$(echo -e 'Hi Mom!')"
-	[ "$(echo "Hi Mom!")" == "$(echo -e 'Hi Mom!')" ]
+	print_debug "$(echo "Hi Mom!")" "$(echo -e 'Hi Mom!\n')"
+	[ "$(echo "Hi Mom!")" == "$(echo -e 'Hi Mom!\n')" ]
 
 	run_teardown
 }
@@ -37,9 +38,10 @@ function run_teardown () {
 	run_setup "test-of-line-7"
 
 	# Assertion of line 7
+
 	shopt -s expand_aliases
-	print_debug "$(echo 'Hello world' | wc -l)" "$(echo -e '1')"
-	[ "$(echo 'Hello world' | wc -l)" == "$(echo -e '1')" ]
+	print_debug "$(echo 'Hello world' | wc -l)" "$(echo -e '1\n')"
+	[ "$(echo 'Hello world' | wc -l)" == "$(echo -e '1\n')" ]
 
 	run_teardown
 }
