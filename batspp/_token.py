@@ -44,6 +44,7 @@ class TokenType(Enum):
     """Token types enum"""
     # Single-character token types
     PESO = '$'
+    GREATER = '>'
     # Reserved words
     SETUP = 'setup'
     TEARDOWN = 'teardown'

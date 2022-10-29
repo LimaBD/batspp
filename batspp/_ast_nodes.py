@@ -16,6 +16,7 @@ from enum import Enum
 # Local packages
 from batspp._exceptions import (
     warning_not_intended_for_cmd,
+    assert_type,
     )
 from batspp._token import TokenData
 
@@ -50,14 +51,16 @@ class Assertion(AST):
             self,
             atype: AssertionType,
             setup_commands: list = None,
-            actual: str = '',
-            expected: str = '',
+            actual: list = None,
+            expected: list = None,
             data: TokenData = TokenData(),
             ) -> None:
         super().__init__(data)
         self.atype = atype
         self.setup_commands = setup_commands
+        assert_type(actual, list)
         self.actual = actual
+        assert_type(expected, list)
         self.expected = expected
 
 

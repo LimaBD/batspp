@@ -65,7 +65,7 @@ class TestParser:
         assert isinstance(parser.peek_token(), Token)
         assert parser.peek_token(1).type == TokenType.TEXT
         assert parser.peek_token(2).type == TokenType.EOF
-        assert parser.peek_token(3) == None
+        assert parser.peek_token(3) is None
 
     def test_eat(self):
         """Test for eat()"""
@@ -355,9 +355,9 @@ class TestParser:
         assert len(parser.tests_ast_nodes_stack[2].assertions) == 0
 
         # Check actual and expected values
-        assert parser.tests_ast_nodes_stack[1].assertions[0].actual == 'some command'
-        assert parser.tests_ast_nodes_stack[1].assertions[0].expected == 'some text'
-        assert parser.tests_ast_nodes_stack[1].assertions[0].expected != 'wrong text!'
+        assert parser.tests_ast_nodes_stack[1].assertions[0].actual == ['some command']
+        assert parser.tests_ast_nodes_stack[1].assertions[0].expected == ['some text']
+        assert parser.tests_ast_nodes_stack[1].assertions[0].expected != ['wrong text!']
 
         # Check setup stack and assertion
         assert len(parser.setup_commands_stack) == 2
@@ -377,8 +377,8 @@ class TestParser:
         parser.build_assertion(reference='important test')
         assertion = parser.tests_ast_nodes_stack[0].assertions[0]
         assert assertion.atype == AssertionType.NOT_EQUAL
-        assert assertion.actual == 'function arg1 arg2'
-        assert assertion.expected == 'not expected text'
+        assert assertion.actual == ['function arg1 arg2']
+        assert assertion.expected == ['not expected text']
 
     def test_pop_setup_commands(self):
         """Test for pop_setup()"""
@@ -428,15 +428,15 @@ class TestParser:
             Token(TokenType.EOF, None),
             ]
         tree = parser.parse(tokens)
-        assert isinstance(tree, TestsSuite)\
+        assert isinstance(tree, TestsSuite)
         # Check setup
         assert tree.setup_commands == ['some global command', 'another global command']
         assert tree.setup_commands != ['wrong command!']
         # Check tests
         assert len(tree.tests) == 1
         assert tree.tests[0].assertions[0].setup_commands == ['local setup command']
-        assert tree.tests[0].assertions[0].actual == 'some assertion command'
-        assert tree.tests[0].assertions[0].expected == 'expected text line 1\nexpected text line 2\nexpected text line 3'
+        assert tree.tests[0].assertions[0].actual == ['some assertion command']
+        assert tree.tests[0].assertions[0].expected == ['expected text line 1', 'expected text line 2', 'expected text line 3']
 
         # Test when tokens list is empty
         with pytest.raises(Exception):

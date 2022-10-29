@@ -204,7 +204,7 @@ class Parser:
         """
         Pop all tests ast nodes in stack
         """
-        debug.trace(7, f'parser.pop_tests_ast_nodes()')
+        debug.trace(7, 'parser.pop_tests_ast_nodes()')
         result = self.tests_ast_nodes_stack
         self.tests_ast_nodes_stack = []
         return result
@@ -301,9 +301,17 @@ class Parser:
             else:
                 pass
 
-        self.setup_commands_stack.append(
-            (reference, self.extract_setup_commands(data))
-            )
+        # Extract setup commands
+        commands = self.extract_next_commands()
+        if not commands:
+            error(
+                message = 'Setup comamnds cannot be empty',
+                text_line = data.text_line,
+                line = data.line,
+                column = data.column,
+                )
+
+        self.setup_commands_stack.append((reference, commands))
 
     def pop_setup_commands(self, reference: str) -> list:
         """
@@ -311,13 +319,16 @@ class Parser:
         if several setups commands blocks are founded, unify all into one
         """
         result = []
+        new_setup_stack = []
 
         # Get commands from stack with same reference
         for stack_reference, commands in self.setup_commands_stack:
             if stack_reference == reference:
                 result += commands
-                self.setup_commands_stack.remove((stack_reference, commands))
+            else:
+                new_setup_stack.append((stack_reference, commands))
 
+        self.setup_commands_stack = new_setup_stack
         return result
 
     def push_teardown_commands(self) -> None:
@@ -325,45 +336,51 @@ class Parser:
         Push teardown commands to stack
         """
         debug.trace(7, 'parser.push_teardown_commands()')
-
         data = self.get_current_token().data
-
         self.eat(TokenType.TEARDOWN)
-        ## TODO: rename extract_setup_commands to a common name
-        commands = self.extract_setup_commands(data)
-
+        commands = self.extract_next_commands()
+        if not commands:
+            error(
+                message = 'Teardown comamnds cannot be empty',
+                text_line = data.text_line,
+                line = data.line,
+                column = data.column,
+                )
         self.teardown_commands_stack.append(commands)
 
     def pop_teardown_commands(self) -> None:
         """
         Pop teardown commands from stack
         """
-        debug.trace(7, f'parser.pop_teardown_commands()')
+        debug.trace(7, 'parser.pop_teardown_commands()')
         result = self.teardown_commands_stack
         self.teardown_commands_stack = []
         return result
 
-    def extract_setup_commands(self, data):
+    def extract_next_command(self) -> str:
         """
-        Extract setup commands from blocks of setup commands,
-        also raise exception if block of commands are empty.
+        Return commands from next token pattern, return in a list
+        command : PESO TEXT (GREATER TEXT)*
         """
         commands = []
 
-        while self.is_setup_command_next():
-            self.eat(TokenType.PESO)
+        self.eat(TokenType.PESO)
+        commands.append(self.get_current_token().value)
+        self.eat(TokenType.TEXT)
+
+        while self.get_current_token().type is TokenType.GREATER:
+            self.eat(TokenType.GREATER)
             commands.append(self.get_current_token().value)
             self.eat(TokenType.TEXT)
 
-        if not commands:
-            error(
-                message = 'Setup cannot be empty',
-                text_line = data.text_line,
-                line = data.line,
-                column = data.column,
-                )
-
         return commands
+
+    def extract_next_commands(self):
+        """Extract N commands next"""
+        result = []
+        while self.is_setup_command_next():
+            result += self.extract_next_command()
+        return result
 
     def build_assertion(self, reference:str='') -> None:
         """
@@ -374,7 +391,7 @@ class Parser:
 
         data = self.get_current_token().data
         atype = None
-        actual = ''
+        actual = []
 
         # BAD:
         #   Do not use is_command_assertion_next or is_arrow_assertion_next here.
@@ -384,14 +401,12 @@ class Parser:
         ## TODO: move this to a different method (e.g. eat_command_assertion???)
         if self.get_current_token().type is TokenType.PESO:
             atype = AssertionType.OUTPUT
-            self.eat(TokenType.PESO)
-            actual = self.get_current_token().value
-            self.eat(TokenType.TEXT)
+            actual = self.extract_next_command()
 
         # Check for arrow assertion
         ## TODO: move this to a different method (e.g. eat_arrow_assertion???)
         elif self.get_current_token().type is TokenType.TEXT:
-            actual = self.get_current_token().value
+            actual = [self.get_current_token().value]
             self.eat(TokenType.TEXT)
 
             # Check for assertion type
@@ -404,11 +419,10 @@ class Parser:
 
         # Check expected text tokens
         ## TODO: move this to a different method
-        expected = ''
+        expected = []
         while self.get_current_token().type is TokenType.TEXT:
-            expected += f'{self.get_current_token().value}\n'
+            expected.append(self.get_current_token().value)
             self.eat(TokenType.TEXT)
-        expected = expected[:-1] # Remove last newline
 
         # New assertion node
         node = Assertion(
