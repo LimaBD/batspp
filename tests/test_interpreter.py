@@ -82,8 +82,8 @@ class TestInterpreter:
         interpreter.last_title = 'important test'
         node = Assertion(
             atype=AssertionType.EQUAL,
-            actual='echo "some text"',
-            expected='some text',
+            actual=['echo "some text"'],
+            expected=['some text'],
             data=data,
             )
         actual = interpreter.visit_Assertion(node)
@@ -103,14 +103,14 @@ class TestInterpreter:
         first_assertion = Assertion(
             atype=AssertionType.EQUAL,
             setup_commands=['echo "hello world" > file.txt'],
-            actual='cat file.txt',
-            expected='hello world',
+            actual=['cat file.txt'],
+            expected=['hello world'],
             data=data,
             )
         second_assertion = Assertion(
             atype=AssertionType.EQUAL,
-            actual='cat file.txt | wc -m',
-            expected='11',
+            actual=['cat file.txt | wc -m'],
+            expected=['11'],
             data=data,
             )
         test = Test(

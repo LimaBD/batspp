@@ -138,7 +138,8 @@ class Interpreter(NodeVisitor):
         """
 
         # Set setup
-        setup = build_commands_block(node.setup_commands) if node.setup_commands else ''
+        setup = f'{build_commands_block(node.setup_commands)}' if node.setup_commands else ''
+        setup += '' if setup.endswith('\n') else '\n'
 
         # Set assertion operator
         operator = ''
@@ -147,11 +148,15 @@ class Interpreter(NodeVisitor):
         else:
             operator = '!='
 
+        # Set actual block of commands
+        actual_commands = build_commands_block(node.actual, indent='', multiline_last_char=';')
+        expected_text = repr(''.join(f'{text}\n' for text in node.expected))
+
         # Set debug
         debug_cmd = ''
         if not self.opts.omit_trace:
             debug_cmd = (
-                f'\tprint_debug "$({node.actual.strip()})" "$(echo -e {repr(node.expected)})"\n'
+                f'\tprint_debug "$({actual_commands})" "$(echo -e {expected_text})"\n'
                 )
 
         # Unify everything
@@ -160,7 +165,7 @@ class Interpreter(NodeVisitor):
             f'{setup}'
             '\tshopt -s expand_aliases\n'
             f'{debug_cmd}'
-            f'\t[ "$({node.actual.strip()})" {operator} "$(echo -e {repr(node.expected)})" ]\n'
+            f'\t[ "$({actual_commands})" {operator} "$(echo -e {expected_text})" ]\n'
             )
 
         # Check global class option to
@@ -292,9 +297,11 @@ def flatten_str(string: str) -> str:
 def build_commands_block(
         commands: list,
         indent: str = '\t',
+        multiline_last_char: str = '\n',
         ) -> str:
     """Build commands block with COMMANDS indented with tab"""
-    result = ''.join([f'{indent}{cmd.strip()}\n' for cmd in commands])
+    multiline_last_char = multiline_last_char if len(commands) > 1 else ''
+    result = ''.join([f'{indent}{cmd.strip()}{multiline_last_char}' for cmd in commands])
     debug.trace(7, f'interpreter.build_commands_block({commands}) => {result}')
     return result
 
@@ -321,8 +328,7 @@ def build_setup_function(
         commands = list(set(sources) - set(commands))
         result += (
             '# One time global setup\n'
-            f'{build_commands_block(sources, indent="")}'
-            '\n'
+            f'{build_commands_block(sources, indent="")}\n'
             )
 
     result += (
@@ -345,7 +351,7 @@ def build_setup_function(
             )
 
     result += build_commands_block(commands)
-
+    result += '' if result.endswith('\n') else '\n'
     result += '}\n\n'
 
     debug.trace(7, f'interpreter.build_global_setup({commands}) => {result}')
@@ -360,12 +366,12 @@ def build_teardown_function(commands: list) -> str:
     if commands:
         body = build_commands_block(commands)
     else:
-        body = '\t: # Nothing here...\n'
+        body = '\t: # Nothing here...'
 
     result = (
         '# Teardown function\n'
         f'function {TEARDOWN_FUNCTION} () {{\n'
-        f'{body}'
+        f'{body}\n'
         '}\n\n'
         )
 
