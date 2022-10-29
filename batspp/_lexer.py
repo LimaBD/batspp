@@ -143,15 +143,16 @@ class Lexer:
                 column = self.text.column + 1,
                 )
 
-            # Tokenize lines with double comments as minor token
+            # Skip double comments
             match = re_match(r'^##', self.text.get_current_line())
             if match:
                 self.text.advance_line()
-                self.push_minor_token(Token(
-                    TokenType.MINOR,
-                    match.group(),
-                    data,
-                    ))
+                continue
+
+            # Skip empty commands (optionally with comments)
+            match = re_match(r' *(?:\$|\>) *(?:#.+?)? *$', self.text.get_current_line())
+            if match:
+                self.text.advance_line()
                 continue
 
             # Tokenize empty lines
@@ -171,6 +172,17 @@ class Lexer:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
                     TokenType.PESO,
+                    match.group(),
+                    data,
+                    ))
+                continue
+
+            # Tokenize greater
+            match = re_match(r' *\>', self.text.get_rest_line())
+            if match:
+                self.text.advance_column(match.span()[1])
+                self.push_token(Token(
+                    TokenType.GREATER,
                     match.group(),
                     data,
                     ))
@@ -273,24 +285,20 @@ class Lexer:
                     ))
                 continue
 
+            # Skip other comments that are not directives
+            match = re_match(r'^ *#.*?$', self.text.get_rest_line())
+            if match:
+                self.text.advance_line()
+                continue
+
             # Tokenize text
-            match = re_match(r'^[^#]+?(?==>|=/>|$)', self.text.get_rest_line())
+            ## TODO: fix pattern not matching char before '#'
+            match = re_match(r'^.+?(?=(?:[^\\](?:=>|=\/>|#)|$))', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
                     TokenType.TEXT,
                     match.group(),
-                    data,
-                    ))
-                continue
-
-            # Tokenize comments as minor token
-            match = re_match(r'^ *#.*?$', self.text.get_current_line())
-            if match:
-                self.text.advance_line()
-                self.push_minor_token(Token(
-                    TokenType.MINOR,
-                    None,
                     data,
                     ))
                 continue

@@ -78,9 +78,9 @@ class TestTextLiner:
         text.column = 26
         assert text.get_rest_line() == 's'
         text.column = 27
-        assert text.get_rest_line() == None
+        assert text.get_rest_line() is None
         text.column = 123
-        assert text.get_rest_line() == None
+        assert text.get_rest_line() is None
 
     def test_get_current_line(self):
         """Test for get_current_line()"""
@@ -93,7 +93,7 @@ class TestTextLiner:
         text.line = 2
         assert text.get_current_line() == 'multiple'
         text.line = 6
-        assert text.get_current_line() == None
+        assert text.get_current_line() is None
 
     def test_advance_column(self):
         """Test for advance_column()"""
@@ -198,7 +198,6 @@ class TestLexer:
         debug.trace(debug.QUITE_DETAILED,
                     f"TestLexer.test_peso(); self={self}")
         valids = [
-            '$',
             '$ some text',
             ]
         invalids = [
