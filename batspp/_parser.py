@@ -382,6 +382,14 @@ class Parser:
             result += self.extract_next_command()
         return result
 
+    def extract_text_lines(self):
+        """Extract N text lines next"""
+        result = []
+        while self.get_current_token().type is TokenType.TEXT:
+            result.append(self.get_current_token().value)
+            self.eat(TokenType.TEXT)
+        return result
+
     def build_assertion(self, reference:str='') -> None:
         """
         Build and append Assertion AST node and set REFERENCE as reference
@@ -418,11 +426,7 @@ class Parser:
                 self.eat(TokenType.ASSERT_NE)
 
         # Check expected text tokens
-        ## TODO: move this to a different method
-        expected = []
-        while self.get_current_token().type is TokenType.TEXT:
-            expected.append(self.get_current_token().value)
-            self.eat(TokenType.TEXT)
+        expected = self.extract_text_lines()
 
         # New assertion node
         node = Assertion(
