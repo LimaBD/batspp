@@ -78,7 +78,7 @@ class Parser:
         debug.trace(7, f'parser.peek_token(number={number}) => {result}')
         return result
 
-    def eat(self, token_type:str) -> None:
+    def eat(self, token_type:TokenType) -> None:
         """
         Compare current token type with TOKEN_TYPE and
         if matchs, advance token otherwise raise exception
@@ -96,6 +96,21 @@ class Parser:
                 message=f'Expected {token_type} but founded {current_token.type}',
                 text_line=current_token.data.text_line,
                 line=current_token.data.line,
+                )
+
+    def eat_some(self, *token_types:TokenType) -> None:
+        """Eat some token type in TOKEN_TYPES"""
+        eated = False
+        for type in token_types: # pylint: disable=redefined-builtin
+            if self.get_current_token().type is type:
+                self.eat(type)
+                eated = True
+                break
+        if not eated:
+            error(
+                message=f'Expected {token_types} but founded {self.get_current_token().type}',
+                text_line=self.get_current_token().data.text_line,
+                line=self.get_current_token().data.line,
                 )
 
     def is_command_next(self) -> bool:
@@ -138,26 +153,35 @@ class Parser:
         command_assertion : command TEXT
         """
         result = False
-        third_token = self.peek_token(2)
+        if (self.get_current_token().type is TokenType.PESO
+            and self.peek_token(1).type is TokenType.TEXT):
 
-        if third_token:
-            result = self.is_command_next() and third_token.type is TokenType.TEXT
+            peek_advance = 2
+            while self.peek_token(peek_advance) and self.peek_token(peek_advance+1):
+                if self.peek_token(peek_advance).type is TokenType.GREATER:
+                    peek_advance += 1
+                else:
+                    break
+                if self.peek_token(peek_advance).type is TokenType.TEXT:
+                    peek_advance += 1
+                else:
+                    break
 
-        debug.trace(7, (
-            f'parser.is_command_assertion_next() => {result}'
-            ))
+            result = self.peek_token(peek_advance).type is TokenType.TEXT
+
+        debug.trace(7, (f'parser.is_command_assertion_next() => {result}'))
         return result
 
-    def is_arrow_assertion_next(self) -> bool:
+    def is_arrow_assertion_next(self, offset=0) -> bool:
         """
-        Check if a arrow assertion tokens pattern is next
+        Check if a arrow assertion tokens pattern is next, an OFFSET
+        could be setted to peek more tokens advanced than now.
         arrow_assertion : TEXT (ASSERT_EQ|ASSERT_NE) TEXT
         """
         result = False
-        first_token = self.get_current_token()
-        second_token = self.peek_token(1)
-        third_token = self.peek_token(2)
-
+        first_token = self.peek_token(0 + offset)
+        second_token = self.peek_token(1 + offset)
+        third_token = self.peek_token(2 + offset)
         if first_token and second_token and third_token:
             result = (
                 first_token.type is TokenType.TEXT
@@ -177,6 +201,25 @@ class Parser:
         debug.trace(7, (
             f'parser.is_assertion_next() => {result}'
             ))
+        return result
+
+    def is_text_paragraph_next(self) -> bool:
+        """Check if text tokens pattern are next, and if not are part of a assertion"""
+        is_valid_text = self.get_current_token().type is TokenType.TEXT
+        is_valid_new_line = (
+            self.get_current_token().type is TokenType.NEW_LINE
+            and not self.embedded_tests
+            )
+        is_last_new_line = (
+            self.get_current_token().type is TokenType.NEW_LINE
+            and self.peek_token(1).type not in [TokenType.TEXT, TokenType.NEW_LINE]
+            )
+        result = (
+            (is_valid_new_line or is_valid_text)
+            and not self.is_arrow_assertion_next(offset=1)
+            and not is_last_new_line
+            )
+        ## TODO: add trace
         return result
 
     def push_test_ast_node(self, reference:str='') -> None:
@@ -200,7 +243,7 @@ class Parser:
 
         self.break_setup_assertion(reference)
 
-    def pop_tests_ast_nodes(self):
+    def pop_tests_ast_nodes(self) -> list:
         """
         Pop all tests ast nodes in stack
         """
@@ -375,19 +418,19 @@ class Parser:
 
         return commands
 
-    def extract_next_commands(self):
+    def extract_next_commands(self) -> list:
         """Extract N commands next"""
         result = []
         while self.is_setup_command_next():
             result += self.extract_next_command()
         return result
 
-    def extract_text_lines(self):
-        """Extract N text lines next"""
+    def extract_text_lines(self) -> list:
+        """Extract N text lines next, not extract last new line"""
         result = []
-        while self.get_current_token().type is TokenType.TEXT:
+        while self.is_text_paragraph_next():
             result.append(self.get_current_token().value)
-            self.eat(TokenType.TEXT)
+            self.eat_some(TokenType.TEXT, TokenType.NEW_LINE)
         return result
 
     def build_assertion(self, reference:str='') -> None:
@@ -474,6 +517,10 @@ class Parser:
             # Skip minor tokens
             if token_type is TokenType.MINOR:
                 self.eat(TokenType.MINOR)
+
+            # Skip new lines without previous text
+            elif token_type is TokenType.NEW_LINE:
+                self.eat(TokenType.NEW_LINE)
 
             # Process next tokens as a test directive pattern
             elif token_type is TokenType.TEST:

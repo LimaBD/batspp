@@ -156,11 +156,11 @@ class Lexer:
                 continue
 
             # Tokenize empty lines
-            match = re_match(r'^ *$', self.text.get_current_line())
+            match = re_match(r'^$', self.text.get_current_line())
             if match:
                 self.text.advance_line()
-                self.push_minor_token(Token(
-                    TokenType.MINOR,
+                self.push_token(Token(
+                    TokenType.NEW_LINE,
                     match.group(),
                     data,
                     ))

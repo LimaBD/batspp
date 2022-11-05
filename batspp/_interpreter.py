@@ -149,8 +149,10 @@ class Interpreter(NodeVisitor):
             operator = '!='
 
         # Set actual block of commands
-        actual_commands = build_commands_block(node.actual, indent='', multiline_last_char=';')
-        expected_text = repr(''.join(f'{text}\n' for text in node.expected))
+        actual_commands = build_commands_block(node.actual, indent='', multiline_last_char='')
+        expected_text = ''.join(f'{text}\n' for text in node.expected).rstrip()
+        expected_text += '' if expected_text.endswith('\n') else '\n'
+        expected_text = repr(expected_text)
 
         # Set debug
         debug_cmd = ''

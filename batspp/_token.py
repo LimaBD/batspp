@@ -45,6 +45,7 @@ class TokenType(Enum):
     # Single-character token types
     PESO = '$'
     GREATER = '>'
+    NEW_LINE = '\n'
     # Reserved words
     SETUP = 'setup'
     TEARDOWN = 'teardown'
