@@ -26,7 +26,6 @@ function run_teardown () {
 	run_setup "test-of-line-4"
 
 	# Assertion of line 4
-
 	shopt -s expand_aliases
 	print_debug "$(echo "Hi Mom!")" "$(echo -e 'Hi Mom!\n')"
 	[ "$(echo "Hi Mom!")" == "$(echo -e 'Hi Mom!\n')" ]
@@ -38,7 +37,6 @@ function run_teardown () {
 	run_setup "test-of-line-7"
 
 	# Assertion of line 7
-
 	shopt -s expand_aliases
 	print_debug "$(echo 'Hello world' | wc -l)" "$(echo -e '1\n')"
 	[ "$(echo 'Hello world' | wc -l)" == "$(echo -e '1\n')" ]

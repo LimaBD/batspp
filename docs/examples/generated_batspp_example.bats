@@ -29,7 +29,6 @@ function run_teardown () {
 	run_setup "test-of-line-15"
 
 	# Assertion of line 15
-
 	shopt -s expand_aliases
 	print_debug "$(echo -e "hello\nworld")" "$(echo -e 'hello\nworld\n')"
 	[ "$(echo -e "hello\nworld")" == "$(echo -e 'hello\nworld\n')" ]
@@ -41,7 +40,6 @@ function run_teardown () {
 	run_setup "test-of-line-20"
 
 	# Assertion of line 20
-
 	shopt -s expand_aliases
 	print_debug "$(run-fibonacci 9)" "$(echo -e 'The Fibonacci series is:\n0 1 1 2 3 5 8 13 21 34\n')"
 	[ "$(run-fibonacci 9)" == "$(echo -e 'The Fibonacci series is:\n0 1 1 2 3 5 8 13 21 34\n')" ]
@@ -53,7 +51,6 @@ function run_teardown () {
 	run_setup "test-of-line-27"
 
 	# Assertion of line 27
-
 	shopt -s expand_aliases
 	print_debug "$(fibonacci 9)" "$(echo -e '0 1 1 2 3 5 8 13 21 34\n')"
 	[ "$(fibonacci 9)" == "$(echo -e '0 1 1 2 3 5 8 13 21 34\n')" ]
@@ -65,7 +62,6 @@ function run_teardown () {
 	run_setup "test-of-line-30"
 
 	# Assertion of line 30
-
 	shopt -s expand_aliases
 	print_debug "$(fibonacci 3)" "$(echo -e '8 2 45 34 3 5\n')"
 	[ "$(fibonacci 3)" != "$(echo -e '8 2 45 34 3 5\n')" ]
@@ -104,7 +100,6 @@ function run_teardown () {
 	[ "$(cat $filepath | wc -l)" == "$(echo -e '3\n')" ]
 
 	# Assertion of line 56
-
 	shopt -s expand_aliases
 	print_debug "$(cat $filepath | wc -c)" "$(echo -e '46\n')"
 	[ "$(cat $filepath | wc -c)" == "$(echo -e '46\n')" ]

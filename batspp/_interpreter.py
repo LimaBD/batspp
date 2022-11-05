@@ -139,7 +139,7 @@ class Interpreter(NodeVisitor):
 
         # Set setup
         setup = f'{build_commands_block(node.setup_commands)}' if node.setup_commands else ''
-        setup += '' if setup.endswith('\n') else '\n'
+        setup += '\n' if setup and not setup.endswith('\n') else ''
 
         # Set assertion operator
         operator = ''

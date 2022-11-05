@@ -25,7 +25,6 @@ function run_teardown () {
 	run_setup "test-of-line-1"
 
 	# Assertion of line 1
-
 	shopt -s expand_aliases
 	print_debug "$(echo "Hello World!")" "$(echo -e 'Hello World!\n')"
 	[ "$(echo "Hello World!")" == "$(echo -e 'Hello World!\n')" ]
