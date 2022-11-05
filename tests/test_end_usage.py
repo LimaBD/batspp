@@ -87,12 +87,11 @@ class TestEndUsage(TestWrapper):
         expected_output = gh.read_file(f'{dir_path}/{output_file}.txt')[:-1]
 
         # Make equal the random number and paths
-        temp_dir_pattern = r'TEMP_DIR=.+'
-        actual_generated = re_sub(temp_dir_pattern, '', actual_generated)
-        expected_generated = re_sub(temp_dir_pattern, '', expected_generated)
-        source_pattern = r'source .+'
-        actual_generated = re_sub(source_pattern, '', actual_generated)
-        expected_generated = re_sub(source_pattern, '', expected_generated)
+        pattern_to_ignore = r'(TEMP_DIR=.+|source .+|.*\/tmp\/.+)'
+        actual_generated = re_sub(pattern_to_ignore, '', actual_generated)
+        actual_output = re_sub(pattern_to_ignore, '', actual_output)
+        expected_generated = re_sub(pattern_to_ignore, '', expected_generated)
+        expected_output = re_sub(pattern_to_ignore, '', expected_output)
 
         assert actual_generated == expected_generated
         assert actual_output == expected_output
