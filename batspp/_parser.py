@@ -28,7 +28,7 @@ from batspp._exceptions import (
     error, warning_not_intended_for_cmd,
     )
 from batspp._token import (
-    TokenType, Token,
+    TokenVariant, Token,
     )
 from batspp._ast_nodes import (
     AST, TestsSuite, Test,
@@ -78,37 +78,37 @@ class Parser:
         debug.trace(7, f'parser.peek_token(number={number}) => {result}')
         return result
 
-    def eat(self, token_type:TokenType) -> None:
+    def eat(self, token_variant:TokenVariant) -> None:
         """
-        Compare current token type with TOKEN_TYPE and
+        Compare current token variant with TOKEN_VARIANT and
         if matchs, advance token otherwise raise exception
         """
-        debug.trace(7, f'parser.eat(token_type={token_type})')
+        debug.trace(7, f'parser.eat(token_variant={token_variant})')
 
-        assert token_type, 'invalid token_type'
+        assert token_variant, 'invalid token_variant'
 
         current_token = self.get_current_token()
 
-        if current_token.type is token_type:
+        if current_token.variant is token_variant:
             self.index += 1
         else:
             error(
-                message=f'Expected {token_type} but founded {current_token.type}',
+                message=f'Expected {token_variant} but founded {current_token.variant}',
                 text_line=current_token.data.text_line,
                 line=current_token.data.line,
                 )
 
-    def eat_some(self, *token_types:TokenType) -> None:
-        """Eat some token type in TOKEN_TYPES"""
+    def eat_some(self, *token_variants:TokenVariant) -> None:
+        """Eat some token variant in TOKEN_VARIANTS"""
         eated = False
-        for type in token_types: # pylint: disable=redefined-builtin
-            if self.get_current_token().type is type:
-                self.eat(type)
+        for variant in token_variants:
+            if self.get_current_token().variant is variant:
+                self.eat(variant)
                 eated = True
                 break
         if not eated:
             error(
-                message=f'Expected {token_types} but founded {self.get_current_token().type}',
+                message=f'Expected {token_variants} but founded {self.get_current_token().variant}',
                 text_line=self.get_current_token().data.text_line,
                 line=self.get_current_token().data.line,
                 )
@@ -125,13 +125,13 @@ class Parser:
 
         if second is not None:
             result = (
-                first.type is TokenType.PESO
-                and second.type is TokenType.TEXT
+                first.variant is TokenVariant.PESO
+                and second.variant is TokenVariant.TEXT
                 )
 
         debug.trace(7, (
             f'parser.is_command_next() =>'
-            f' next tokens types: {first} {second}'
+            f' next tokens variants: {first} {second}'
             f' => {result}'
             ))
         return result
@@ -153,21 +153,21 @@ class Parser:
         command_assertion : command TEXT
         """
         result = False
-        if (self.get_current_token().type is TokenType.PESO
-            and self.peek_token(1).type is TokenType.TEXT):
+        if (self.get_current_token().variant is TokenVariant.PESO
+            and self.peek_token(1).variant is TokenVariant.TEXT):
 
             peek_advance = 2
             while self.peek_token(peek_advance) and self.peek_token(peek_advance+1):
-                if self.peek_token(peek_advance).type is TokenType.GREATER:
+                if self.peek_token(peek_advance).variant is TokenVariant.GREATER:
                     peek_advance += 1
                 else:
                     break
-                if self.peek_token(peek_advance).type is TokenType.TEXT:
+                if self.peek_token(peek_advance).variant is TokenVariant.TEXT:
                     peek_advance += 1
                 else:
                     break
 
-            result = self.peek_token(peek_advance).type is TokenType.TEXT
+            result = self.peek_token(peek_advance).variant is TokenVariant.TEXT
 
         debug.trace(7, (f'parser.is_command_assertion_next() => {result}'))
         return result
@@ -184,9 +184,9 @@ class Parser:
         third_token = self.peek_token(2 + offset)
         if first_token and second_token and third_token:
             result = (
-                first_token.type is TokenType.TEXT
-                and second_token.type in [TokenType.ASSERT_EQ, TokenType.ASSERT_NE]
-                and third_token.type is TokenType.TEXT
+                first_token.variant is TokenVariant.TEXT
+                and second_token.variant in [TokenVariant.ASSERT_EQ, TokenVariant.ASSERT_NE]
+                and third_token.variant is TokenVariant.TEXT
                 )
         debug.trace(7, (
             f'parser.is_arrow_assertion_next() => {result}'
@@ -205,14 +205,14 @@ class Parser:
 
     def is_text_paragraph_next(self) -> bool:
         """Check if text tokens pattern are next, and if not are part of a assertion"""
-        is_valid_text = self.get_current_token().type is TokenType.TEXT
+        is_valid_text = self.get_current_token().variant is TokenVariant.TEXT
         is_valid_new_line = (
-            self.get_current_token().type is TokenType.NEW_LINE
+            self.get_current_token().variant is TokenVariant.NEW_LINE
             and not self.embedded_tests
             )
         is_last_new_line = (
-            self.get_current_token().type is TokenType.NEW_LINE
-            and self.peek_token(1).type not in [TokenType.TEXT, TokenType.NEW_LINE]
+            self.get_current_token().variant is TokenVariant.NEW_LINE
+            and self.peek_token(1).variant not in [TokenVariant.TEXT, TokenVariant.NEW_LINE]
             )
         result = (
             (is_valid_new_line or is_valid_text)
@@ -232,10 +232,10 @@ class Parser:
         data = self.get_current_token().data
 
         if not reference:
-            self.eat(TokenType.TEST)
+            self.eat(TokenVariant.TEST)
             reference = self.get_current_token().value.strip()
             self.last_reference = reference
-            self.eat(TokenType.TEXT)
+            self.eat(TokenVariant.TEXT)
 
         self.tests_ast_nodes_stack.append(
             Test(reference=reference, assertions=None, data=data)
@@ -273,15 +273,15 @@ class Parser:
 
         data = self.get_current_token().data
 
-        self.eat(TokenType.CONTINUATION)
+        self.eat(TokenVariant.CONTINUATION)
 
         reference = ''
 
         # Check for reference
-        if self.get_current_token().type is TokenType.POINTER:
-            self.eat(TokenType.POINTER)
+        if self.get_current_token().variant is TokenVariant.POINTER:
+            self.eat(TokenVariant.POINTER)
             reference = self.get_current_token().value.strip()
-            self.eat(TokenType.TEXT)
+            self.eat(TokenVariant.TEXT)
 
         # Assign continuation to last test
         elif self.last_reference:
@@ -326,13 +326,13 @@ class Parser:
 
         # Check reference
         if not reference:
-            self.eat(TokenType.SETUP)
+            self.eat(TokenVariant.SETUP)
 
             # Local setups contains reference
-            if self.get_current_token().type is TokenType.POINTER:
-                self.eat(TokenType.POINTER)
+            if self.get_current_token().variant is TokenVariant.POINTER:
+                self.eat(TokenVariant.POINTER)
                 reference = self.get_current_token().value.strip()
-                self.eat(TokenType.TEXT)
+                self.eat(TokenVariant.TEXT)
 
             # If there are a previus test to the setup,
             # we assign the setup to that test
@@ -380,7 +380,7 @@ class Parser:
         """
         debug.trace(7, 'parser.push_teardown_commands()')
         data = self.get_current_token().data
-        self.eat(TokenType.TEARDOWN)
+        self.eat(TokenVariant.TEARDOWN)
         commands = self.extract_next_commands()
         if not commands:
             error(
@@ -407,14 +407,14 @@ class Parser:
         """
         commands = []
 
-        self.eat(TokenType.PESO)
+        self.eat(TokenVariant.PESO)
         commands.append(self.get_current_token().value)
-        self.eat(TokenType.TEXT)
+        self.eat(TokenVariant.TEXT)
 
-        while self.get_current_token().type is TokenType.GREATER:
-            self.eat(TokenType.GREATER)
+        while self.get_current_token().variant is TokenVariant.GREATER:
+            self.eat(TokenVariant.GREATER)
             commands.append(self.get_current_token().value)
-            self.eat(TokenType.TEXT)
+            self.eat(TokenVariant.TEXT)
 
         return commands
 
@@ -430,7 +430,7 @@ class Parser:
         result = []
         while self.is_text_paragraph_next():
             result.append(self.get_current_token().value)
-            self.eat_some(TokenType.TEXT, TokenType.NEW_LINE)
+            self.eat_some(TokenVariant.TEXT, TokenVariant.NEW_LINE)
         return result
 
     def build_assertion(self, reference:str='') -> None:
@@ -450,23 +450,23 @@ class Parser:
 
         # Check for command assertion
         ## TODO: move this to a different method (e.g. eat_command_assertion???)
-        if self.get_current_token().type is TokenType.PESO:
+        if self.get_current_token().variant is TokenVariant.PESO:
             atype = AssertionType.OUTPUT
             actual = self.extract_next_command()
 
         # Check for arrow assertion
         ## TODO: move this to a different method (e.g. eat_arrow_assertion???)
-        elif self.get_current_token().type is TokenType.TEXT:
+        elif self.get_current_token().variant is TokenVariant.TEXT:
             actual = [self.get_current_token().value]
-            self.eat(TokenType.TEXT)
+            self.eat(TokenVariant.TEXT)
 
             # Check for assertion type
-            if self.get_current_token().type is TokenType.ASSERT_EQ:
+            if self.get_current_token().variant is TokenVariant.ASSERT_EQ:
                 atype = AssertionType.EQUAL
-                self.eat(TokenType.ASSERT_EQ)
-            elif self.get_current_token().type is TokenType.ASSERT_NE:
+                self.eat(TokenVariant.ASSERT_EQ)
+            elif self.get_current_token().variant is TokenVariant.ASSERT_NE:
                 atype = AssertionType.NOT_EQUAL
-                self.eat(TokenType.ASSERT_NE)
+                self.eat(TokenVariant.ASSERT_NE)
 
         # Check expected text tokens
         expected = self.extract_text_lines()
@@ -512,33 +512,33 @@ class Parser:
         # (Test, Setup, Assertion)
         while self.get_current_token() is not None:
             current_token = self.get_current_token()
-            token_type = current_token.type
+            token_variant = current_token.variant
 
             # Skip minor tokens
-            if token_type is TokenType.MINOR:
-                self.eat(TokenType.MINOR)
+            if token_variant is TokenVariant.MINOR:
+                self.eat(TokenVariant.MINOR)
 
             # Skip new lines without previous text
-            elif token_type is TokenType.NEW_LINE:
-                self.eat(TokenType.NEW_LINE)
+            elif token_variant is TokenVariant.NEW_LINE:
+                self.eat(TokenVariant.NEW_LINE)
 
             # Process next tokens as a test directive pattern
-            elif token_type is TokenType.TEST:
+            elif token_variant is TokenVariant.TEST:
                 self.push_test_ast_node()
 
             # Process next tokens as a continuation directive pattern
             #
             # Continuation pattern are brak
             # into Setup and Assertions nodes
-            elif token_type is TokenType.CONTINUATION:
+            elif token_variant is TokenVariant.CONTINUATION:
                 self.break_continuation()
 
             # Process next tokens as a setup directive pattern
-            elif token_type is TokenType.SETUP:
+            elif token_variant is TokenVariant.SETUP:
                 self.push_setup_commands()
 
             # Process next tokens as teardown directive pattern
-            elif token_type is TokenType.TEARDOWN:
+            elif token_variant is TokenVariant.TEARDOWN:
                 self.push_teardown_commands()
 
             # Create new test node for standlone commands and assertions
@@ -546,15 +546,15 @@ class Parser:
                 self.push_test_ast_node(f'test of line {current_token.data.line}')
 
             # (Only when embedded_tests!) skip standlone text tokens
-            elif self.embedded_tests and token_type is TokenType.TEXT:
-                self.eat(TokenType.TEXT)
+            elif self.embedded_tests and token_variant is TokenVariant.TEXT:
+                self.eat(TokenVariant.TEXT)
 
             # Finish
             else:
                 break
 
         # The last token always should be an EOF
-        self.eat(TokenType.EOF)
+        self.eat(TokenVariant.EOF)
 
         result = TestsSuite(
             self.pop_tests_ast_nodes(),
@@ -588,7 +588,7 @@ class Parser:
         Builds an Abstract Syntax Tree (AST) from TOKENS list
         """
         assert tokens, 'Tokens list cannot be empty'
-        assert tokens[-1].type is TokenType.EOF, 'Last token should be EOF'
+        assert tokens[-1].variant is TokenVariant.EOF, 'Last token should be EOF'
 
         self.reset_global_state_variables()
         self.tokens = tokens

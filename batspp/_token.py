@@ -40,9 +40,9 @@ class TokenData:
             )
 
 
-class TokenType(Enum):
-    """Token types enum"""
-    # Single-character token types
+class TokenVariant(Enum):
+    """Token variants enum"""
+    # Single-character token variants
     PESO = '$'
     GREATER = '>'
     NEW_LINE = '\n'
@@ -67,19 +67,17 @@ class Token:
 
     def __init__(
             self,
-            ttype:str,
-            tvalue:any,
+            variant: TokenVariant,
+            value:any,
             data: TokenData = TokenData(),
             ) -> None:
-        # NOTE: extra "t" in ttype and tvalue
-        #       avoids redefine the built-in 'type'
-        self.type = ttype
-        self.value = tvalue
+        self.variant = variant
+        self.value = value
         self.data = data
 
     def __str__(self):
         return (
-            f'Token(type={self.type},\n'
+            f'Token(variant={self.variant},\n'
             f'      value={self.value},\n'
             f'      data={self.data})'
             )
