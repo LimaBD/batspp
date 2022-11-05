@@ -216,7 +216,7 @@ class TestBatspp(TestWrapper):
         test_file = f'{self.temp_file}.batspp'
         gh.write_file(test_file, self.simple_test)
 
-        expected_assert = '# Assertion of line 3\n\tshopt -s expand_aliases\n\t[ "$(echo "hello world")" == "$(echo -e \'hello world\')" ]'
+        expected_assert = '# Assertion of line 3\n\tshopt -s expand_aliases\n\t[ "$(echo "hello world")" == "$(echo -e \'hello world\\n\')" ]'
         expected_function = 'function print_debug() {'
 
         # Test command-line argument

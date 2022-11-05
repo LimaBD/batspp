@@ -183,15 +183,15 @@ class TestLexer:
         """Test for MINOR token type"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestLexer.test_minor(); self={self}")
+        ## TODO: WORK-IN-PROGRESS
 
+    def test_new_line(self):
+        """Test for NEW_LINE token type"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestLexer.test_new_line(); self={self}")
         tokens = self.tokenize('\n')
         assert len(tokens) == 2 # two tokens: MINOR and EOF
-        assert tokens[0].type == TokenType.MINOR
-
-        # N minor lines should be treat as one minor token
-        tokens = self.tokenize('\n\n\n\n\n')
-        assert len(tokens) == 2
-        assert tokens[0].type == TokenType.MINOR
+        assert tokens[0].type == TokenType.NEW_LINE
 
     def test_peso(self):
         """Test for PESO token type"""
