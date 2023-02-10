@@ -6,7 +6,7 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-183192"
+TEMP_DIR="/tmp/batspp-183544"
 
 # Setup function
 # $1 -> test name
@@ -14,7 +14,6 @@ function run_setup () {
 	test_folder=$(echo $TEMP_DIR/$1-$$)
 	mkdir --parents "$test_folder"
 	cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
-	bind 'set enable-bracketed-paste off'
 }
 
 # Teardown function
@@ -22,24 +21,13 @@ function run_teardown () {
 	: # Nothing here...
 }
 
-@test "test of line 4" {
-	run_setup "test-of-line-4"
+@test "test of line 1" {
+	run_setup "test-of-line-1"
 
-	# Assertion of line 4
+	# Assertion of line 1
 	shopt -s expand_aliases
-	print_debug "$(echo "Hi Mom!")" "$(echo -e 'Hi Mom!\n')"
-	[ "$(echo "Hi Mom!")" == "$(echo -e 'Hi Mom!\n')" ]
-
-	run_teardown
-}
-
-@test "test of line 7" {
-	run_setup "test-of-line-7"
-
-	# Assertion of line 7
-	shopt -s expand_aliases
-	print_debug "$(echo 'Hello world' | wc -l)" "$(echo -e '1\n')"
-	[ "$(echo 'Hello world' | wc -l)" == "$(echo -e '1\n')" ]
+	print_debug "$(echo "Hello World!")" "$(echo -e 'Hello World!\n')"
+	[ "$(echo "Hello World!")" == "$(echo -e 'Hello World!\n')" ]
 
 	run_teardown
 }

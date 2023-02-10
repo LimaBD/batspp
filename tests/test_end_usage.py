@@ -87,12 +87,11 @@ class TestEndUsage(TestWrapper):
         expected_output = gh.read_file(f'{dir_path}/{output_file}.txt')[:-1]
 
         # Make equal the random number and paths
-        temp_dir_pattern = r'TEMP_DIR=.+'
-        actual_generated = re_sub(temp_dir_pattern, '', actual_generated)
-        expected_generated = re_sub(temp_dir_pattern, '', expected_generated)
-        source_pattern = r'source .+'
-        actual_generated = re_sub(source_pattern, '', actual_generated)
-        expected_generated = re_sub(source_pattern, '', expected_generated)
+        pattern_to_ignore = r'(TEMP_DIR=.+|source .+|.*\/tmp\/.+)'
+        actual_generated = re_sub(pattern_to_ignore, '', actual_generated)
+        actual_output = re_sub(pattern_to_ignore, '', actual_output)
+        expected_generated = re_sub(pattern_to_ignore, '', expected_generated)
+        expected_output = re_sub(pattern_to_ignore, '', expected_output)
 
         assert actual_generated == expected_generated
         assert actual_output == expected_output
@@ -155,6 +154,30 @@ class TestEndUsage(TestWrapper):
             test_file='3_aliases', extension='batspp',
             generated_file='3_generated_aliases',
             output_file='3_output_aliases'
+            )
+
+    @pytest.mark.slow
+    def test_comments(self):
+        """End test tests/cases/4_comments.batspp"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestEndUsage.test_comments(); self={self}")
+        self.run_regression_test(
+            dir_path=CASES_PATH,
+            test_file='4_comments', extension='batspp',
+            generated_file='4_generated_comments',
+            output_file='4_output_comments'
+            )
+
+    @pytest.mark.slow
+    def test_long_outputs(self):
+        """End test tests/cases/5_long_outputs.batspp"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestEndUsage.test_comments(); self={self}")
+        self.run_regression_test(
+            dir_path=CASES_PATH,
+            test_file='5_long_outputs', extension='batspp',
+            generated_file='5_generated_long_outputs',
+            output_file='5_output_long_outputs'
             )
 
 

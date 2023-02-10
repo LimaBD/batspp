@@ -22,7 +22,7 @@ from mezcla import debug
 # Local packages
 sys_path.insert(0, './batspp')
 from batspp._token import (
-    Token, TokenType,
+    Token, TokenVariant,
     )
 
 
@@ -78,9 +78,9 @@ class TestTextLiner:
         text.column = 26
         assert text.get_rest_line() == 's'
         text.column = 27
-        assert text.get_rest_line() == None
+        assert text.get_rest_line() is None
         text.column = 123
-        assert text.get_rest_line() == None
+        assert text.get_rest_line() is None
 
     def test_get_current_line(self):
         """Test for get_current_line()"""
@@ -93,7 +93,7 @@ class TestTextLiner:
         text.line = 2
         assert text.get_current_line() == 'multiple'
         text.line = 6
-        assert text.get_current_line() == None
+        assert text.get_current_line() is None
 
     def test_advance_column(self):
         """Test for advance_column()"""
@@ -139,7 +139,7 @@ class TestLexer:
 
     def tokenize(self, string: str, embedded_tests:bool = False) -> list:
         """
-        Tokenize STRING, verify tokens and returned types
+        Tokenize STRING, verify tokens and returned variants
         """
 
         tokens = THE_MODULE.Lexer().tokenize(string, embedded_tests=embedded_tests)
@@ -149,65 +149,64 @@ class TestLexer:
         for token in tokens:
             assert isinstance(token, Token)
 
-        assert tokens[-1].type == TokenType.EOF
+        assert tokens[-1].variant == TokenVariant.EOF
 
         return tokens
 
     def assert_token(self,
-                     expected_type: TokenType,
+                     expected_variant: TokenVariant,
                      valids:list = None,
                      invalids:list = None) -> None:
         """
-        Assert token type, the VALIDS and INVALIDS cases
+        Assert token variant, the VALIDS and INVALIDS cases
         must be very insolated tests cases, only check for the
         first token
         """
         if valids:
             for valid in valids:
                 tokens = self.tokenize(valid)
-                assert tokens[0].type == expected_type
+                assert tokens[0].variant == expected_variant
         if invalids:
             for invalid in invalids:
                 tokens = self.tokenize(invalid)
-                assert tokens[0].type != expected_type
+                assert tokens[0].variant != expected_variant
 
-    def tokenize_types(self, string:str, embedded_tests:bool = False) -> list:
-        """Tokenize STRING and map by types"""
+    def tokenize_variants(self, string:str, embedded_tests:bool = False) -> list:
+        """Tokenize STRING and map by variants"""
         tokens = self.tokenize(string, embedded_tests=embedded_tests)
-        types = [token.type for token in tokens]
+        variants = [token.variant for token in tokens]
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestLexer.tokenize_types() => {types}")
-        return types
+                    f"TestLexer.tokenize_variants() => {variants}")
+        return variants
 
     def test_minor(self):
-        """Test for MINOR token type"""
+        """Test for MINOR token variant"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestLexer.test_minor(); self={self}")
+        ## TODO: WORK-IN-PROGRESS
 
+    def test_new_line(self):
+        """Test for NEW_LINE token variant"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestLexer.test_new_line(); self={self}")
         tokens = self.tokenize('\n')
         assert len(tokens) == 2 # two tokens: MINOR and EOF
-        assert tokens[0].type == TokenType.MINOR
-
-        # N minor lines should be treat as one minor token
-        tokens = self.tokenize('\n\n\n\n\n')
-        assert len(tokens) == 2
-        assert tokens[0].type == TokenType.MINOR
+        assert tokens[0].variant == TokenVariant.NEW_LINE
 
     def test_peso(self):
-        """Test for PESO token type"""
+        """Test for PESO token variant"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestLexer.test_peso(); self={self}")
         valids = [
-            '$',
             '$ some text',
             ]
         invalids = [
             'foo $ some text',
             ]
-        self.assert_token(TokenType.PESO, valids=valids, invalids=invalids)
+        self.assert_token(TokenVariant.PESO, valids=valids, invalids=invalids)
 
     def test_test(self):
-        """Test for TEST token type"""
+        """Test for TEST token variant"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestLexer.test_test(); self={self}")
         valids = [
@@ -218,10 +217,10 @@ class TestLexer:
             '# foobar foobar Test foobar',
             '# foobar Test',
             ]
-        self.assert_token(TokenType.TEST, valids=valids, invalids=invalids)
+        self.assert_token(TokenVariant.TEST, valids=valids, invalids=invalids)
 
     def test_setup(self):
-        """Test for SETUP token type"""
+        """Test for SETUP token variant"""
         debug.trace(
             debug.QUITE_DETAILED,
             f"TestLexer.test_setup(); self={self}"
@@ -234,14 +233,14 @@ class TestLexer:
             '# foobar foobar Setup foobar',
             '# foobar Setup',
             ]
-        self.assert_token(TokenType.SETUP, valids=valids, invalids=invalids)
+        self.assert_token(TokenVariant.SETUP, valids=valids, invalids=invalids)
 
     def test_teardown(self):
-        """Test for TEARDOWN token type"""
+        """Test for TEARDOWN token variant"""
         ## TODO: WORK-IN-PROGRESS
 
     def test_continuation(self):
-        """Test for CONTINUATION token type"""
+        """Test for CONTINUATION token variant"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestLexer.test_continuation(); self={self}")
         valids = [
@@ -253,69 +252,69 @@ class TestLexer:
             '# foobar foobar Continuation foobar',
             '# foobar continuation',
             ]
-        self.assert_token(TokenType.CONTINUATION, valids=valids, invalids=invalids)
+        self.assert_token(TokenVariant.CONTINUATION, valids=valids, invalids=invalids)
 
     def test_pointer(self):
-        """Test for POINTER token type"""
+        """Test for POINTER token variant"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestLexer.test_pointer(); self={self}")
 
-        types = self.tokenize_types('# Continuation of foobar')
-        assert types[:2] == [TokenType.CONTINUATION, TokenType.POINTER]
-        self.assert_token(TokenType.POINTER, invalids=['# of foobar'])
+        variants = self.tokenize_variants('# Continuation of foobar')
+        assert variants[:2] == [TokenVariant.CONTINUATION, TokenVariant.POINTER]
+        self.assert_token(TokenVariant.POINTER, invalids=['# of foobar'])
 
     def test_assert_eq(self):
-        """Test for ASSERT_EQ token type"""
+        """Test for ASSERT_EQ token variant"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestLexer.test_assert_eq(); self={self}")
 
-        types = self.tokenize_types('somefunction arg1 arg2 => expected result')
-        assert types == [
-            TokenType.TEXT,
-            TokenType.ASSERT_EQ,
-            TokenType.TEXT,
-            TokenType.EOF,
+        variants = self.tokenize_variants('somefunction arg1 arg2 => expected result')
+        assert variants == [
+            TokenVariant.TEXT,
+            TokenVariant.ASSERT_EQ,
+            TokenVariant.TEXT,
+            TokenVariant.EOF,
             ]
 
     def test_assert_ne(self):
-        """Test for ASSERT_NE token type"""
+        """Test for ASSERT_NE token variant"""
         debug.trace(debug.QUITE_DETAILED,
                     f"TestLexer.test_assert_ne(); self={self}")
 
-        types = self.tokenize_types('somefunction arg1 arg2 =/> not expected result')
-        assert types == [
-            TokenType.TEXT,
-            TokenType.ASSERT_NE,
-            TokenType.TEXT,
-            TokenType.EOF,
+        variants = self.tokenize_variants('somefunction arg1 arg2 =/> not expected result')
+        assert variants == [
+            TokenVariant.TEXT,
+            TokenVariant.ASSERT_NE,
+            TokenVariant.TEXT,
+            TokenVariant.EOF,
             ]
 
     def test_end_eof_tags(self):
         """Test for END and EOF tags"""
-        types = self.tokenize_types('$ some command\nexpected text\n<EOF>\n<END>')
-        assert types == [
-            TokenType.PESO,
-            TokenType.TEXT,
-            TokenType.TEXT,
-            TokenType.MINOR,
-            TokenType.MINOR,
-            TokenType.EOF,
+        variants = self.tokenize_variants('$ some command\nexpected text\n<EOF>\n<END>')
+        assert variants == [
+            TokenVariant.PESO,
+            TokenVariant.TEXT,
+            TokenVariant.TEXT,
+            TokenVariant.MINOR,
+            TokenVariant.MINOR,
+            TokenVariant.EOF,
             ]
 
     def test_blank(self):
         """Test for BLANK tag"""
-        types = self.tokenize_types('$ some command\nexpected text\n<BLANK>\nwith an blank line')
-        assert types == [
-            TokenType.PESO,
-            TokenType.TEXT,
-            TokenType.TEXT,
-            TokenType.TEXT,
-            TokenType.TEXT,
-            TokenType.EOF,
+        variants = self.tokenize_variants('$ some command\nexpected text\n<BLANK>\nwith an blank line')
+        assert variants == [
+            TokenVariant.PESO,
+            TokenVariant.TEXT,
+            TokenVariant.TEXT,
+            TokenVariant.TEXT,
+            TokenVariant.TEXT,
+            TokenVariant.EOF,
             ]
 
     def test_text(self):
-        """Test for TEXT token type"""
+        """Test for TEXT token variant"""
         ## TODO: WORK-IN-PROGRESS
 
     def test_comments(self):

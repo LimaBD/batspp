@@ -21,7 +21,7 @@ from mezcla import debug
 
 # Local packages
 sys_path.insert(0, './batspp')
-from batspp._token import Token, TokenType
+from batspp._token import Token, TokenVariant
 from batspp._ast_nodes import (
     AssertionType, Assertion,
     TestsSuite, Test,
@@ -41,15 +41,15 @@ class TestParser:
 
         parser = THE_MODULE.Parser()
         parser.tokens = [
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.EOF, None),
             ]
 
         assert isinstance(parser.get_current_token(), Token)
-        assert parser.get_current_token().type == TokenType.PESO
+        assert parser.get_current_token().variant == TokenVariant.PESO
         parser.index = 1
-        assert parser.get_current_token().type == TokenType.TEXT
+        assert parser.get_current_token().variant == TokenVariant.TEXT
 
     def test_peek_token(self):
         """Test for peek_token()"""
@@ -57,15 +57,15 @@ class TestParser:
 
         parser = THE_MODULE.Parser()
         parser.tokens = [
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.EOF, None),
             ]
 
         assert isinstance(parser.peek_token(), Token)
-        assert parser.peek_token(1).type == TokenType.TEXT
-        assert parser.peek_token(2).type == TokenType.EOF
-        assert parser.peek_token(3) == None
+        assert parser.peek_token(1).variant == TokenVariant.TEXT
+        assert parser.peek_token(2).variant == TokenVariant.EOF
+        assert parser.peek_token(3) is None
 
     def test_eat(self):
         """Test for eat()"""
@@ -73,18 +73,18 @@ class TestParser:
 
         parser = THE_MODULE.Parser()
         parser.tokens = [
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.EOF, None),
             ]
         assert parser.index == 0
-        parser.eat(TokenType.PESO)
+        parser.eat(TokenVariant.PESO)
         assert parser.index == 1
-        parser.eat(TokenType.TEXT)
+        parser.eat(TokenVariant.TEXT)
         assert parser.index == 2
 
         with pytest.raises(Exception):
-            parser.eat(TokenType.TEXT)
+            parser.eat(TokenVariant.TEXT)
 
     def test_is_command_next(self):
         """Test for is_command_next()"""
@@ -93,17 +93,17 @@ class TestParser:
 
         # Valid command pattern
         parser.tokens = [
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.EOF, None),
             ]
         assert parser.is_command_next()
 
         # Invalid command pattern
         parser.tokens = [
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEST, '# Test text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEST, '# Test text'),
+            Token(TokenVariant.EOF, None),
             ]
         assert not parser.is_command_next()
 
@@ -114,36 +114,36 @@ class TestParser:
 
         # Valid setup patern
         parser.tokens = [
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.EOF, None),
             ]
         assert parser.is_setup_command_next()
 
         # Multiple setup patterns
         parser.tokens = [
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.EOF, None),
             ]
         assert parser.is_setup_command_next()
 
         # Not a command pattern
         parser.tokens = [
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.EOF, None),
             ]
         assert not parser.is_setup_command_next()
 
         # Extra text token
         parser.tokens = [
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.TEXT, 'more text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.TEXT, 'more text'),
+            Token(TokenVariant.EOF, None),
             ]
         assert not parser.is_setup_command_next()
 
@@ -154,37 +154,37 @@ class TestParser:
 
         # Valid assertion pattern
         parser.tokens = [
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.TEXT, 'more text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.TEXT, 'more text'),
+            Token(TokenVariant.EOF, None),
             ]
         assert parser.is_assertion_next()
 
         # Multiple setup pattern, should return false
         parser.tokens = [
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.EOF, None),
             ]
         assert not parser.is_assertion_next()
 
         # Valid assert eq patterns (assert ne should work same)
         parser.tokens = [
-            Token(TokenType.TEXT, 'function arg1 arg2'),
-            Token(TokenType.ASSERT_EQ, '=>'),
-            Token(TokenType.TEXT, 'some expected text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.TEXT, 'function arg1 arg2'),
+            Token(TokenVariant.ASSERT_EQ, '=>'),
+            Token(TokenVariant.TEXT, 'some expected text'),
+            Token(TokenVariant.EOF, None),
             ]
         assert parser.is_assertion_next()
 
         # Invalid assert eq pattern
         parser.tokens = [
-            Token(TokenType.TEXT, 'function arg1 arg2'),
-            Token(TokenType.ASSERT_EQ, '=>'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.TEXT, 'function arg1 arg2'),
+            Token(TokenVariant.ASSERT_EQ, '=>'),
+            Token(TokenVariant.EOF, None),
             ]
         assert not parser.is_assertion_next()
 
@@ -196,9 +196,9 @@ class TestParser:
         # Check test pattern
         assert not parser.tests_ast_nodes_stack
         parser.tokens = [
-            Token(TokenType.TEST, '# Test '),
-            Token(TokenType.TEXT, 'some test title'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.TEST, '# Test '),
+            Token(TokenVariant.TEXT, 'some test title'),
+            Token(TokenVariant.EOF, None),
             ]
         parser.push_test_ast_node()
         assert len(parser.tests_ast_nodes_stack) == 1
@@ -219,13 +219,13 @@ class TestParser:
         parser.tests_ast_nodes_stack.append(Test(reference='important test'))
         parser.tests_ast_nodes_stack.append(Test(reference='another test'))
         parser.tokens = [
-            Token(TokenType.CONTINUATION, '# Continuation'),
-            Token(TokenType.POINTER, ' of '),
-            Token(TokenType.TEXT, 'important test'),
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some command'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.CONTINUATION, '# Continuation'),
+            Token(TokenVariant.POINTER, ' of '),
+            Token(TokenVariant.TEXT, 'important test'),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some command'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.EOF, None),
             ]
 
         # Continuation pattern content should
@@ -245,11 +245,11 @@ class TestParser:
         parser.last_reference = 'important test'
         parser.tests_ast_nodes_stack = [Test(reference='important test', assertions=None)]
         parser.tokens = [
-            Token(TokenType.CONTINUATION, '# Continuation'),
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some command'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.MINOR, ''),
+            Token(TokenVariant.CONTINUATION, '# Continuation'),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some command'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.MINOR, ''),
             ]
         assert len(parser.tests_ast_nodes_stack[0].assertions) == 0
         parser.break_continuation()
@@ -271,12 +271,12 @@ class TestParser:
         # Global setup pattern
         assert not parser.setup_commands_stack
         parser.tokens = [
-            Token(TokenType.SETUP, '# Setup'),
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some command'),
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'another command'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.SETUP, '# Setup'),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some command'),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'another command'),
+            Token(TokenVariant.EOF, None),
             ]
         parser.push_setup_commands()
         assert len(parser.setup_commands_stack) == 1
@@ -290,12 +290,12 @@ class TestParser:
         # Check for local setup pattern
         parser = THE_MODULE.Parser()
         parser.tokens = [
-            Token(TokenType.SETUP, '# Setup '),
-            Token(TokenType.POINTER, ' of '),
-            Token(TokenType.TEXT, 'important test'),
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some command'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.SETUP, '# Setup '),
+            Token(TokenVariant.POINTER, ' of '),
+            Token(TokenVariant.TEXT, 'important test'),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some command'),
+            Token(TokenVariant.EOF, None),
             ]
         parser.push_setup_commands()
         assert len(parser.setup_commands_stack) == 1
@@ -305,9 +305,9 @@ class TestParser:
         # Check setup pattern without commands
         parser = THE_MODULE.Parser()
         parser.tokens = [
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some command'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some command'),
+            Token(TokenVariant.EOF, None),
             ]
         assert not parser.setup_commands_stack
         parser.push_setup_commands(reference='some lonely setup')
@@ -318,10 +318,10 @@ class TestParser:
         parser = THE_MODULE.Parser()
         parser.last_reference = 'important test'
         parser.tokens = [
-            Token(TokenType.SETUP, '# Setup'),
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some command'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.SETUP, '# Setup'),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some command'),
+            Token(TokenVariant.EOF, None),
             ]
         parser.push_setup_commands()
         assert len(parser.setup_commands_stack) == 1
@@ -339,10 +339,10 @@ class TestParser:
         parser.setup_commands_stack.append(('important test', ['some command']))
         parser.setup_commands_stack.append(('another test', []))
         parser.tokens = [
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some command'),
-            Token(TokenType.TEXT, 'some text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some command'),
+            Token(TokenVariant.TEXT, 'some text'),
+            Token(TokenVariant.EOF, None),
             ]
 
         # Check that the assertion is added to the corresponding test
@@ -355,9 +355,9 @@ class TestParser:
         assert len(parser.tests_ast_nodes_stack[2].assertions) == 0
 
         # Check actual and expected values
-        assert parser.tests_ast_nodes_stack[1].assertions[0].actual == 'some command'
-        assert parser.tests_ast_nodes_stack[1].assertions[0].expected == 'some text'
-        assert parser.tests_ast_nodes_stack[1].assertions[0].expected != 'wrong text!'
+        assert parser.tests_ast_nodes_stack[1].assertions[0].actual == ['some command']
+        assert parser.tests_ast_nodes_stack[1].assertions[0].expected == ['some text']
+        assert parser.tests_ast_nodes_stack[1].assertions[0].expected != ['wrong text!']
 
         # Check setup stack and assertion
         assert len(parser.setup_commands_stack) == 2
@@ -368,17 +368,17 @@ class TestParser:
         # Check for assertion eq
         parser = THE_MODULE.Parser()
         parser.tokens = [
-            Token(TokenType.TEXT, 'function arg1 arg2'),
-            Token(TokenType.ASSERT_NE, ' =/> '),
-            Token(TokenType.TEXT, 'not expected text'),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.TEXT, 'function arg1 arg2'),
+            Token(TokenVariant.ASSERT_NE, ' =/> '),
+            Token(TokenVariant.TEXT, 'not expected text'),
+            Token(TokenVariant.EOF, None),
             ]
         parser.tests_ast_nodes_stack.append(Test(reference='important test'))
         parser.build_assertion(reference='important test')
         assertion = parser.tests_ast_nodes_stack[0].assertions[0]
         assert assertion.atype == AssertionType.NOT_EQUAL
-        assert assertion.actual == 'function arg1 arg2'
-        assert assertion.expected == 'not expected text'
+        assert assertion.actual == ['function arg1 arg2']
+        assert assertion.expected == ['not expected text']
 
     def test_pop_setup_commands(self):
         """Test for pop_setup()"""
@@ -409,34 +409,34 @@ class TestParser:
 
         # Normal parser usage test
         tokens = [
-            Token(TokenType.SETUP, ''),
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some global command'),
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'another global command'),
-            Token(TokenType.MINOR, ''),
-            Token(TokenType.TEST, '# Test '),
-            Token(TokenType.TEXT, 'testing parser'),
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'local setup command'),
-            Token(TokenType.PESO, '$'),
-            Token(TokenType.TEXT, 'some assertion command'),
-            Token(TokenType.TEXT, 'expected text line 1'),
-            Token(TokenType.TEXT, 'expected text line 2'),
-            Token(TokenType.TEXT, 'expected text line 3'),
-            Token(TokenType.MINOR, ''),
-            Token(TokenType.EOF, None),
+            Token(TokenVariant.SETUP, ''),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some global command'),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'another global command'),
+            Token(TokenVariant.MINOR, ''),
+            Token(TokenVariant.TEST, '# Test '),
+            Token(TokenVariant.TEXT, 'testing parser'),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'local setup command'),
+            Token(TokenVariant.PESO, '$'),
+            Token(TokenVariant.TEXT, 'some assertion command'),
+            Token(TokenVariant.TEXT, 'expected text line 1'),
+            Token(TokenVariant.TEXT, 'expected text line 2'),
+            Token(TokenVariant.TEXT, 'expected text line 3'),
+            Token(TokenVariant.MINOR, ''),
+            Token(TokenVariant.EOF, None),
             ]
         tree = parser.parse(tokens)
-        assert isinstance(tree, TestsSuite)\
+        assert isinstance(tree, TestsSuite)
         # Check setup
         assert tree.setup_commands == ['some global command', 'another global command']
         assert tree.setup_commands != ['wrong command!']
         # Check tests
         assert len(tree.tests) == 1
         assert tree.tests[0].assertions[0].setup_commands == ['local setup command']
-        assert tree.tests[0].assertions[0].actual == 'some assertion command'
-        assert tree.tests[0].assertions[0].expected == 'expected text line 1\nexpected text line 2\nexpected text line 3'
+        assert tree.tests[0].assertions[0].actual == ['some assertion command']
+        assert tree.tests[0].assertions[0].expected == ['expected text line 1', 'expected text line 2', 'expected text line 3']
 
         # Test when tokens list is empty
         with pytest.raises(Exception):
@@ -445,8 +445,8 @@ class TestParser:
         # Test when tokens list not finish with EOF
         with pytest.raises(Exception):
             parser.parse([
-                Token(TokenType.TEXT, 'expected text line 2'),
-                Token(TokenType.TEXT, 'expected text line 3'),
+                Token(TokenVariant.TEXT, 'expected text line 2'),
+                Token(TokenVariant.TEXT, 'expected text line 3'),
             ])
 
 

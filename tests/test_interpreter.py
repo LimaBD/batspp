@@ -82,8 +82,8 @@ class TestInterpreter:
         interpreter.last_title = 'important test'
         node = Assertion(
             atype=AssertionType.EQUAL,
-            actual='echo "some text"',
-            expected='some text',
+            actual=['echo "some text"'],
+            expected=['some text'],
             data=data,
             )
         actual = interpreter.visit_Assertion(node)
@@ -103,14 +103,14 @@ class TestInterpreter:
         first_assertion = Assertion(
             atype=AssertionType.EQUAL,
             setup_commands=['echo "hello world" > file.txt'],
-            actual='cat file.txt',
-            expected='hello world',
+            actual=['cat file.txt'],
+            expected=['hello world'],
             data=data,
             )
         second_assertion = Assertion(
             atype=AssertionType.EQUAL,
-            actual='cat file.txt | wc -m',
-            expected='11',
+            actual=['cat file.txt | wc -m'],
+            expected=['11'],
             data=data,
             )
         test = Test(
@@ -159,13 +159,13 @@ class TestInterpreter:
             '\t# Assertion of line 3\n'
             '\techo "hello world" > file.txt\n'
             '\tshopt -s expand_aliases\n'
-            '\tprint_debug "$(cat file.txt)" "$(echo -e \'hello world\')"\n'
-            '\t[ "$(cat file.txt)" == "$(echo -e \'hello world\')" ]\n'
+            '\tprint_debug "$(cat file.txt)" "$(echo -e \'hello world\\n\')"\n'
+            '\t[ "$(cat file.txt)" == "$(echo -e \'hello world\\n\')" ]\n'
             '\n'
             '\t# Assertion of line 3\n'
             '\tshopt -s expand_aliases\n'
-            '\tprint_debug "$(cat file.txt | wc -m)" "$(echo -e \'11\')"\n'
-            '\t[ "$(cat file.txt | wc -m)" == "$(echo -e \'11\')" ]\n'
+            '\tprint_debug "$(cat file.txt | wc -m)" "$(echo -e \'11\\n\')"\n'
+            '\t[ "$(cat file.txt | wc -m)" == "$(echo -e \'11\\n\')" ]\n'
             '\n'
             '\trun_teardown\n'
             '}\n'
