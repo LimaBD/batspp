@@ -17,6 +17,7 @@ from mezcla import glue_helpers as gh
 from batspp._lexer import Lexer
 from batspp._parser import Parser
 from batspp._interpreter import Interpreter
+from batspp._ipynb_to_batspp import IpynbToBatspp
 from batspp._settings import (
     BATSPP_EXTENSION, BATS_EXTENSION
 )
@@ -74,10 +75,19 @@ class BatsppTest:
         self.lexer = Lexer()
         self.parser = Parser()
         self.interpreter = Interpreter()
+        self.ipynb_to_text = IpynbToBatspp()
 
     def _is_not_batspp_file(self, file:str) -> bool:
         """Whether is FILE is a batspp test file"""
         return not file.endswith(f'.{BATSPP_EXTENSION}')
+
+    def is_ipynb_file(self, file:str) -> bool:
+        """Whether is FILE is a Jupyter notebook file"""
+        return file.endswith('.ipynb')
+
+    def is_not_ipynb_file(self, file:str) -> bool:
+        """Whether is FILE is not a Jupyter notebook file"""
+        return not self.is_ipynb_file(file)
 
     def transpile_to_bats(
             self,
@@ -89,11 +99,11 @@ class BatsppTest:
         assert file, 'File path cannot be empty'
 
         # Check for embedded tests
-        if not opts.embedded_tests:
+        if not opts.embedded_tests and self.is_not_ipynb_file(file):
             opts.embedded_tests = self._is_not_batspp_file(file)
 
         # Check for sources files
-        if self._is_not_batspp_file(file):
+        if self._is_not_batspp_file(file) and self.is_not_ipynb_file(file):
             if args.sources:
                 args.sources.append(file)
             else:
@@ -101,6 +111,7 @@ class BatsppTest:
 
         # Transpilation
         content = gh.read_file(file)
+        content = self.ipynb_to_text.convert(content) if self.is_ipynb_file(file) else content
         tokens = self.lexer.tokenize(content, opts.embedded_tests)
         tree = self.parser.parse(tokens, opts.embedded_tests)
         result = self.interpreter.interpret(tree, opts=opts, args=args)

@@ -66,6 +66,7 @@ function run_numeric_eg () {
 
 run_named_eg $examples "batspp_example" "batspp"
 run_named_eg $examples "bash_example" "bash"
+run_named_eg $examples "jupyter_example" "ipynb"
 run_numeric_eg $test_cases "1" "no_setup_directive" "batspp"
 run_numeric_eg $test_cases "2" "function" "batspp"
 run_numeric_eg $test_cases "3" "aliases" "batspp"

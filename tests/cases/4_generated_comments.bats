@@ -6,7 +6,7 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-183544"
+TEMP_DIR="/tmp/batspp-32678"
 
 # Setup function
 # $1 -> test name
