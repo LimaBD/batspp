@@ -120,7 +120,6 @@ class TestEndUsage(TestWrapper):
             output_file='output_bash_example'
             )
 
-    @pytest.mark.sudo
     def test_no_setup_directive(self):
         """End test tests/cases/1_no_setup_directive.batspp"""
         debug.trace(debug.QUITE_DETAILED,
@@ -132,7 +131,6 @@ class TestEndUsage(TestWrapper):
             output_file='1_output_no_setup_directive'
             )
 
-    @pytest.mark.sudo
     def test_function(self):
         """End test tests/cases/2_function.batspp"""
         debug.trace(debug.QUITE_DETAILED,
@@ -144,7 +142,6 @@ class TestEndUsage(TestWrapper):
             output_file='2_output_function'
             )
 
-    @pytest.mark.sudo
     def test_aliases(self):
         """End test tests/cases/2_aliases.batspp"""
         debug.trace(debug.QUITE_DETAILED,
@@ -156,7 +153,6 @@ class TestEndUsage(TestWrapper):
             output_file='3_output_aliases'
             )
 
-    @pytest.mark.sudo
     def test_comments(self):
         """End test tests/cases/4_comments.batspp"""
         debug.trace(debug.QUITE_DETAILED,
@@ -168,7 +164,6 @@ class TestEndUsage(TestWrapper):
             output_file='4_output_comments'
             )
 
-    @pytest.mark.sudo
     def test_long_outputs(self):
         """End test tests/cases/5_long_outputs.batspp"""
         debug.trace(debug.QUITE_DETAILED,
