@@ -1,3 +1,10 @@
 $ alias hello='echo "Hello user!"'
 $ hello
 Hello user!
+
+# Testing alias commands separated by newlines
+
+$ alias count-words='wc -w'
+
+$ echo abc def ght | count-words
+3

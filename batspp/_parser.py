@@ -306,13 +306,20 @@ class Parser:
         debug.trace(7, f'parser.break_setup_assertion(reference={reference})')
         assert reference, 'Invalid empty reference'
 
+        # This unifies setup-assertions separated by a new line
+        last_was_setup = False
+
         while True:
-            if self.is_setup_command_next():
+            if self.get_current_token().variant is TokenVariant.NEW_LINE and last_was_setup:
+                self.eat(TokenVariant.NEW_LINE)
+            elif self.is_setup_command_next():
                 # Only setups commands can be present on a
                 # block assertion, not teardowns
                 self.push_setup_commands(reference)
+                last_was_setup = True
             elif self.is_assertion_next():
                 self.build_assertion(reference)
+                last_was_setup = False
             else:
                 break
 

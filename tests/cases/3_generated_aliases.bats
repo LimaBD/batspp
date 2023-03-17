@@ -33,6 +33,18 @@ function run_teardown () {
 	run_teardown
 }
 
+@test "test of line 7" {
+	run_setup "test-of-line-7"
+
+	# Assertion of line 9
+	alias count-words='wc -w'
+	shopt -s expand_aliases
+	print_debug "$(echo abc def ght | count-words)" "$(echo -e '3\n')"
+	[ "$(echo abc def ght | count-words)" == "$(echo -e '3\n')" ]
+
+	run_teardown
+}
+
 # This prints debug data when an assertion fail
 # $1 -> actual value
 # $2 -> expected value
