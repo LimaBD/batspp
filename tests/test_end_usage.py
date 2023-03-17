@@ -97,6 +97,7 @@ class TestEndUsage(TestWrapper):
         assert actual_output == expected_output
 
     @pytest.mark.sudo
+    @pytest.mark.reinstall
     def test_batspp_example(self):
         """End test docs/examples/batspp_example.batspp"""
         debug.trace(debug.QUITE_DETAILED,
@@ -109,6 +110,7 @@ class TestEndUsage(TestWrapper):
             )
 
     @pytest.mark.sudo
+    @pytest.mark.reinstall
     def test_bash_example(self):
         """End test docs/examples/bash_example.bash"""
         debug.trace(debug.QUITE_DETAILED,
@@ -120,6 +122,7 @@ class TestEndUsage(TestWrapper):
             output_file='output_bash_example'
             )
 
+    @pytest.mark.reinstall
     def test_no_setup_directive(self):
         """End test tests/cases/1_no_setup_directive.batspp"""
         debug.trace(debug.QUITE_DETAILED,
@@ -131,6 +134,7 @@ class TestEndUsage(TestWrapper):
             output_file='1_output_no_setup_directive'
             )
 
+    @pytest.mark.reinstall
     def test_function(self):
         """End test tests/cases/2_function.batspp"""
         debug.trace(debug.QUITE_DETAILED,
@@ -142,6 +146,7 @@ class TestEndUsage(TestWrapper):
             output_file='2_output_function'
             )
 
+    @pytest.mark.reinstall
     def test_aliases(self):
         """End test tests/cases/2_aliases.batspp"""
         debug.trace(debug.QUITE_DETAILED,
@@ -153,6 +158,7 @@ class TestEndUsage(TestWrapper):
             output_file='3_output_aliases'
             )
 
+    @pytest.mark.reinstall
     def test_comments(self):
         """End test tests/cases/4_comments.batspp"""
         debug.trace(debug.QUITE_DETAILED,
@@ -164,6 +170,7 @@ class TestEndUsage(TestWrapper):
             output_file='4_output_comments'
             )
 
+    @pytest.mark.reinstall
     def test_long_outputs(self):
         """End test tests/cases/5_long_outputs.batspp"""
         debug.trace(debug.QUITE_DETAILED,
