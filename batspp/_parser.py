@@ -8,14 +8,12 @@
 ## TODO: solve: Setup and Continue referenced before
 ##       assignment should print the correct line, not the next.
 
-
 """
 Parser module
 
 This module is responsible for building
 an Abstract Syntax Tree (AST) for Batspp
 """
-
 
 # Standard packages
 ## NOTE: this is empty for now
@@ -28,584 +26,425 @@ from batspp._exceptions import (
     error, warning_not_intended_for_cmd,
     )
 from batspp._token import (
-    TokenVariant, Token,
+    PESO, GREATER, SETUP, GLOBAL, TEARDOWN,
+    TEST, POINTER, CONTINUATION, ASSERT_EQ,
+    ASSERT_NE, TEXT, EOF, Token, NEW_LINE,
     )
-from batspp._ast_nodes import (
-    AST, TestsSuite, Test,
-    Assertion, AssertionType,
+from batspp._ast_node import (
+    ASTnode, TestSuite, TestOrSetup, GlobalTeardown,
+    GlobalSetup, Setup, Test, ContinuationReferencePrefix,
+    TestReference, SetupReference, CommandAssertion,
+    Assertion, Command, CommandExtension, Text,
+    MultilineText, ArrowAssertion, StandaloneCommands,
     )
 
+class _RuleState:
+    """Rule state class"""
 
-class Parser:
-    """
-    This is responsible for building an
-    abstract syntax tree (AST) for Batspp
-    """
-
-    def __init__(self) -> None:
-        # Global states variables
-        self.tokens = []
-        self.index = 0
-        self.last_reference = ''
-        self.tests_ast_nodes_stack = []
-        self.setup_commands_stack = []
-        self.teardown_commands_stack = []
-        self.embedded_tests = False
-
-    def reset_global_state_variables(self) -> None:
-        """Reset global states variables"""
-        self.__init__()
-
-    def get_current_token(self) -> Token:
-        """Returns current token"""
-
-        result = self.peek_token(0)
-
-        debug.trace(7, f'parser.get_current_token() => {result}')
-        return result
-
-    def peek_token(self, number:int =1) -> Token:
-        """Peek next NUMBER of tokens ahead"""
-
-        moved_index = self.index + number
-
-        result = None
-
-        # We dont get the last token because should be EOF
-        if moved_index < len(self.tokens):
-            result = self.tokens[moved_index]
-
-        debug.trace(7, f'parser.peek_token(number={number}) => {result}')
-        return result
-
-    def eat(self, token_variant:TokenVariant) -> None:
-        """
-        Compare current token variant with TOKEN_VARIANT and
-        if matchs, advance token otherwise raise exception
-        """
-        debug.trace(7, f'parser.eat(token_variant={token_variant})')
-
-        assert token_variant, 'invalid token_variant'
-
-        current_token = self.get_current_token()
-
-        if current_token.variant is token_variant:
-            self.index += 1
-        else:
-            error(
-                message=f'Expected {token_variant} but founded {current_token.variant}',
-                text_line=current_token.data.text_line,
-                line=current_token.data.line,
-                )
-
-    def eat_some(self, *token_variants:TokenVariant) -> None:
-        """Eat some token variant in TOKEN_VARIANTS"""
-        eated = False
-        for variant in token_variants:
-            if self.get_current_token().variant is variant:
-                self.eat(variant)
-                eated = True
-                break
-        if not eated:
-            error(
-                message=f'Expected {token_variants} but founded {self.get_current_token().variant}',
-                text_line=self.get_current_token().data.text_line,
-                line=self.get_current_token().data.line,
-                )
-
-    def is_command_next(self) -> bool:
-        """
-        Check if a command token pattern is next
-        command : PESO TEXT
-        """
-
-        result = False
-        first = self.get_current_token()
-        second = self.peek_token(1)
-
-        if second is not None:
-            result = (
-                first.variant is TokenVariant.PESO
-                and second.variant is TokenVariant.TEXT
-                )
-
-        debug.trace(7, (
-            f'parser.is_command_next() =>'
-            f' next tokens variants: {first} {second}'
-            f' => {result}'
-            ))
-        return result
-
-    def is_setup_command_next(self) -> bool:
-        """
-        Check for setup command token pattern next
-        setup : command ^[TEXT]
-        """
-        result = self.is_command_next() and not self.is_command_assertion_next()
-        debug.trace(7, (
-            f'parser.is_setup_command_next() => {result}'
-            ))
-        return result
-
-    def is_command_assertion_next(self) -> bool:
-        """
-        Check if a command assertion tokens pattern is next
-        command_assertion : command TEXT
-        """
-        result = False
-        if (self.get_current_token().variant is TokenVariant.PESO
-            and self.peek_token(1).variant is TokenVariant.TEXT):
-
-            peek_advance = 2
-            while self.peek_token(peek_advance) and self.peek_token(peek_advance+1):
-                if self.peek_token(peek_advance).variant is TokenVariant.GREATER:
-                    peek_advance += 1
-                else:
-                    break
-                if self.peek_token(peek_advance).variant is TokenVariant.TEXT:
-                    peek_advance += 1
-                else:
-                    break
-
-            result = self.peek_token(peek_advance).variant is TokenVariant.TEXT
-
-        debug.trace(7, (f'parser.is_command_assertion_next() => {result}'))
-        return result
-
-    def is_arrow_assertion_next(self, offset=0) -> bool:
-        """
-        Check if a arrow assertion tokens pattern is next, an OFFSET
-        could be setted to peek more tokens advanced than now.
-        arrow_assertion : TEXT (ASSERT_EQ|ASSERT_NE) TEXT
-        """
-        result = False
-        first_token = self.peek_token(0 + offset)
-        second_token = self.peek_token(1 + offset)
-        third_token = self.peek_token(2 + offset)
-        if first_token and second_token and third_token:
-            result = (
-                first_token.variant is TokenVariant.TEXT
-                and second_token.variant in [TokenVariant.ASSERT_EQ, TokenVariant.ASSERT_NE]
-                and third_token.variant is TokenVariant.TEXT
-                )
-        debug.trace(7, (
-            f'parser.is_arrow_assertion_next() => {result}'
-            ))
-        return result
-
-    def is_assertion_next(self) -> bool:
-        """
-        Check if a assertion tokens pattern is next
-        """
-        result = self.is_command_assertion_next() or self.is_arrow_assertion_next()
-        debug.trace(7, (
-            f'parser.is_assertion_next() => {result}'
-            ))
-        return result
-
-    def is_text_paragraph_next(self) -> bool:
-        """Check if text tokens pattern are next, and if not are part of a assertion"""
-        is_valid_text = self.get_current_token().variant is TokenVariant.TEXT
-        is_valid_new_line = (
-            self.get_current_token().variant is TokenVariant.NEW_LINE
-            and not self.embedded_tests
-            )
-        is_last_new_line = (
-            self.get_current_token().variant is TokenVariant.NEW_LINE
-            and self.peek_token(1).variant not in [TokenVariant.TEXT, TokenVariant.NEW_LINE]
-            )
-        result = (
-            (is_valid_new_line or is_valid_text)
-            and not self.is_arrow_assertion_next(offset=1)
-            and not is_last_new_line
-            )
-        ## TODO: add trace
-        return result
-
-    def push_test_ast_node(self, reference:str='') -> None:
-        """
-        Push test AST node to tests stack,
-        Set REFERENCE as reference, otherwise (if empty), search for TEST TEXT tokens
-        """
-        debug.trace(7, f'parser.push_test_ast_node(reference={reference})')
-
-        data = self.get_current_token().data
-
-        if not reference:
-            self.eat(TokenVariant.TEST)
-            reference = self.get_current_token().value.strip()
-            self.last_reference = reference
-            self.eat(TokenVariant.TEXT)
-
-        self.tests_ast_nodes_stack.append(
-            Test(reference=reference, assertions=None, data=data)
-            )
-
-        self.break_setup_assertion(reference)
-
-    def pop_tests_ast_nodes(self) -> list:
-        """
-        Pop all tests ast nodes in stack
-        """
-        debug.trace(7, 'parser.pop_tests_ast_nodes()')
-        result = self.tests_ast_nodes_stack
-        self.tests_ast_nodes_stack = []
-        return result
-
-    def break_continuation(self) -> None:
-        """
-        Process and break continuation block tokens
-        """
-        debug.trace(7, 'parser.break_continuation()')
-
-        # Continuation blocks e.g.
-        #
-        #   # Continuation
-        #   $ command-setup
-        #   $ another-command-setup
-        #   $ command
-        #   expected-output
-        #
-        # Are break into setup commands or assertion nodes
-        #
-        # If continuation has no reference token,
-        # set reference to the last test
-
-        data = self.get_current_token().data
-
-        self.eat(TokenVariant.CONTINUATION)
-
-        reference = ''
-
-        # Check for reference
-        if self.get_current_token().variant is TokenVariant.POINTER:
-            self.eat(TokenVariant.POINTER)
-            reference = self.get_current_token().value.strip()
-            self.eat(TokenVariant.TEXT)
-
-        # Assign continuation to last test
-        elif self.last_reference:
-            reference = self.last_reference
-
-        # Otherwise the continuation is invalid
-        else:
-            error(
-                message='Continuation without test assigned',
-                text_line=data.text_line,
-                line=data.line,
-                column=data.column,
-                )
-
-        self.break_setup_assertion(reference)
-
-    def break_setup_assertion(self, reference:int = '') -> None:
-        """
-        Process and break block test
-        into setup commands and assertion AST nodes and set REFERENCE as reference
-        """
-        debug.trace(7, f'parser.break_setup_assertion(reference={reference})')
-        assert reference, 'Invalid empty reference'
-
-        # This unifies setup-assertions separated by a new line
-        last_was_setup = False
-
-        while True:
-            if self.get_current_token().variant is TokenVariant.NEW_LINE and last_was_setup:
-                self.eat(TokenVariant.NEW_LINE)
-            elif self.is_setup_command_next():
-                # Only setups commands can be present on a
-                # block assertion, not teardowns
-                self.push_setup_commands(reference)
-                last_was_setup = True
-            elif self.is_assertion_next():
-                self.build_assertion(reference)
-                last_was_setup = False
-            else:
-                break
-
-    def push_setup_commands(self, reference:str='') -> None:
-        """
-        Push Setup commands to stack and set REFERENCE as reference
-        """
-        debug.trace(7, f'parser.push_setup_commands(reference={reference})')
-
-        data = self.get_current_token().data
-
-        # Check reference
-        if not reference:
-            self.eat(TokenVariant.SETUP)
-
-            # Local setups contains reference
-            if self.get_current_token().variant is TokenVariant.POINTER:
-                self.eat(TokenVariant.POINTER)
-                reference = self.get_current_token().value.strip()
-                self.eat(TokenVariant.TEXT)
-
-            # If there are a previus test to the setup,
-            # we assign the setup to that test
-            elif self.last_reference:
-                reference = self.last_reference
-
-            # Otherwise we treat the setup as a
-            # global setup (empty reference)
-            else:
-                pass
-
-        # Extract setup commands
-        commands = self.extract_next_commands()
-        if not commands:
-            error(
-                message = 'Setup comamnds cannot be empty',
-                text_line = data.text_line,
-                line = data.line,
-                column = data.column,
-                )
-
-        self.setup_commands_stack.append((reference, commands))
-
-    def pop_setup_commands(self, reference: str) -> list:
-        """
-        Pop setup commands from stack with same REFERENCE,
-        if several setups commands blocks are founded, unify all into one
-        """
-        result = []
-        new_setup_stack = []
-
-        # Get commands from stack with same reference
-        for stack_reference, commands in self.setup_commands_stack:
-            if stack_reference == reference:
-                result += commands
-            else:
-                new_setup_stack.append((stack_reference, commands))
-
-        self.setup_commands_stack = new_setup_stack
-        return result
-
-    def push_teardown_commands(self) -> None:
-        """
-        Push teardown commands to stack
-        """
-        debug.trace(7, 'parser.push_teardown_commands()')
-        data = self.get_current_token().data
-        self.eat(TokenVariant.TEARDOWN)
-        commands = self.extract_next_commands()
-        if not commands:
-            error(
-                message = 'Teardown comamnds cannot be empty',
-                text_line = data.text_line,
-                line = data.line,
-                column = data.column,
-                )
-        self.teardown_commands_stack.append(commands)
-
-    def pop_teardown_commands(self) -> None:
-        """
-        Pop teardown commands from stack
-        """
-        debug.trace(7, 'parser.pop_teardown_commands()')
-        result = self.teardown_commands_stack
-        self.teardown_commands_stack = []
-        return result
-
-    def extract_next_command(self) -> str:
-        """
-        Return commands from next token pattern, return in a list
-        command : PESO TEXT (GREATER TEXT)*
-        """
-        commands = []
-
-        self.eat(TokenVariant.PESO)
-        commands.append(self.get_current_token().value)
-        self.eat(TokenVariant.TEXT)
-
-        while self.get_current_token().variant is TokenVariant.GREATER:
-            self.eat(TokenVariant.GREATER)
-            commands.append(self.get_current_token().value)
-            self.eat(TokenVariant.TEXT)
-
-        return commands
-
-    def extract_next_commands(self) -> list:
-        """Extract N commands next"""
-        result = []
-        while self.is_setup_command_next():
-            result += self.extract_next_command()
-        return result
-
-    def extract_text_lines(self) -> list:
-        """Extract N text lines next, not extract last new line"""
-        result = []
-        while self.is_text_paragraph_next():
-            result.append(self.get_current_token().value)
-            self.eat_some(TokenVariant.TEXT, TokenVariant.NEW_LINE)
-        return result
-
-    def build_assertion(self, reference:str='') -> None:
-        """
-        Build and append Assertion AST node and set REFERENCE as reference
-        """
-        debug.trace(7, f'parser.build_assertion(reference={reference})')
-        assert reference, 'Invalid empty reference'
-
-        data = self.get_current_token().data
-        atype = None
-        actual = []
-
-        # BAD:
-        #   Do not use is_command_assertion_next or is_arrow_assertion_next here.
-        #   because we need to check only the first token to ensure what assertion is next.
-
-        # Check for command assertion
-        ## TODO: move this to a different method (e.g. eat_command_assertion???)
-        if self.get_current_token().variant is TokenVariant.PESO:
-            atype = AssertionType.OUTPUT
-            actual = self.extract_next_command()
-
-        # Check for arrow assertion
-        ## TODO: move this to a different method (e.g. eat_arrow_assertion???)
-        elif self.get_current_token().variant is TokenVariant.TEXT:
-            actual = [self.get_current_token().value]
-            self.eat(TokenVariant.TEXT)
-
-            # Check for assertion type
-            if self.get_current_token().variant is TokenVariant.ASSERT_EQ:
-                atype = AssertionType.EQUAL
-                self.eat(TokenVariant.ASSERT_EQ)
-            elif self.get_current_token().variant is TokenVariant.ASSERT_NE:
-                atype = AssertionType.NOT_EQUAL
-                self.eat(TokenVariant.ASSERT_NE)
-
-        # Check expected text tokens
-        expected = self.extract_text_lines()
-
-        # New assertion node
-        node = Assertion(
-            atype=atype,
-            setup_commands=self.pop_setup_commands(reference=reference),
-            actual=actual,
-            expected=expected,
-            data=data,
-            )
-
-        self.assign_child_assertion_to_parent_test(node, reference)
-
-    def assign_child_assertion_to_parent_test(
+    def __init__(
             self,
-            assertion_node: Assertion,
-            reference: str
+            nodes:list=[],
+            in_loop:bool=False,
             ) -> None:
-        """
-        Assign child assertion ast node into parent test ast node
-        """
-        for test in reversed(self.tests_ast_nodes_stack):
-            if test.reference == reference:
-                test.assertions.append(assertion_node)
-                assertion_node = None
-                break
-        if assertion_node is not None:
-            error(
-                message=f'Assertion "{reference}" referenced before assignment.',
-                text_line=assertion_node.data.text_line,
-                line=assertion_node.data.line,
-                column=None,
-                )
+        """init rule state"""
+        self.nodes = nodes
+        self.in_loop = in_loop
 
-    def build_tests_suite(self) -> AST:
-        """
-        Build AST node for test suite
-        """
+class _Rule:
+    """Grammar rule class"""
 
-        # Extract main nodes from tokens list
-        # (Test, Setup, Assertion)
-        while self.get_current_token() is not None:
-            current_token = self.get_current_token()
-            token_variant = current_token.variant
+    def __init__(self, resulting_ast_node:ASTnode, alias='') -> None:
+        """Initialize a grammar rule"""
+        # This is the AST node type that will be generated by this rule
+        self._resulting_ast_node = resulting_ast_node
+        # Alias is used for show the rule name in error messages
+        if alias:
+            self._alias = alias
+        elif resulting_ast_node:
+            self._alias = resulting_ast_node.__name__
+        else:
+            self._alias = 'UnnamedRule'
+        self._alias = alias if alias else resulting_ast_node.__name__
+        # Instructions are a list of tuples with a function and its parameters
+        # that will be executed in order to build the AST tree from a list of tokens.
+        self._instructions = []
+        # Generated child nodes will be appended to the base AST node generated by this rule.
+        #    resulting_ast_node
+        #    /                \
+        # child_node_1 ... child_node_N
+        self._generated_child_nodes = []
+        # This is used for loop instructions, determine if the child node should
+        # be appended to the child nodes or in a list, used for loop instructions.
+        #   resulting_ast_node
+        #  /                \
+        # child_node_N ... [child_node_N+1 ... ]
+        self._running_loop_instruction = False
+        # This is used when multiple parent rules use this rule,
+        # avoid mix the states of every call to this rule.
+        self._state_stack = []
+        # List of tokens to be parsed
+        self.tokens = []
+        # This used for print debug messages
+        self._debug_deep_level = 1
 
-            # Skip minor tokens
-            if token_variant is TokenVariant.MINOR:
-                self.eat(TokenVariant.MINOR)
+    def expect(self, token_or_rule) -> '_Rule':
+        """Expect a token or another rule"""
+        self._append_instruction(self._run_expect, token_or_rule)
+        return self
 
-            # Skip new lines without previous text
-            elif token_variant is TokenVariant.NEW_LINE:
-                self.eat(TokenVariant.NEW_LINE)
+    def optionally(self, token_or_rule) -> '_Rule':
+        """Optionally expect a token or another rule"""
+        self._append_instruction(self._run_optionally, token_or_rule)
+        return self
 
-            # Process next tokens as a test directive pattern
-            elif token_variant is TokenVariant.TEST:
-                self.push_test_ast_node()
+    def zero_or_more(self, token_or_rule) -> '_Rule':
+        """Expect zero or N times a token or another rule"""
+        expected = token_or_rule
+        not_expected = None # this is added with until()
+        self._append_instruction(self._run_zero_or_more, (expected, not_expected))
+        return self
 
-            # Process next tokens as a continuation directive pattern
-            #
-            # Continuation pattern are brak
-            # into Setup and Assertions nodes
-            elif token_variant is TokenVariant.CONTINUATION:
-                self.break_continuation()
+    def one_or_more(self, token_or_rule) -> '_Rule':
+        """Expect at least one or N times a token or another rule"""
+        expected = token_or_rule
+        not_expected = None # this is added with until()
+        self._append_instruction(self._run_one_or_more, (expected, not_expected))
+        return self
 
-            # Process next tokens as a setup directive pattern
-            elif token_variant is TokenVariant.SETUP:
-                self.push_setup_commands()
+    def expect_some_of(self, *tokens_or_rules) -> '_Rule':
+        """Expect some of a token or another rule"""
+        self._append_instruction(self._run_expect_some_of, tokens_or_rules)
+        return self
 
-            # Process next tokens as teardown directive pattern
-            elif token_variant is TokenVariant.TEARDOWN:
-                self.push_teardown_commands()
+    def ignore_next(self, token_or_rule) -> '_Rule':
+        """Ignore next specified tokens or rules N times"""
+        self._append_instruction(self._run_ignore_next, token_or_rule)
+        return self
 
-            # Create new test node for standlone commands and assertions
-            elif self.is_command_next() or self.is_assertion_next():
-                self.push_test_ast_node(f'test of line {current_token.data.line}')
+    def until(self, token_or_rule) -> '_Rule':
+        """Adds to latest loop a condition rule to stop it"""
+        assert isinstance(self._instructions[-1], tuple), 'until() must be used after a loop'
+        # Note: remember that tuples are immutable!
+        func, params = self._instructions[-1]
+        expected, not_expected = params
+        not_expected = token_or_rule
+        self._instructions[-1] = (func, (expected, not_expected))
+        return self
 
-            # (Only when embedded_tests!) skip standlone text tokens
-            elif self.embedded_tests and token_variant is TokenVariant.TEXT:
-                self.eat(TokenVariant.TEXT)
-
-            # Finish
-            else:
-                break
-
-        # The last token always should be an EOF
-        self.eat(TokenVariant.EOF)
-
-        result = TestsSuite(
-            self.pop_tests_ast_nodes(),
-            setup_commands = self.pop_setup_commands(reference=''),
-            teardown_commands = self.pop_teardown_commands(),
-            )
-
-        self.check_if_setup_commands_stack_is_empty()
-
-        debug.trace(7, f'parser.build_tests_suite() => {result}')
-        return result
-
-    def check_if_setup_commands_stack_is_empty(self) -> None:
-        """
-        Check if setup stack is empty, otherwise raises exception
-        """
-        if self.setup_commands_stack:
-            ## TODO: print text and line when raise exception
-            first_setup_reference, _ = self.setup_commands_stack[0]
-            error(
-                message=f'Setup "{first_setup_reference}" referenced before assignment.',
-                )
-        debug.trace(7, 'parser.check_setup_stack_is_empty() => passed!')
-
-    def parse(
-            self,
-            tokens: list,
-            embedded_tests:bool=False,
-            ) -> AST:
-        """
-        Builds an Abstract Syntax Tree (AST) from TOKENS list
-        """
-        assert tokens, 'Tokens list cannot be empty'
-        assert tokens[-1].variant is TokenVariant.EOF, 'Last token should be EOF'
-
-        self.reset_global_state_variables()
+    def build_tree_from(self, tokens: list, debug_deep_level=0) -> ASTnode:
+        """Build an AST tree from a list of tokens"""
+        ## TODO: expecify that tuple(ASTnode, list) is returned
+        self._push_state()
         self.tokens = tokens
-        self.embedded_tests = embedded_tests
+        self._debug_deep_level = debug_deep_level + 1
+        self._run_instructions()
+        generated_ast_tree = None
+        if self._resulting_ast_node:
+            generated_ast_tree = self._resulting_ast_node(*self._generated_child_nodes)
+        self._pop_state()
+        return generated_ast_tree, self.tokens
 
-        result = self.build_tests_suite()
+    def _append_instruction(self, func, params) -> None:
+        """Append an rule instruction to the stack"""
+        self._instructions.append((func, params))
 
-        debug.trace(7, f'Parser.parse() => {result}')
+    def _run_instructions(self) -> None:
+        """Run all rule instructions in stack"""
+        self._print_debug('_run_instructions', '<start>')
+        for func, params in self._instructions:
+            if isinstance(params, tuple):
+                func(*params)
+            else:
+                func(params)
+        self._print_debug('_run_instructions', '<stop>')
+
+    def _push_state(self) -> None:
+        """Save current state of this rule to the stack"""
+        new_state = _RuleState(
+            nodes=self._generated_child_nodes,
+            in_loop=self._running_loop_instruction
+        )
+        self._state_stack.append(new_state)
+        self._reset_state()
+
+    def _pop_state(self) -> None:
+        """Pop current state of this rule from the stack"""
+        if self._state_stack:
+            last_state = self._state_stack.pop()
+            self._generated_child_nodes = last_state.nodes
+            self._running_loop_instruction = last_state.in_loop
+        else:
+            self._reset_state()
+
+    def _reset_state(self) -> None:
+        """Reset current state of this rule"""
+        self._generated_child_nodes = []
+        self._running_loop_instruction = False
+
+    def _eat_token(self, token) -> None:
+        """Eat a specific token from the tokens list, or raise an error"""
+        def print_debug(result):
+            self._print_debug('_eat_token', f'{token} <{result}>')
+        if self.tokens[0].variant == token:
+            print_debug('ok')
+            self._append_child_node(self.tokens[0])
+            self.tokens = self.tokens[1:]
+        else:
+            print_debug('failed')
+            error(
+                message=f'Expected "{token}" but got "{self.tokens[0].variant}"',
+                text_line=self.tokens[0].data.text_line,
+                line=self.tokens[0].data.line,
+                column=self.tokens[0].data.column,
+                )
+
+    def _is_rule_followed(self, token_or_rule) -> bool:
+        """Check if the next tokens follow a rule or match token without consuming them."""
+        self._print_debug('_is_rule_followed', str(token_or_rule))
+        result = False
+        tokens_backup = self.tokens.copy()
+        try:
+            self._run_expect(token_or_rule)
+            result = True
+        except SyntaxError:
+            pass
+        self.tokens = tokens_backup
         return result
 
+    def _run_expect(self, token_or_rule) -> None:
+        """Run a expect rule"""
+        def print_debug(result):
+            self._print_debug('_run_expect', f'{token_or_rule} <{result}>')
+        if isinstance(token_or_rule, _Rule):
+            print_debug('running child tree')
+            child_tree, self.tokens = token_or_rule.build_tree_from(self.tokens, self._debug_deep_level)
+            self._append_child_node(child_tree)
+        elif isinstance(token_or_rule, str):
+            print_debug('going to eat')
+            self._eat_token(token_or_rule)
+        else:
+            print_debug('failed')
+            raise Exception(f'Expected a Rule or Token but got {token_or_rule}')
+
+    def _append_child_node(self, node: ASTnode) -> None:
+        """Append a child node to the generated child nodes list"""
+        # Loop instructions store a list of children instead of a single child node
+        if self._running_loop_instruction:
+            empty = not self._generated_child_nodes
+            no_list = not isinstance(self._generated_child_nodes[-1], list)
+            if empty or no_list:
+                raise Exception('Not appended a list when started running a loop')
+            self._generated_child_nodes[-1].append(node)
+        else:
+            self._generated_child_nodes.append(node)
+
+    def _run_optionally(self, token_or_rule) -> None:
+        """Run a optionally rule if next tokens match,
+           otherwise append a 'None' to the generated
+           child nodes list and continue."""
+        self._print_debug('_run_optionally', f'{token_or_rule}')
+        tokens_backup = self.tokens.copy()
+        try:
+            self._run_expect(token_or_rule)
+        except SyntaxError:
+            self._append_child_node(None)
+            self.tokens = tokens_backup
+
+    def _run_zero_or_more(self, expected, not_expected) -> None:
+        """Run EXPECTED rule zero or more times until NOT_EXPECTED is found"""
+        def print_debug(status):
+            self._print_debug('_run_zero_or_more', f'{expected} <{status}>')
+        self._setup_loop_instruction()
+        print_debug('starting')
+        while True:
+            print_debug('loop')
+            if not_expected is not None:
+                if self._is_rule_followed(not_expected):
+                    print_debug('not expected found')
+                    break
+            try:
+                self._run_expect(expected)
+                print_debug('ok')
+                continue # not necessary, but more readable
+            except SyntaxError:
+                print_debug('failed')
+                break
+        self._teardown_loop_instruction()
+
+    def _run_one_or_more(self, expected, not_expected) -> None:
+        """Run EXPECTED rule one or more times until NOT_EXPECTED is found"""
+        self._print_debug('_run_one_or_more', f'{expected}, {not_expected}')
+        self._setup_loop_instruction()
+        if not_expected is not None:
+            if self._is_rule_followed(not_expected):
+                self._print_debug('_run_one_or_more', f"{not_expected} <failed>")
+                raise SyntaxError(f'Expected "{expected}" but got "{not_expected}"')
+        self._run_expect(expected)
+        self._run_zero_or_more(expected, not_expected)
+        self._print_debug('_run_one_or_more', f"{not_expected} <ok>")
+        self._teardown_loop_instruction()
+
+    def _setup_loop_instruction(self) -> None:
+        """Setup this rule to START a loop instruction"""
+        if not self._running_loop_instruction:
+            self._generated_child_nodes.append([])
+        self._running_loop_instruction = True
+
+    def _teardown_loop_instruction(self) -> None:
+        """Setup this rule to END a loop instruction"""
+        self._running_loop_instruction = False
+
+    def _run_expect_some_of(self, *tokens_or_rules) -> None:
+        """Expect at least any TOKENS_OR_RULES next"""
+        def print_debug(branch):
+            self._print_debug('_run_expect_some_of', f'{tokens_or_rules} <{branch}>')
+        print_debug('starting')
+        ## TODO: refactor, decide what branch of expected rules go without run entire rule first
+        some_rule_succeeded = False
+        for token_or_rule in tokens_or_rules:
+            print_debug(f'checking {token_or_rule}')
+            try:
+                self._run_expect(token_or_rule)
+                some_rule_succeeded = True
+                print_debug(f'{token_or_rule} ok')
+                break
+            except SyntaxError:
+                print_debug(f'{token_or_rule} failed')
+                continue # not necessary, but more readable
+        if not some_rule_succeeded:
+            error(
+                message=f'Expected some of "{tokens_or_rules}" but got "{self.tokens[0].variant}"',
+                text_line=self.tokens[0].data.text_line,
+                line=self.tokens[0].data.line,
+                column=self.tokens[0].data.column,
+                )
+
+    def _run_ignore_next(self, token_or_rule) -> None:
+        """Advance tokens until TOKEN_OR_RULE, but don't append any child node"""
+        generated_child_nodes_backup = self._generated_child_nodes.copy()
+        while True:
+            self._print_debug('_run_ignore_next', f'{token_or_rule} <running loop>')
+            try:
+                self._run_expect(token_or_rule)
+            except SyntaxError:
+                break
+        self._generated_child_nodes = generated_child_nodes_backup
+
+    def _print_debug(self, method_name:str, notes:str) -> None:
+        """Print debug information"""
+        variant = self.tokens[0].variant if self.tokens else 'None'
+        line_number = self.tokens[0].data.line if self.tokens else -1
+        debug.trace(7, (
+            f'{variant} '
+            f'(l {str(line_number)})\t'
+            f'{">" * self._debug_deep_level}\t'
+            f'{self}.{method_name}:\t'
+            f'{notes}'
+        ))
+
+    def __repr__(self):
+        return self._alias
+
+class _Parser:
+    """Batspp parser class"""
+
+    def __init__(self):
+        self.embedded_tests = False
+        self.grammar = None
+
+    def build_grammar(self) -> _Rule:
+        """Returns the grammar rules for Batspp."""
+
+        # Batspp grammar
+        #
+        # test_suite : global_setup? (test_or_setup)+ global_teardown? EOF
+        # test_or_setup : test | setup
+        #
+        # global_setup : SETUP standalone_commands
+        # global_teardown : TEARDOWN standalone_commands
+        # test : test_reference? setup? assertion+
+        # setup : setup_reference? standalone_commands
+        #
+        # standalone_commands : command+ [^TEXT]
+        #
+        # setup_reference : SETUP POINTER TEXT
+        # test_reference : (TEST | continuation_reference_prefix) TEXT
+        # continuation_reference_prefix : CONTINUATION POINTER
+        #
+        # assertion : command_assertion | arrow_ne_assertion | arrow_eq_assertion
+        # command_assertion : command multiline_text
+        # arrow_eq_assertion : TEXT ASSERT_EQ TEXT+ [^arrow_assertion_start]
+        # arrow_ne_assertion : TEXT ASSERT_NE TEXT+ [^arrow_assertion_start]
+        #
+        # command : PESO TEXT command_extension*
+        # command_extension : GREATER TEXT
+        #
+        # multiline_text : (TEXT | NEW_LINE)+ [^arrow_assertion_start]
+        # arrow_assertion_start : TEXT (ASSERT_EQ | ASSERT_NE)
+        # text : TEXT | NEW_LINE
+
+        # Notes:
+        # - the ast node variants not present in the
+        #   ast node module are only for debug porposes.
+        # - carefull referencing the same rule in another rules,
+        #   it can cause problems when building the ast node object.
+
+        text = _Rule(Text) \
+            .expect_some_of(TEXT, NEW_LINE)
+        arrow_assertion_start = _Rule(None, alias="arrow_assertion_start") \
+            .expect(TEXT).expect_some_of(ASSERT_EQ, ASSERT_NE)
+        multiline_text = _Rule(MultilineText) \
+            .one_or_more(text).until(arrow_assertion_start)
+
+        command_extension = _Rule(CommandExtension) \
+            .expect(GREATER).expect(TEXT)
+        command = _Rule(Command) \
+            .expect(PESO).expect(TEXT).zero_or_more(command_extension)
+
+        arrow_eq_assertion = _Rule(ArrowAssertion) \
+            .expect(TEXT).expect(ASSERT_EQ).one_or_more(TEXT).until(arrow_assertion_start)
+        arrow_ne_assertion = _Rule(ArrowAssertion) \
+            .expect(TEXT).expect(ASSERT_NE).one_or_more(TEXT).until(arrow_assertion_start)
+        command_assertion = _Rule(CommandAssertion) \
+            .expect(command).expect(multiline_text)
+        assertion = _Rule(Assertion) \
+            .expect_some_of(command_assertion, arrow_eq_assertion, arrow_ne_assertion).ignore_next(NEW_LINE)
+
+        continuation_reference_prefix = _Rule(ContinuationReferencePrefix) \
+            .expect(CONTINUATION).expect(POINTER)
+        test_reference = _Rule(TestReference) \
+            .expect_some_of(TEST, continuation_reference_prefix).expect(TEXT)
+        setup_reference = _Rule(SetupReference) \
+            .expect(SETUP).expect(POINTER).expect(TEXT)
+
+        standalone_commands = _Rule(StandaloneCommands) \
+            .one_or_more(command).until(command_assertion).ignore_next(NEW_LINE)
+
+        setup = _Rule(Setup) \
+            .optionally(setup_reference).expect(standalone_commands)
+        test = _Rule(Test) \
+            .optionally(test_reference).optionally(setup).one_or_more(assertion).ignore_next(NEW_LINE)
+        global_teardown = _Rule(GlobalTeardown) \
+            .expect(TEARDOWN).expect(standalone_commands)
+        global_setup = _Rule(GlobalSetup) \
+            .expect(SETUP).expect(standalone_commands)
+
+        test_or_setup = _Rule(TestOrSetup) \
+            .expect_some_of(test, setup)
+        test_suite = _Rule(TestSuite) \
+            .ignore_next(NEW_LINE).optionally(global_setup).one_or_more(test_or_setup).optionally(global_teardown).expect(EOF)
+
+        return test_suite
+
+    def parse(self, tokens: list, embedded_tests:bool=False) -> ASTnode:
+        """Builds an Abstract Syntax Tree (AST) from TOKENS list following the Batspp grammar."""
+        if self.grammar is None:
+            self.grammar = self.build_grammar()
+        self.embedded_tests = embedded_tests
+        tree, _ = self.grammar.build_tree_from(tokens)
+        return tree
+
+parser = _Parser()
 
 if __name__ == '__main__':
     warning_not_intended_for_cmd()
