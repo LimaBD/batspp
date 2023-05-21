@@ -3,12 +3,10 @@
 # Token module
 #
 
-
 """Token module"""
 
-
 # Standard packages
-from enum import Enum
+## NOTE: this is empty for now
 
 # Installed packages
 ## NOTE: this is empty for now
@@ -18,6 +16,29 @@ from batspp._exceptions import (
     warning_not_intended_for_cmd,
     )
 
+# Token variants
+#
+# NOTE: we dont use enum to get a more
+#       readable code in the parser module.
+#
+# Single-character token variants
+PESO = 'PESO'
+GREATER = 'GREATER'
+# Reserved words tokens
+SETUP = 'setup'
+GLOBAL = 'global'
+TEARDOWN = 'teardown'
+TEST = 'test'
+POINTER = ' of '
+CONTINUATION = 'continuation'
+ASSERT_EQ = 'ASSERT_EQ' # "=>"
+ASSERT_NE = 'ASSERT_NE' # "=>"
+# Misc tokens
+TEXT = 'TEXT'
+EOF = 'EOF'
+# NOTE: to be deprecated
+NEW_LINE = 'NEW_LINE' ## TODO: unify to TEXT token
+MINOR = 'MINOR'
 
 class TokenData:
     """Data class for token"""
@@ -32,34 +53,6 @@ class TokenData:
         self.line = line
         self.column = column
 
-    def __str__(self):
-        return (
-            f'TokenData(text_line={self.text_line},\n'
-            f'\t          line={self.line},\n'
-            f'\t          column={self.column})'
-            )
-
-
-class TokenVariant(Enum):
-    """Token variants enum"""
-    # Single-character token variants
-    PESO = '$'
-    GREATER = '>'
-    NEW_LINE = '\n'
-    # Reserved words
-    SETUP = 'setup'
-    TEARDOWN = 'teardown'
-    TEST = 'test'
-    POINTER = ' of '
-    CONTINUATION = 'continuation'
-    ASSERT_EQ = '=>'
-    ASSERT_NE = '=/>'
-    # Misc
-    TEXT = 'TEXT'
-    MINOR = 'MINOR' # unimportant tokens that cannot be ignored
-    EOF = 'EOF' # end of file
-
-
 class Token:
     """
     Token class
@@ -67,21 +60,16 @@ class Token:
 
     def __init__(
             self,
-            variant: TokenVariant,
-            value:any,
+            variant: str,
+            value: any,
             data: TokenData = TokenData(),
             ) -> None:
         self.variant = variant
         self.value = value
         self.data = data
 
-    def __str__(self):
-        return (
-            f'Token(variant={self.variant},\n'
-            f'      value={self.value},\n'
-            f'      data={self.data})'
-            )
-
+    def __repr__(self) -> str:
+        return f'Token({self.variant.upper()})'
 
 if __name__ == '__main__':
     warning_not_intended_for_cmd()
