@@ -19,12 +19,13 @@ import json
 ## NOTE: this is empty for now
 
 # Local packages
-## NOTE: this is empty for now
+from batspp._exceptions import (
+    warning_not_intended_for_cmd,
+    )
 
-
-class IpynbToBatspp:
+class _JupyterToBatspp:
     """
-    This is responsible for converting ipynb json test to Batspp style text
+    This is responsible for converting ipynb jupiter test to Batspp style text
     """
 
     def convert(self, ipynb: str) -> str:
@@ -44,7 +45,7 @@ class IpynbToBatspp:
         """
         Convert markdown to batspp comment
         """
-        return merge_lines(markdown_cell['source'], line_start="# ")
+        return _merge_lines(markdown_cell['source'], line_start="# ")
 
     def convert_code_cell_to_commands(self, code_cell: dict) -> str:
         """
@@ -54,18 +55,18 @@ class IpynbToBatspp:
 
         # Source to command
         result = "$ " + code_cell['source'][0]
-        result += merge_lines(code_cell['source'][1:], line_start="$ ")
+        result += _merge_lines(code_cell['source'][1:], line_start="$ ")
 
         # Output to text
         for output in code_cell['outputs']:
 
             # Stream output type
             if output['output_type'] == 'stream':
-                result += merge_lines(output['text'])
+                result += _merge_lines(output['text'])
 
             # Error output type
             elif output['output_type'] == 'error':
-                result += merge_lines(output['ename'])
+                result += _merge_lines(output['ename'])
 
             else:
                 ## NOTE: display_data (used for images) is not supported for now
@@ -73,7 +74,7 @@ class IpynbToBatspp:
 
         return result
 
-def merge_lines(lines:list, line_start="") -> str:
+def _merge_lines(lines:list, line_start="") -> str:
     """
     Merge lines into single string,
     ensuring that every line has a LINE_START
@@ -82,10 +83,15 @@ def merge_lines(lines:list, line_start="") -> str:
     result = ""
     for line in lines:
         result += line_start + line
-    return ensure_trailing_newline(result)
+    return _ensure_trailing_newline(result)
 
-def ensure_trailing_newline(text:str) -> str:
+def _ensure_trailing_newline(text:str) -> str:
     """Ensure text has a trailing newline"""
     if not text.endswith('\n'):
         text += '\n'
     return text
+
+jupyter_to_batspp = _JupyterToBatspp()
+
+if __name__ == '__main__':
+    warning_not_intended_for_cmd()
