@@ -3,9 +3,7 @@
 # Batspp Test module
 #
 
-
 """Batspp test module"""
-
 
 # Standard packages
 from re import search as re_search
@@ -14,10 +12,11 @@ from re import search as re_search
 from mezcla import glue_helpers as gh
 
 # Local packages
-from batspp._lexer import Lexer
-from batspp._parser import Parser
-from batspp._interpreter import Interpreter
-from batspp._ipynb_to_batspp import IpynbToBatspp
+from batspp._lexer import lexer
+from batspp._parser import parser
+from batspp._semantic_analizer import semantic_analizer
+from batspp._interpreter import interpreter
+from batspp._jupyter_to_batspp import jupyter_to_batspp
 from batspp._settings import (
     BATSPP_EXTENSION, BATS_EXTENSION
 )
@@ -27,55 +26,40 @@ from batspp._exceptions import (
     warning_not_intended_for_cmd,
     )
 
-
-def add_prefix_to_filename(file:str, prefix:str) -> str:
+def _add_prefix_to_filename(file:str, prefix:str) -> str:
     """Adds PREFIX to FILE path"""
     return f'{gh.dir_path(file)}/{prefix}{gh.basename(file)}'
 
-
-def merge_filename_into_path(filename:str, path:str) -> str:
+def _merge_filename_into_path(filename:str, path:str) -> str:
     """Merge FILENAME into PATH, e.g. /etc/passwd /home/ => /home/passwd """
     assert filename and path, 'FILENAME or PATH cannot be empty'
     assert path.endswith('/'), 'PATH must end with "/".'
     return f'{path}{gh.basename(filename)}'
 
-
-def replace_extension(filename:str, extension:str) -> str:
+def _replace_extension(filename:str, extension:str) -> str:
     """Replace current FILENAME extension with EXTENSION"""
     current_extension = re_search(r'(?:\.\w+)+', filename).group()
     filename = gh.remove_extension(filename, current_extension)
     return f'{filename}.{extension}'
 
-
-def resolve_path(path:str, alternative:str) -> str:
+def _resolve_path(path:str, alternative:str) -> str:
     """Resolve PATH based on ALTERNATIVE filename"""
     result = ''
     if not path:
-        result = add_prefix_to_filename(alternative, 'generated_')
-        result = replace_extension(result, BATS_EXTENSION)
+        result = _add_prefix_to_filename(alternative, 'generated_')
+        result = _replace_extension(result, BATS_EXTENSION)
     elif path.endswith('/'):
-        result = merge_filename_into_path(alternative, path)
-        result = add_prefix_to_filename(result, 'generated_')
-        result = replace_extension(result, BATS_EXTENSION)
+        result = _merge_filename_into_path(alternative, path)
+        result = _add_prefix_to_filename(result, 'generated_')
+        result = _replace_extension(result, BATS_EXTENSION)
     else:
         result = path
     return result
-
 
 class BatsppTest:
     """
     This is responsible to parse and run Batspp tests
     """
-
-    def __init__(self) -> None:
-        # Most used classes
-        #
-        # this avoid to instanciate a new class
-        # every time that a tests file is parsed
-        self.lexer = Lexer()
-        self.parser = Parser()
-        self.interpreter = Interpreter()
-        self.ipynb_to_text = IpynbToBatspp()
 
     def _is_not_batspp_file(self, file:str) -> bool:
         """Whether is FILE is a batspp test file"""
@@ -111,10 +95,11 @@ class BatsppTest:
 
         # Transpilation
         content = gh.read_file(file)
-        content = self.ipynb_to_text.convert(content) if self.is_ipynb_file(file) else content
-        tokens = self.lexer.tokenize(content, opts.embedded_tests)
-        tree = self.parser.parse(tokens, opts.embedded_tests)
-        result = self.interpreter.interpret(tree, opts=opts, args=args)
+        content = jupyter_to_batspp.convert(content) if self.is_ipynb_file(file) else content
+        tokens = lexer.tokenize(content, opts.embedded_tests)
+        tree = parser.parse(tokens, opts.embedded_tests)
+        tree = semantic_analizer.analize(tree)
+        result = interpreter.interpret(tree, opts=opts, args=args)
 
         return result
 
@@ -128,7 +113,7 @@ class BatsppTest:
         """Save Batspp transiled test FILE to OUTPUT path,
            if OUTPUT is not provided or is a dir, a default is used 'generated_<file>.bats'"""
         assert file, 'File path cannot be empty'
-        output = resolve_path(output, file)
+        output = _resolve_path(output, file)
         transpiled_text = self.transpile_to_bats(file, args=args, opts=opts)
         gh.write_file(output, transpiled_text)
         gh.run(f'chmod +x {output}')
@@ -145,7 +130,6 @@ class BatsppTest:
         self.transpile_and_save_bats(file, temp_bats, args=args, opts=opts)
         sudo = 'sudo' if 'sudo' in gh.read_file(temp_bats) else ''
         return gh.run(f'{sudo} bats {args.run_opts} {temp_bats}')
-
 
 if __name__ == '__main__':
     warning_not_intended_for_cmd()
