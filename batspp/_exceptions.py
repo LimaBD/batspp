@@ -28,12 +28,16 @@ def error(
     """Raise exception"""
     ## TODO: limit text_line if it is very long
 
-    output = ''
-    output += f'{message}' if message else ''
-    output += f'\nline {line}: {text_line}' if text_line and line else ''
-    output += f'\n             {" " * column}^' if column else ''
+    if not text_line:
+        text_line = '<empty line>'
 
-    raise Exception(output)
+    line_number = f'line {line}: ' if line else ''
+
+    output = f'{message}' if message else ''
+    output += f'\n{line_number}{text_line}' if line else ''
+    output += f'\n{" " * len(line_number)}{" " * column}^' if column else ''
+
+    raise SyntaxError(output)
 
 
 def warning(message: str) -> None:
