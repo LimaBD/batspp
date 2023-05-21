@@ -31,7 +31,9 @@ from batspp._exceptions import (
     error, warning_not_intended_for_cmd,
     )
 from batspp._token import (
-    TokenData, TokenVariant, Token,
+    TokenData, Token, PESO, GREATER, SETUP, TEARDOWN,
+    TEST, POINTER, CONTINUATION, ASSERT_EQ, ASSERT_NE,
+    TEXT, EOF, NEW_LINE, MINOR
     )
 
 
@@ -42,7 +44,7 @@ class Tags(Enum):
     BLANK = '<BLANK>' # blank line
 
 
-class TextLiner:
+class _TextLiner:
     """
     This provides functionality to process text line per line
     """
@@ -86,7 +88,7 @@ class TextLiner:
         self.column = 0
 
 
-class Lexer:
+class _Lexer:
     """
     This is responsible for breaking
     a sentence/text apart into tokens for Batspp
@@ -116,9 +118,9 @@ class Lexer:
         Push minor TOKEN to stack only if these are not a previus MINOR token.
         this avoids have N unnecesary MINOR tokens.
         """
-        assert token.variant is TokenVariant.MINOR, 'wrong token variant, must be a MINOR'
+        assert token.variant is MINOR, 'wrong token variant, must be a MINOR'
 
-        if self.tokens_stack and self.tokens_stack[-1].variant is TokenVariant.MINOR:
+        if self.tokens_stack and self.tokens_stack[-1].variant is MINOR:
             debug.trace(7, f'Lexer.push_minor_token(token={token}) -> kicked!')
             return
 
@@ -135,13 +137,17 @@ class Lexer:
         #
         # NOTE: we dont use full regex to have more
         #       control and handle exceptions better
-        while self.text.is_line_safe():
+        data = None
+        while True:
 
             data = TokenData(
                 text_line = self.text.get_current_line(),
                 line = self.text.line + 1,
                 column = self.text.column + 1,
                 )
+
+            if not self.text.is_line_safe():
+                break
 
             # Skip double comments
             match = re_match(r'^##', self.text.get_current_line())
@@ -160,7 +166,7 @@ class Lexer:
             if match:
                 self.text.advance_line()
                 self.push_token(Token(
-                    TokenVariant.NEW_LINE,
+                    NEW_LINE,
                     match.group(),
                     data,
                     ))
@@ -171,7 +177,7 @@ class Lexer:
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
-                    TokenVariant.PESO,
+                    PESO,
                     match.group(),
                     data,
                     ))
@@ -182,7 +188,7 @@ class Lexer:
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
-                    TokenVariant.GREATER,
+                    GREATER,
                     match.group(),
                     data,
                     ))
@@ -193,7 +199,7 @@ class Lexer:
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
-                    TokenVariant.TEST,
+                    TEST,
                     match.group(),
                     data,
                     ))
@@ -204,7 +210,7 @@ class Lexer:
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
-                    TokenVariant.SETUP,
+                    SETUP,
                     match.group(),
                     data,
                     ))
@@ -215,7 +221,7 @@ class Lexer:
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
-                    TokenVariant.TEARDOWN,
+                    TEARDOWN,
                     match.group(),
                     data,
                     ))
@@ -226,7 +232,7 @@ class Lexer:
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
-                    TokenVariant.CONTINUATION,
+                    CONTINUATION,
                     match.group(),
                     data,
                     ))
@@ -236,7 +242,7 @@ class Lexer:
             if self.text.get_rest_line().startswith((Tags.END.value, Tags.EOF.value)):
                 self.text.advance_column(5)
                 self.push_token(Token(
-                    TokenVariant.MINOR,
+                    MINOR,
                     None,
                     data,
                     ))
@@ -246,7 +252,7 @@ class Lexer:
             if self.text.get_rest_line().startswith(Tags.BLANK.value):
                 self.text.advance_column(len(Tags.BLANK.value))
                 self.push_token(Token(
-                    TokenVariant.TEXT,
+                    TEXT,
                     '\n',
                     data,
                     ))
@@ -257,7 +263,7 @@ class Lexer:
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
-                    TokenVariant.POINTER,
+                    POINTER,
                     match.group(),
                     data,
                     ))
@@ -268,7 +274,7 @@ class Lexer:
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
-                    TokenVariant.ASSERT_EQ,
+                    ASSERT_EQ,
                     match.group(),
                     data,
                     ))
@@ -279,7 +285,7 @@ class Lexer:
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
-                    TokenVariant.ASSERT_NE,
+                    ASSERT_NE,
                     match.group(),
                     data,
                     ))
@@ -297,7 +303,7 @@ class Lexer:
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
-                    TokenVariant.TEXT,
+                    TEXT,
                     match.group(),
                     data,
                     ))
@@ -311,13 +317,13 @@ class Lexer:
                 )
 
         # Tokenize End of file
-        self.push_token(Token(TokenVariant.EOF, None, None))
+        self.push_token(Token(EOF, None, data))
 
     def tokenize(self, text: str, embedded_tests:bool=False) -> list:
         """Tokenize text"""
         if embedded_tests:
-            text = normalize_embedded_tests(text)
-        self.text = TextLiner(text)
+            text = _normalize_embedded_tests(text)
+        self.text = _TextLiner(text)
         self.run_extraction_of_tokens()
         debug.trace(7,
             f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests})'
@@ -325,7 +331,7 @@ class Lexer:
         return self.pop_tokens()
 
 
-def normalize_embedded_tests(embedded_tests: str) -> str:
+def _normalize_embedded_tests(embedded_tests: str) -> str:
     """Normalize embedded comment tests into tests"""
     result = embedded_tests
 
@@ -344,6 +350,7 @@ def normalize_embedded_tests(embedded_tests: str) -> str:
     debug.trace(7, f'normalize_embedded_tests({embedded_tests}) => \n{result}')
     return result
 
+lexer = _Lexer()
 
 if __name__ == '__main__':
     warning_not_intended_for_cmd()
