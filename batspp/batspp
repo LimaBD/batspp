@@ -59,6 +59,7 @@ SAVE = 'save'
 SOURCES = 'sources'
 OUTPUT = 'output'
 DEBUG = 'debug'
+EMBEDDED_TESTS = 'embedded_tests'
 HEXDUMP_DEBUG = 'hexdump_debug'
 VERBOSE_DEBUG = 'verbose_debug'
 TMP = 'TMP'
@@ -81,6 +82,7 @@ class Batspp(Main):
     save_path = ''
     sources = []
     output = False
+    embedded_tests = False
     hexdump_debug = False
     verbose_debug = False
     debug = ''
@@ -104,6 +106,7 @@ class Batspp(Main):
         self.save_path = self.get_entered_text(SAVE, self.temp_file)
         self.sources = text_utils.extract_string_list(self.get_entered_text(SOURCES, ''))
         self.output = self.get_entered_bool(OUTPUT, self.output)
+        self.embedded_tests = self.get_entered_bool(EMBEDDED_TESTS, self.embedded_tests)
         self.hexdump_debug = self.get_entered_bool(HEXDUMP_DEBUG, self.hexdump_debug)
         self.verbose_debug = self.get_entered_bool(VERBOSE_DEBUG, self.verbose_debug)
         self.debug = self.get_entered_text(DEBUG, self.debug)
@@ -126,6 +129,7 @@ class Batspp(Main):
         # Build tests
         test = BatsppTest()
         opts = BatsppOpts(
+            embedded_tests = self.embedded_tests,
             hexdump_debug = self.hexdump_debug,
             verbose_debug = self.verbose_debug,
             omit_trace = self.omit_trace,
@@ -191,6 +195,7 @@ if __name__ == '__main__':
         boolean_options = [
             (VERSION, 'Show installed Batspp version'),
             (OUTPUT, 'Print generated test'),
+            (EMBEDDED_TESTS, 'Whether tests embedded in script'),
             (HEXDUMP_DEBUG, 'Print hexdump debug when an assertion fail'),
             (VERBOSE_DEBUG, 'Print debug verbose when an assertion fail'),
             (SKIP_RUN, 'Do not run the test script'),
