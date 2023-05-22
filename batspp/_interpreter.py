@@ -230,8 +230,9 @@ class Interpreter(NodeVisitor):
             commands.append(f'PATH={":".join(self.args.visible_paths)}:$PATH\n')
 
         # Check for sources files
-        if (self.args.sources and
-            not self.opts.disable_aliases):
+        if (self.args.sources and self.opts.embedded_tests):
+            if not self.opts.disable_aliases:
+                commands += "shopt -s expand_aliases\n"
             commands += [f'source {src}' for src in self.args.sources]
 
         return commands
