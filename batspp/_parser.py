@@ -402,13 +402,16 @@ class _Parser:
             .expect(PESO).expect(TEXT).zero_or_more(command_extension)
 
         arrow_eq_assertion = _Rule(ArrowAssertion) \
-            .expect(TEXT).expect(ASSERT_EQ).one_or_more(TEXT).until(arrow_assertion_start)
+            .expect(TEXT).expect(ASSERT_EQ).one_or_more(TEXT) \
+            .until(arrow_assertion_start)
         arrow_ne_assertion = _Rule(ArrowAssertion) \
-            .expect(TEXT).expect(ASSERT_NE).one_or_more(TEXT).until(arrow_assertion_start)
+            .expect(TEXT).expect(ASSERT_NE).one_or_more(TEXT) \
+            .until(arrow_assertion_start)
         command_assertion = _Rule(CommandAssertion) \
             .expect(command).expect(multiline_text)
         assertion = _Rule(Assertion) \
-            .expect_some_of(command_assertion, arrow_eq_assertion, arrow_ne_assertion).ignore_next(NEW_LINE)
+            .expect_some_of(command_assertion, arrow_eq_assertion, arrow_ne_assertion) \
+            .ignore_next(NEW_LINE)
 
         continuation_reference_prefix = _Rule(ContinuationReferencePrefix) \
             .expect(CONTINUATION).expect(POINTER)
@@ -423,7 +426,8 @@ class _Parser:
         setup = _Rule(Setup) \
             .optionally(setup_reference).expect(standalone_commands)
         test = _Rule(Test) \
-            .optionally(test_reference).optionally(setup).one_or_more(assertion).ignore_next(NEW_LINE)
+            .optionally(test_reference).optionally(setup) \
+            .one_or_more(assertion).ignore_next(NEW_LINE)
         global_teardown = _Rule(GlobalTeardown) \
             .expect(TEARDOWN).expect(standalone_commands)
         global_setup = _Rule(GlobalSetup) \
@@ -432,7 +436,9 @@ class _Parser:
         test_or_setup = _Rule(TestOrSetup) \
             .expect_some_of(test, setup)
         test_suite = _Rule(TestSuite) \
-            .ignore_next(NEW_LINE).optionally(global_setup).one_or_more(test_or_setup).optionally(global_teardown).expect(EOF)
+            .ignore_next(NEW_LINE).optionally(global_setup) \
+            .one_or_more(test_or_setup).optionally(global_teardown) \
+            .expect(EOF)
 
         return test_suite
 
