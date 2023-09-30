@@ -32,7 +32,7 @@ TEST = 'test'
 POINTER = ' of '
 CONTINUATION = 'continuation'
 ASSERT_EQ = 'ASSERT_EQ' # "=>"
-ASSERT_NE = 'ASSERT_NE' # "=>"
+ASSERT_NE = 'ASSERT_NE' # "=/>"
 # Misc tokens
 TEXT = 'TEXT'
 EOF = 'EOF'
@@ -69,7 +69,12 @@ class Token:
         self.data = data
 
     def __repr__(self) -> str:
-        return f'Token({self.variant.upper()})'
+        return f'Token(var={self.variant.upper()}, val="{self.value}")'
+
+    @property
+    def line(self) -> int:
+        """Return token line"""
+        return self.data.line
 
 if __name__ == '__main__':
     warning_not_intended_for_cmd()
