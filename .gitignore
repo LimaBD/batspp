@@ -54,6 +54,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+/docs/examples/report
 
 # Translations
 *.mo
@@ -165,5 +166,5 @@ cython_debug/
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 
-# Ignore coverage report examples
-/docs/examples/report
+# Ignore vscode settings
+.vscode/
