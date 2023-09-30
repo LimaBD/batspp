@@ -98,7 +98,7 @@ class BatsppTest:
         content = jupyter_to_batspp.convert(content) if self.is_ipynb_file(file) else content
         tokens = lexer.tokenize(content, opts.embedded_tests)
         tree = parser.parse(tokens, opts.embedded_tests)
-        tree = semantic_analizer.analize(tree)
+        tree, opts, args = semantic_analizer.analize(tree, opts=opts, args=args)
         result = interpreter.interpret(tree, opts=opts, args=args)
 
         return result
