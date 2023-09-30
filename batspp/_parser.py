@@ -26,9 +26,9 @@ from batspp._exceptions import (
     error, warning_not_intended_for_cmd,
     )
 from batspp._token import (
-    PESO, GREATER, SETUP, GLOBAL, TEARDOWN,
+    PESO, GREATER, SETUP, TEARDOWN,
     TEST, POINTER, CONTINUATION, ASSERT_EQ,
-    ASSERT_NE, TEXT, EOF, Token, NEW_LINE,
+    ASSERT_NE, TEXT, EOF, NEW_LINE,
     )
 from batspp._ast_node import (
     ASTnode, TestSuite, TestOrSetup, GlobalTeardown,
@@ -36,7 +36,18 @@ from batspp._ast_node import (
     TestReference, SetupReference, CommandAssertion,
     Assertion, Command, CommandExtension, Text,
     MultilineText, ArrowAssertion, StandaloneCommands,
+    SetupAssertion,
     )
+
+def copy_with_nested_lists(list_to_copy:list) -> list:
+    """Copy a list with nested lists, better than using list.copy(), [:]
+       because this copies the nested lists too, and better than a deepcopy
+       because only copy a limited deep level"""
+    result_copy = list_to_copy[:]
+    for i, item in enumerate(result_copy):
+        if isinstance(item, list):
+            result_copy[i] = item[:]
+    return result_copy
 
 class _RuleState:
     """Rule state class"""
@@ -202,13 +213,15 @@ class _Rule:
         """Check if the next tokens follow a rule or match token without consuming them."""
         self._print_debug('_is_rule_followed', str(token_or_rule))
         result = False
-        tokens_backup = self.tokens.copy()
+        tokens_backup = copy_with_nested_lists(self.tokens)
+        children_backup = copy_with_nested_lists(self._generated_child_nodes)
         try:
             self._run_expect(token_or_rule)
             result = True
         except SyntaxError:
             pass
         self.tokens = tokens_backup
+        self._generated_child_nodes = children_backup
         return result
 
     def _run_expect(self, token_or_rule) -> None:
@@ -228,6 +241,7 @@ class _Rule:
 
     def _append_child_node(self, node: ASTnode) -> None:
         """Append a child node to the generated child nodes list"""
+        self._print_debug('_append_child_node', f'{node}')
         # Loop instructions store a list of children instead of a single child node
         if self._running_loop_instruction:
             empty = not self._generated_child_nodes
@@ -243,12 +257,14 @@ class _Rule:
            otherwise append a 'None' to the generated
            child nodes list and continue."""
         self._print_debug('_run_optionally', f'{token_or_rule}')
-        tokens_backup = self.tokens.copy()
+        tokens_backup = copy_with_nested_lists(self.tokens)
+        children_backup = copy_with_nested_lists(self._generated_child_nodes)
         try:
             self._run_expect(token_or_rule)
         except SyntaxError:
-            self._append_child_node(None)
             self.tokens = tokens_backup
+            self._generated_child_nodes = children_backup
+            self._append_child_node(None)
 
     def _run_zero_or_more(self, expected, not_expected) -> None:
         """Run EXPECTED rule zero or more times until NOT_EXPECTED is found"""
@@ -260,7 +276,7 @@ class _Rule:
             print_debug('loop')
             if not_expected is not None:
                 if self._is_rule_followed(not_expected):
-                    print_debug('not expected found')
+                    print_debug('not-expected found')
                     break
             try:
                 self._run_expect(expected)
@@ -273,16 +289,16 @@ class _Rule:
 
     def _run_one_or_more(self, expected, not_expected) -> None:
         """Run EXPECTED rule one or more times until NOT_EXPECTED is found"""
-        self._print_debug('_run_one_or_more', f'{expected}, {not_expected}')
+        self._print_debug('_run_one_or_more', f'{expected}, {not_expected} <starting>')
         self._setup_loop_instruction()
         if not_expected is not None:
             if self._is_rule_followed(not_expected):
-                self._print_debug('_run_one_or_more', f"{not_expected} <failed>")
+                self._print_debug('_run_one_or_more', f"{not_expected} <not-expected found>")
                 raise SyntaxError(f'Expected "{expected}" but got "{not_expected}"')
         self._run_expect(expected)
         self._run_zero_or_more(expected, not_expected)
-        self._print_debug('_run_one_or_more', f"{not_expected} <ok>")
         self._teardown_loop_instruction()
+        self._print_debug('_run_one_or_more', f"{expected} <finished>")
 
     def _setup_loop_instruction(self) -> None:
         """Setup this rule to START a loop instruction"""
@@ -320,15 +336,15 @@ class _Rule:
                 )
 
     def _run_ignore_next(self, token_or_rule) -> None:
-        """Advance tokens until TOKEN_OR_RULE, but don't append any child node"""
-        generated_child_nodes_backup = self._generated_child_nodes.copy()
+        """Advance TOKEN_OR_RULE, but don't append any child node"""
+        children_backup = copy_with_nested_lists(self._generated_child_nodes)
         while True:
             self._print_debug('_run_ignore_next', f'{token_or_rule} <running loop>')
             try:
                 self._run_expect(token_or_rule)
             except SyntaxError:
                 break
-        self._generated_child_nodes = generated_child_nodes_backup
+        self._generated_child_nodes = children_backup
 
     def _print_debug(self, method_name:str, notes:str) -> None:
         """Print debug information"""
@@ -362,7 +378,8 @@ class _Parser:
         #
         # global_setup : SETUP standalone_commands
         # global_teardown : TEARDOWN standalone_commands
-        # test : test_reference? setup? assertion+
+        # test : test_reference? (setup_assertion)+
+        # setup_assertion : setup? assertion
         # setup : setup_reference? standalone_commands
         #
         # standalone_commands : command+ [^TEXT]
@@ -390,7 +407,7 @@ class _Parser:
         #   it can cause problems when building the ast node object.
 
         text = _Rule(Text) \
-            .expect_some_of(TEXT, NEW_LINE)
+            .expect(TEXT)
         arrow_assertion_start = _Rule(None, alias="arrow_assertion_start") \
             .expect(TEXT).expect_some_of(ASSERT_EQ, ASSERT_NE)
         multiline_text = _Rule(MultilineText) \
@@ -399,19 +416,17 @@ class _Parser:
         command_extension = _Rule(CommandExtension) \
             .expect(GREATER).expect(TEXT)
         command = _Rule(Command) \
-            .expect(PESO).expect(TEXT).zero_or_more(command_extension)
+            .expect(PESO).expect(TEXT) \
+            .zero_or_more(command_extension).ignore_next(NEW_LINE)
 
         arrow_eq_assertion = _Rule(ArrowAssertion) \
-            .expect(TEXT).expect(ASSERT_EQ).one_or_more(TEXT) \
-            .until(arrow_assertion_start)
+            .expect(TEXT).expect(ASSERT_EQ).expect(multiline_text)
         arrow_ne_assertion = _Rule(ArrowAssertion) \
-            .expect(TEXT).expect(ASSERT_NE).one_or_more(TEXT) \
-            .until(arrow_assertion_start)
+            .expect(TEXT).expect(ASSERT_NE).expect(multiline_text)
         command_assertion = _Rule(CommandAssertion) \
             .expect(command).expect(multiline_text)
         assertion = _Rule(Assertion) \
-            .expect_some_of(command_assertion, arrow_eq_assertion, arrow_ne_assertion) \
-            .ignore_next(NEW_LINE)
+            .expect_some_of(command_assertion, arrow_eq_assertion, arrow_ne_assertion)
 
         continuation_reference_prefix = _Rule(ContinuationReferencePrefix) \
             .expect(CONTINUATION).expect(POINTER)
@@ -425,18 +440,37 @@ class _Parser:
 
         setup = _Rule(Setup) \
             .optionally(setup_reference).expect(standalone_commands)
+        setup_assertion = _Rule(SetupAssertion) \
+            .optionally(setup).expect(assertion)
         test = _Rule(Test) \
-            .optionally(test_reference).optionally(setup) \
-            .one_or_more(assertion).ignore_next(NEW_LINE)
+            .optionally(test_reference) \
+            .one_or_more(setup_assertion).ignore_next(NEW_LINE)
         global_teardown = _Rule(GlobalTeardown) \
             .expect(TEARDOWN).expect(standalone_commands)
         global_setup = _Rule(GlobalSetup) \
             .expect(SETUP).expect(standalone_commands)
 
-        test_or_setup = _Rule(TestOrSetup) \
+        # Tokens to ignore in embedded tests
+        # Those tokens are residual from the previous
+        # step removing the # from tests comments
+        to_ignore_in_embedded_tests = _Rule(None, alias="to_ignore_in_embedded_tests") \
+            .expect_some_of(multiline_text, NEW_LINE)
+
+        test_or_setup = _Rule(TestOrSetup)
+        if self.embedded_tests:
+            test_or_setup = test_or_setup.ignore_next(to_ignore_in_embedded_tests)
+        test_or_setup = test_or_setup \
             .expect_some_of(test, setup)
-        test_suite = _Rule(TestSuite) \
-            .ignore_next(NEW_LINE).optionally(global_setup) \
+        if self.embedded_tests:
+            test_or_setup = test_or_setup.ignore_next(to_ignore_in_embedded_tests)
+
+        test_suite = _Rule(TestSuite)
+        if self.embedded_tests:
+            test_suite = test_suite.ignore_next(to_ignore_in_embedded_tests)
+        else:
+            test_suite = test_suite.ignore_next(NEW_LINE)
+        test_suite = test_suite \
+            .optionally(global_setup) \
             .one_or_more(test_or_setup).optionally(global_teardown) \
             .expect(EOF)
 
@@ -444,9 +478,9 @@ class _Parser:
 
     def parse(self, tokens: list, embedded_tests:bool=False) -> ASTnode:
         """Builds an Abstract Syntax Tree (AST) from TOKENS list following the Batspp grammar."""
+        self.embedded_tests = embedded_tests
         if self.grammar is None:
             self.grammar = self.build_grammar()
-        self.embedded_tests = embedded_tests
         tree, _ = self.grammar.build_tree_from(tokens)
         return tree
 
