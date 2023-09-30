@@ -21,7 +21,27 @@ from batspp._token import (
 
 class ASTnode:
     """Abstract Syntax Tree node for Batspp"""
-    pass
+
+    def __init__(self) -> None:
+        """Initialize AST node"""
+        pass
+
+    @property
+    def line(self) -> int:
+        """Return the line number of the node"""
+        # Search in children the lower line number
+        child_lines = []
+        for child in self.__dict__.values():
+            if isinstance(child, ASTnode) or isinstance(child, Token):
+                child_lines.append(child.line)
+            elif isinstance(child, list):
+                for subchild in child:
+                    if subchild is not None:
+                        child_lines.append(subchild.line)
+        child_lines = [line for line in child_lines if line is not None]
+        if child_lines:
+            return min(child_lines)
+        raise Exception('ASTnode.line: no line number found')
 
 class Text(ASTnode):
     """Text node"""
@@ -89,7 +109,7 @@ class ContinuationReferencePrefix(ASTnode):
 class TestReference(ASTnode):
     """Test reference node"""
 
-    def __init__(self, pointer, reference: Token|ContinuationReferencePrefix) -> None:
+    def __init__(self, pointer: Token|ContinuationReferencePrefix, reference: Token) -> None:
         """Initialize AST node"""
         self.pointer = pointer
         self.reference = reference
@@ -106,7 +126,7 @@ class SetupReference(ASTnode):
 class StandaloneCommands(ASTnode):
     """Standalone commands node"""
 
-    def __init__(self, commands: list) -> None:
+    def __init__(self, commands: list=[]) -> None:
         self.commands = commands
 
 class Setup(ASTnode):
@@ -120,11 +140,10 @@ class Setup(ASTnode):
 class Test(ASTnode):
     """Test node"""
 
-    def __init__(self, reference: TestReference, setup: Setup, assertions: list) -> None:
+    def __init__(self, reference: TestReference, setup_assertions: list) -> None:
         """Initialize AST node"""
         self.reference = reference
-        self.setup = setup
-        self.assertions = assertions
+        self.setup_assertions = setup_assertions
 
 class GlobalSetup(ASTnode):
     """Global setup node"""
@@ -132,6 +151,7 @@ class GlobalSetup(ASTnode):
     def __init__(self, setup: Token, commands: StandaloneCommands) -> None:
         """Initialize AST node"""
         self.setup = setup
+        self.one_time_commands = StandaloneCommands()
         self.commands = commands
 
 class GlobalTeardown(ASTnode):
@@ -162,10 +182,26 @@ class TestSuite(ASTnode):
             eof: Token,
             ) -> None:
         """Initialize AST node"""
+        self.constants: Constants = None # This is added later, not during construction.
         self.global_setup = global_setup
         self.tests_or_setups = tests_or_setups
         self.global_teardown = global_teardown
         self.eof = eof
+
+class SetupAssertion(ASTnode):
+    """Setup assertion node"""
+
+    def __init__(self, setup: Setup, assertion: Assertion) -> None:
+        """Initialize AST node"""
+        self.setup = setup
+        self.assertion = assertion
+
+class Constants(ASTnode):
+    """Constants node"""
+
+    def __init__(self, constants: list) -> None:
+        """Initialize AST node"""
+        self.constants = constants
 
 if __name__ == '__main__':
     warning_not_intended_for_cmd()
