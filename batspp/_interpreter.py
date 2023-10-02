@@ -241,7 +241,7 @@ class Interpreter(ReferenceNodeVisitor):
         """
         result = node.command.value
         if node.extensions:
-            result += '\n'.join([ self.visit(ext) for ext in node.extensions ])
+            result += '\n' + '\n'.join([ self.visit(ext) for ext in node.extensions ])
         return result
 
     # pylint: disable=invalid-name
@@ -355,6 +355,10 @@ def build_commands_block(
     # Plit every line
     if isinstance(commands, str):
         commands = commands.split('\n')
+    separated_commands = []
+    for command in commands:
+        separated_commands += command.split('\n')
+    commands = separated_commands
     # Transform lines
     result = ''
     for command in commands:
