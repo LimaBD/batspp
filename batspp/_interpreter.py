@@ -120,7 +120,6 @@ class Interpreter(ReferenceNodeVisitor):
             f'function {SETUP_FUNCTION} () {{\n'
             )
         result += build_commands_block(self.visit(node.commands), '\t')
-        result += '' if result.endswith('\n') else '\n'
         result += '}\n\n'
         debug.trace(7, f'interpreter.visit_GlobalSetup() => {result}')
         return result
@@ -189,8 +188,6 @@ class Interpreter(ReferenceNodeVisitor):
         Visit Setup NODE
         """
         result = self.visit(node.commands)
-        if result and not result.endswith('\n'):
-            result += '\n'
         return result
 
     # pylint: disable=invalid-name
@@ -201,7 +198,6 @@ class Interpreter(ReferenceNodeVisitor):
         result = ''
         cmds = [ self.visit(cmd) for cmd in node.commands ]
         result += build_commands_block(cmds)
-        result += '\n' if result and not result.endswith('\n') else ''
         return result
 
     # pylint: disable=invalid-name
@@ -353,14 +349,20 @@ def flatten_str(string: str) -> str:
 def build_commands_block(
         commands: list,
         indent: str = '\t',
-        multiline_last_char: str = '\n',
+        end_of_line: str = '\n',
         ) -> str:
     """Build commands block with COMMANDS indented with tab"""
+    # Plit every line
     if isinstance(commands, str):
         commands = commands.split('\n')
-    commands = [ cmd for cmd in commands if cmd and cmd != '\n' ]
-    multiline_last_char = multiline_last_char if len(commands) > 1 else ''
-    result = ''.join([f'{indent}{cmd.strip()}{multiline_last_char}' for cmd in commands])
+    # Transform lines
+    result = ''
+    for command in commands:
+        if not command or command == '\n':
+            continue
+        result += f'{indent}{command.strip()}{end_of_line}'
+    if result and not result.endswith('\n'):
+        result += '\n'
     debug.trace(7, f'interpreter.build_commands_block({commands}) => {result}')
     return result
 
