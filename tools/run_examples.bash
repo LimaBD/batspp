@@ -44,6 +44,16 @@ function run_eg () {
     # Run
     cd $folder
     $script --hexdump_debug --save $generated $test_file > $output
+
+    # Replace random generated values
+    # to avoid changes on git diff
+    to_replace="TEMP_DIR=\"\/tmp\/batspp-.*\""
+    replacement="TEMP_DIR=\"\/tmp\/batspp-<REPLACED>\""
+    sed -i "s/$to_replace/$replacement/g" $generated
+    #
+    to_replace="source .*"
+    replacement="source <REPLACED>"
+    sed -i "s/$to_replace/$replacement/g" $generated
 }
 
 # Run example that starts with name 

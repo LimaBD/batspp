@@ -6,11 +6,11 @@
 
 # Constants
 VERBOSE_DEBUG="| hexdump -C"
-TEMP_DIR="/tmp/batspp-182722"
+TEMP_DIR="/tmp/batspp-<REPLACED>"
 
 # One time global setup
 shopt -s expand_aliases
-source ./bash_example.bash
+source <REPLACED>
 
 # Setup function
 # $1 -> test name
