@@ -99,36 +99,42 @@ class _Rule:
         self._debug_deep_level = 1
 
     def expect(self, token_or_rule) -> '_Rule':
-        """Expect a token or another rule"""
+        """Expect a token or another rule.\n
+           Equivalent to regex: TOKEN_OR_RULE"""
         self._append_instruction(self._run_expect, token_or_rule)
         return self
 
     def optionally(self, token_or_rule) -> '_Rule':
-        """Optionally expect a token or another rule"""
+        """Optionally expect a token or another rule.\n
+           Equivalent to regex: TOKEN_OR_RULE?"""
         self._append_instruction(self._run_optionally, token_or_rule)
         return self
 
     def zero_or_more(self, token_or_rule) -> '_Rule':
-        """Expect zero or N times a token or another rule"""
+        """Expect zero or N times a token or another rule.\n
+           Equivalent to regex: TOKEN_OR_RULE*"""
         expected = token_or_rule
         not_expected = None # this is added with until()
         self._append_instruction(self._run_zero_or_more, (expected, not_expected))
         return self
 
     def one_or_more(self, token_or_rule) -> '_Rule':
-        """Expect at least one or N times a token or another rule"""
+        """Expect at least one or N times a token or another rule.\n
+           Equivalent to regex: TOKEN_OR_RULE+"""
         expected = token_or_rule
         not_expected = None # this is added with until()
         self._append_instruction(self._run_one_or_more, (expected, not_expected))
         return self
 
     def expect_some_of(self, *tokens_or_rules) -> '_Rule':
-        """Expect some of a token or another rule"""
+        """Expect some of a token or another rule.\n
+           Equivalent to regex: (TOKEN_OR_RULE1 | TOKEN_OR_RULE2 | ...)"""
         self._append_instruction(self._run_expect_some_of, tokens_or_rules)
         return self
 
     def ignore_next(self, token_or_rule) -> '_Rule':
-        """Ignore next specified tokens or rules N times"""
+        """Ignore next specified tokens or rules N times.\n
+           Equivalent to regex: (?!TOKEN_OR_RULE*)"""
         self._append_instruction(self._run_ignore_next, token_or_rule)
         return self
 
@@ -364,25 +370,33 @@ class _Rule:
 class _Parser:
     """Batspp parser class"""
 
-    def __init__(self):
-        self.embedded_tests = False
-        self.grammar = None
-
-    def build_grammar(self) -> _Rule:
+    def build_grammar(self, embedded_tests:bool) -> _Rule:
         """Returns the grammar rules for Batspp."""
 
-        # Batspp grammar
+        # Batspp complete grammar
         #
-        # test_suite : global_setup? (test_or_setup)+ global_teardown? EOF
-        # test_or_setup : test | setup
+        # this is dinamic and changes depending if
+        # the tests are embedded or not, those changes
+        # are indicated with parenthesis.
+        #
+        # e.g.: "(normal)   NAME : RULE"
+        # e.g.: "(embedded) NAME : OTHER RULE"
+
+        # (normal)   test_suite : global_setup? (test_or_setup)+ global_teardown? EOF
+        # (embedded) test_suite : (?!any_text)* test_suite (?!any_text)*
+        #
+        # (normal)   test_or_setup : test | setup
+        # (embedded) test_or_setup : (?!any_text)* test_or_setup (?!any_text)*
+        #
+        # any_text : multiline_text | NEW_LINE
         #
         # global_setup : SETUP standalone_commands
         # global_teardown : TEARDOWN standalone_commands
-        # test : test_reference? (setup_assertion)+
+        # test : test_reference? (setup_assertion)+ (?!NEW_LINE)*
         # setup_assertion : setup? assertion
         # setup : setup_reference? standalone_commands
         #
-        # standalone_commands : command+ [^TEXT]
+        # standalone_commands : command+ [^command_assertion] (?!NEW_LINE)*
         #
         # setup_reference : SETUP POINTER TEXT
         # test_reference : (TEST | continuation_reference_prefix) TEXT
@@ -390,19 +404,17 @@ class _Parser:
         #
         # assertion : command_assertion | arrow_ne_assertion | arrow_eq_assertion
         # command_assertion : command multiline_text
-        # arrow_eq_assertion : TEXT ASSERT_EQ TEXT+ [^arrow_assertion_start]
-        # arrow_ne_assertion : TEXT ASSERT_NE TEXT+ [^arrow_assertion_start]
+        # arrow_eq_assertion : TEXT ASSERT_EQ TEXT+ multiline_text
+        # arrow_ne_assertion : TEXT ASSERT_NE TEXT+ multiline_text
         #
-        # command : PESO TEXT command_extension*
+        # command : PESO TEXT command_extension* (?!NEW_LINE)*
         # command_extension : GREATER TEXT
         #
-        # multiline_text : (TEXT | NEW_LINE)+ [^arrow_assertion_start]
+        # multiline_text : text+ [^arrow_assertion_start]
         # arrow_assertion_start : TEXT (ASSERT_EQ | ASSERT_NE)
-        # text : TEXT | NEW_LINE
+        # text : TEXT
 
         # Notes:
-        # - the ast node variants not present in the
-        #   ast node module are only for debug porposes.
         # - carefull referencing the same rule in another rules,
         #   it can cause problems when building the ast node object.
 
@@ -450,23 +462,24 @@ class _Parser:
         global_setup = _Rule(GlobalSetup) \
             .expect(SETUP).expect(standalone_commands)
 
-        # Tokens to ignore in embedded tests
-        # Those tokens are residual from the previous
-        # step removing the # from tests comments
-        to_ignore_in_embedded_tests = _Rule(None, alias="to_ignore_in_embedded_tests") \
-            .expect_some_of(multiline_text, NEW_LINE)
+        # This rule is only used with embedded tests to reduce
+        # functions calls we can avoid it if is not used
+        any_text = None
+        if embedded_tests:
+            any_text = _Rule(None, alias="any_text") \
+                .expect_some_of(multiline_text, NEW_LINE)
 
         test_or_setup = _Rule(TestOrSetup)
-        if self.embedded_tests:
-            test_or_setup = test_or_setup.ignore_next(to_ignore_in_embedded_tests)
+        if embedded_tests:
+            test_or_setup = test_or_setup.ignore_next(any_text)
         test_or_setup = test_or_setup \
             .expect_some_of(test, setup)
-        if self.embedded_tests:
-            test_or_setup = test_or_setup.ignore_next(to_ignore_in_embedded_tests)
+        if embedded_tests:
+            test_or_setup = test_or_setup.ignore_next(any_text)
 
         test_suite = _Rule(TestSuite)
-        if self.embedded_tests:
-            test_suite = test_suite.ignore_next(to_ignore_in_embedded_tests)
+        if embedded_tests:
+            test_suite = test_suite.ignore_next(any_text)
         else:
             test_suite = test_suite.ignore_next(NEW_LINE)
         test_suite = test_suite \
@@ -478,10 +491,8 @@ class _Parser:
 
     def parse(self, tokens: list, embedded_tests:bool=False) -> ASTnode:
         """Builds an Abstract Syntax Tree (AST) from TOKENS list following the Batspp grammar."""
-        self.embedded_tests = embedded_tests
-        if self.grammar is None:
-            self.grammar = self.build_grammar()
-        tree, _ = self.grammar.build_tree_from(tokens)
+        grammar = self.build_grammar(embedded_tests)
+        tree, _ = grammar.build_tree_from(tokens)
         return tree
 
 parser = _Parser()
