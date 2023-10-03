@@ -415,6 +415,8 @@ class _Parser:
         # text : TEXT
 
         # Notes:
+        # - the order of the rules are inverted, the last rule is
+        #   the first to be declared due to nested rules.
         # - carefull referencing the same rule in another rules,
         #   it can cause problems when building the ast node object.
 
