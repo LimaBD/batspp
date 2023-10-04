@@ -370,8 +370,12 @@ class _Rule:
 class _Parser:
     """Batspp parser class"""
 
-    def build_grammar(self, embedded_tests:bool) -> _Rule:
-        """Returns the grammar rules for Batspp."""
+    def build_grammar(self, embedded_tests:bool, has_arrow_assertion:bool=True) -> _Rule:
+        """Returns the grammar rules for Batspp.\n
+           If EMBEDDED_TESTS is True, the grammar rules will be
+           modified to allow embedded tests.\n
+           If HAS_ARROW_ASSERTION is False, the grammar rules
+           will be optimized with shortcuts."""
 
         # Batspp complete grammar
         #
@@ -403,9 +407,9 @@ class _Parser:
         # continuation_reference_prefix : CONTINUATION POINTER
         #
         # assertion : command_assertion | arrow_ne_assertion | arrow_eq_assertion
-        # command_assertion : command multiline_text
         # arrow_eq_assertion : TEXT ASSERT_EQ TEXT+ multiline_text
         # arrow_ne_assertion : TEXT ASSERT_NE TEXT+ multiline_text
+        # command_assertion : command multiline_text
         #
         # command : PESO TEXT command_extension* (?!NEW_LINE)*
         # command_extension : GREATER TEXT
@@ -430,14 +434,15 @@ class _Parser:
         else:
             text = text.expect_some_of(TEXT, NEW_LINE)
 
-        arrow_assertion_start = _Rule(None, alias="arrow_assertion_start") \
-            .zero_or_more(NEW_LINE).expect(TEXT).expect_some_of(ASSERT_EQ, ASSERT_NE)
         command_start = _Rule(None, alias="command_start") \
             .one_or_more(NEW_LINE).expect_some_of(PESO)
-        end_of_mtext = _Rule(None, alias="end_of_mtext") \
-            .expect_some_of(arrow_assertion_start, command_start)
+        if has_arrow_assertion:
+            arrow_assertion_start = _Rule(None, alias="arrow_assertion_start") \
+                .zero_or_more(NEW_LINE).expect(TEXT).expect_some_of(ASSERT_EQ, ASSERT_NE)
+            end_of_mtext = _Rule(None, alias="end_of_mtext") \
+                .expect_some_of(arrow_assertion_start, command_start)
         multiline_text = _Rule(MultilineText) \
-            .one_or_more(text).until(end_of_mtext)
+            .one_or_more(text).until(end_of_mtext if has_arrow_assertion else command_start)
 
         command_extension = _Rule(CommandExtension) \
             .expect(GREATER).expect(TEXT)
@@ -445,14 +450,15 @@ class _Parser:
             .expect(PESO).expect(TEXT) \
             .zero_or_more(command_extension).ignore_next(NEW_LINE)
 
-        arrow_eq_assertion = _Rule(ArrowAssertion) \
-            .expect(TEXT).expect(ASSERT_EQ).expect(multiline_text)
-        arrow_ne_assertion = _Rule(ArrowAssertion) \
-            .expect(TEXT).expect(ASSERT_NE).expect(multiline_text)
         command_assertion = _Rule(CommandAssertion) \
             .expect(command).expect(multiline_text)
-        assertion = _Rule(Assertion) \
-            .expect_some_of(command_assertion, arrow_eq_assertion, arrow_ne_assertion)
+        if has_arrow_assertion:
+            arrow_eq_assertion = _Rule(ArrowAssertion) \
+                .expect(TEXT).expect(ASSERT_EQ).expect(multiline_text)
+            arrow_ne_assertion = _Rule(ArrowAssertion) \
+                .expect(TEXT).expect(ASSERT_NE).expect(multiline_text)
+            assertion = _Rule(Assertion) \
+                .expect_some_of(command_assertion, arrow_eq_assertion, arrow_ne_assertion)
 
         continuation_reference_prefix = _Rule(ContinuationReferencePrefix) \
             .expect(CONTINUATION).expect(POINTER)
@@ -467,7 +473,7 @@ class _Parser:
         setup = _Rule(Setup) \
             .optionally(setup_reference).expect(standalone_commands)
         setup_assertion = _Rule(SetupAssertion) \
-            .optionally(setup).expect(assertion)
+            .optionally(setup).expect(assertion if has_arrow_assertion else command_assertion)
         test = _Rule(Test) \
             .optionally(test_reference) \
             .one_or_more(setup_assertion).ignore_next(NEW_LINE)
@@ -491,21 +497,24 @@ class _Parser:
         if embedded_tests:
             test_or_setup = test_or_setup.ignore_next(any_text)
 
-        test_suite = _Rule(TestSuite)
-        if embedded_tests:
-            test_suite = test_suite.ignore_next(any_text)
-        else:
-            test_suite = test_suite.ignore_next(NEW_LINE)
-        test_suite = test_suite \
+        test_suite = _Rule(TestSuite) \
+            .ignore_next(any_text if embedded_tests else NEW_LINE) \
             .optionally(global_setup) \
             .one_or_more(test_or_setup).optionally(global_teardown) \
             .expect(EOF)
 
         return test_suite
 
+    def has_arrow_assertion(self, tokens: list) -> bool:
+        """Check if tokens has an arrow assertion"""
+        for token in tokens:
+            if token.variant in (ASSERT_EQ, ASSERT_NE):
+                return True
+
     def parse(self, tokens: list, embedded_tests:bool=False) -> ASTnode:
         """Builds an Abstract Syntax Tree (AST) from TOKENS list following the Batspp grammar."""
-        grammar = self.build_grammar(embedded_tests)
+        has_arrow_assertion = self.has_arrow_assertion(tokens)
+        grammar = self.build_grammar(embedded_tests, has_arrow_assertion)
         tree, _ = grammar.build_tree_from(tokens)
         return tree
 
