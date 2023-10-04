@@ -36,7 +36,7 @@ from batspp._exceptions import (
     warning_not_intended_for_cmd,
     )
 from batspp._token import (
-    ASSERT_EQ, ASSERT_NE,
+    ASSERT_EQ, ASSERT_NE, Token
     )    
 
 # Constants
@@ -302,7 +302,9 @@ class Interpreter(ReferenceNodeVisitor):
         """
         result = ''
         for txt in node.text_lines:
-            if txt:
+            if isinstance(txt, Token):
+                result += f'{txt.value}\n'
+            else:
                 result += f'{self.visit(txt)}\n'
         result += '' if result.endswith('\n') else '\n'
         return result

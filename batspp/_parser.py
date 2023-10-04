@@ -428,21 +428,22 @@ class _Parser:
         # - carefull referencing the same rule in another rules,
         #   it can cause problems when building the ast node object.
 
-        text = _Rule(Text)
+        text = None
         if embedded_tests:
-            text = text.expect(TEXT)
+            text = TEXT
         else:
-            text = text.expect_some_of(TEXT, NEW_LINE)
+            text = _Rule(Text).expect_some_of(TEXT, NEW_LINE)
 
         command_start = _Rule(None, alias="command_start") \
-            .one_or_more(NEW_LINE).expect_some_of(PESO)
+            .one_or_more(NEW_LINE).expect(PESO)
+        end_of_mtext = command_start
         if has_arrow_assertion:
             arrow_assertion_start = _Rule(None, alias="arrow_assertion_start") \
                 .zero_or_more(NEW_LINE).expect(TEXT).expect_some_of(ASSERT_EQ, ASSERT_NE)
             end_of_mtext = _Rule(None, alias="end_of_mtext") \
                 .expect_some_of(arrow_assertion_start, command_start)
         multiline_text = _Rule(MultilineText) \
-            .one_or_more(text).until(end_of_mtext if has_arrow_assertion else command_start)
+            .one_or_more(text).until(end_of_mtext)
 
         command_extension = _Rule(CommandExtension) \
             .expect(GREATER).expect(TEXT)
@@ -452,6 +453,7 @@ class _Parser:
 
         command_assertion = _Rule(CommandAssertion) \
             .expect(command).expect(multiline_text)
+        assertion = command_assertion
         if has_arrow_assertion:
             arrow_eq_assertion = _Rule(ArrowAssertion) \
                 .expect(TEXT).expect(ASSERT_EQ).expect(multiline_text)
@@ -473,7 +475,7 @@ class _Parser:
         setup = _Rule(Setup) \
             .optionally(setup_reference).expect(standalone_commands)
         setup_assertion = _Rule(SetupAssertion) \
-            .optionally(setup).expect(assertion if has_arrow_assertion else command_assertion)
+            .optionally(setup).expect(assertion)
         test = _Rule(Test) \
             .optionally(test_reference) \
             .one_or_more(setup_assertion).ignore_next(NEW_LINE)

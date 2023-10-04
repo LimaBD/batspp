@@ -55,7 +55,7 @@ class MultilineText(ASTnode):
 
     def __init__(self, text_lines: list) -> None:
         """Initialize AST node"""
-        self.text_lines = text_lines
+        self.text_lines = text_lines # Tokens or Text nodes
 
 class CommandExtension(ASTnode):
     """Command extension node"""
