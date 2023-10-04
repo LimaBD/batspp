@@ -279,7 +279,7 @@ class Interpreter(ReferenceNodeVisitor):
         """
         Build assertion
         """
-        actual = actual.strip().rstrip('\n')
+        actual = actual.replace('\n', '')
         expected = repr(expected.strip().rstrip('\n') + '\n')
         # Set debug
         debug_cmd = ''

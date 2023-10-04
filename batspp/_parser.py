@@ -410,9 +410,13 @@ class _Parser:
         # command : PESO TEXT command_extension* (?!NEW_LINE)*
         # command_extension : GREATER TEXT
         #
-        # multiline_text : text+ [^arrow_assertion_start]
-        # arrow_assertion_start : TEXT (ASSERT_EQ | ASSERT_NE)
-        # text : TEXT
+        # multiline_text : text+ [^end_of_mtext]
+        # end_of_mtext : arrow_assertion_start | command_start
+        # arrow_assertion_start : NEW_LINE* TEXT (ASSERT_EQ | ASSERT_NE)
+        # command_start : NEW_LINE+ PESO
+        #
+        # (normal)   text : TEXT | NEW_LINE
+        # (embedded) text : TEXT
 
         # Notes:
         # - the order of the rules are inverted, the last rule is
@@ -420,12 +424,20 @@ class _Parser:
         # - carefull referencing the same rule in another rules,
         #   it can cause problems when building the ast node object.
 
-        text = _Rule(Text) \
-            .expect(TEXT)
+        text = _Rule(Text)
+        if embedded_tests:
+            text = text.expect(TEXT)
+        else:
+            text = text.expect_some_of(TEXT, NEW_LINE)
+
         arrow_assertion_start = _Rule(None, alias="arrow_assertion_start") \
-            .expect(TEXT).expect_some_of(ASSERT_EQ, ASSERT_NE)
+            .zero_or_more(NEW_LINE).expect(TEXT).expect_some_of(ASSERT_EQ, ASSERT_NE)
+        command_start = _Rule(None, alias="command_start") \
+            .one_or_more(NEW_LINE).expect_some_of(PESO)
+        end_of_mtext = _Rule(None, alias="end_of_mtext") \
+            .expect_some_of(arrow_assertion_start, command_start)
         multiline_text = _Rule(MultilineText) \
-            .one_or_more(text).until(arrow_assertion_start)
+            .one_or_more(text).until(end_of_mtext)
 
         command_extension = _Rule(CommandExtension) \
             .expect(GREATER).expect(TEXT)

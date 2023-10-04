@@ -173,7 +173,7 @@ class _Lexer:
                 continue
 
             # Tokenize peso
-            match = re_match(r' *\$', self.text.get_rest_line())
+            match = re_match(r' *\$ *', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
@@ -184,7 +184,7 @@ class _Lexer:
                 continue
 
             # Tokenize greater
-            match = re_match(r' *\>', self.text.get_rest_line())
+            match = re_match(r'\> ', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
