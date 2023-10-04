@@ -322,24 +322,21 @@ class _Rule:
             self._print_debug('_run_expect_some_of', f'{tokens_or_rules} <{branch}>')
         print_debug('starting')
         ## TODO: refactor, decide what branch of expected rules go without run entire rule first
-        some_rule_succeeded = False
         for token_or_rule in tokens_or_rules:
             print_debug(f'checking {token_or_rule}')
             try:
                 self._run_expect(token_or_rule)
-                some_rule_succeeded = True
                 print_debug(f'{token_or_rule} ok')
-                break
+                return
             except SyntaxError:
                 print_debug(f'{token_or_rule} failed')
                 continue # not necessary, but more readable
-        if not some_rule_succeeded:
-            error(
-                message=f'Expected some of "{tokens_or_rules}" but got "{self.tokens[0].variant}"',
-                text_line=self.tokens[0].data.text_line,
-                line=self.tokens[0].data.line,
-                column=self.tokens[0].data.column,
-                )
+        error(
+            message=f'Expected some of "{tokens_or_rules}" but got "{self.tokens[0].variant}"',
+            text_line=self.tokens[0].data.text_line,
+            line=self.tokens[0].data.line,
+            column=self.tokens[0].data.column,
+            )
 
     def _run_ignore_next(self, token_or_rule) -> None:
         """Advance TOKEN_OR_RULE, but don't append any child node"""
