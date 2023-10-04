@@ -50,10 +50,14 @@ function run_eg () {
     to_replace="TEMP_DIR=\"\/tmp\/batspp-.*\""
     replacement="TEMP_DIR=\"\/tmp\/batspp-<REPLACED>\""
     sed -i "s/$to_replace/$replacement/g" $generated
-    #
+    # Replace local paths
     to_replace="source .*"
     replacement="source <REPLACED>"
     sed -i "s/$to_replace/$replacement/g" $generated
+    # Replace random temporal files
+    to_replace="\/tmp\/.*\.bats"
+    replacement="\/tmp\/<REPLACED>.bats"
+    sed -i "s/$to_replace/$replacement/g" $output
 }
 
 # Run example that starts with name 
