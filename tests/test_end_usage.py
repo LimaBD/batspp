@@ -14,9 +14,7 @@
 # $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_end_usage.py
 #
 
-
 """Tests for Batspp end usage"""
-
 
 # Standard packages
 from re import sub as re_sub
@@ -31,16 +29,13 @@ from mezcla import debug
 # Local packages
 ## NOTE: this is empty for now
 
-
 # Reference to the module being tested
 SCRIPT = 'batspp'
-
 
 # Constants
 TESTS_PATH = os_path.dirname(__file__)
 EXAMPLES_PATH = f'{TESTS_PATH}/../docs/examples'
 CASES_PATH = f'{TESTS_PATH}/cases'
-
 
 class TestEndUsage(TestWrapper):
     """Class for testcase definition"""
@@ -181,7 +176,6 @@ class TestEndUsage(TestWrapper):
             generated_file='5_generated_long_outputs',
             output_file='5_output_long_outputs'
             )
-
 
 if __name__ == '__main__':
     debug.trace_current_context()
