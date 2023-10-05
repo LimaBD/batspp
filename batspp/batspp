@@ -160,6 +160,7 @@ class Batspp(Main):
         result = (self.has_parsed_option(label.lower()) or
                   system.getenv_bool(var=label.upper()))
         result = result if result else default
+        result = bool(result)
         debug.trace(7, f'batspp.get_entered_bool(label={label}) => {result}')
         return result
 
