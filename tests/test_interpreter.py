@@ -6,32 +6,31 @@
 # $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_interpreter.py
 #
 
-
 """Tests for _interpreter module"""
-
 
 # Standard packages
 from sys import path as sys_path
-
 
 # Installed packages
 import pytest
 from mezcla.unittest_wrapper import TestWrapper
 from mezcla import debug
 
-
 # Local packages
 sys_path.insert(0, './batspp')
-from batspp._token import TokenData
-from batspp._ast_nodes import (
-    AssertionType, Assertion,
-    Test, TestsSuite,
+from batspp._token import (
+    TokenData, EOF, SETUP,
+    PESO,
+    )
+from batspp._ast_node import (
+    TestSuite, GlobalSetup, GlobalTeardown,
+    Test, StandaloneCommands, Command,
+    TestReference, Assertion, CommandAssertion,
+    SetupAssertion,
     )
 
-
 # Reference to the module being tested
-import batspp._interpreter as THE_MODULE
-
+from batspp._interpreter import interpreter
 
 class TestNodeVisitor:
     """Class for testcase definition"""
@@ -46,145 +45,68 @@ class TestNodeVisitor:
         """Test for generic_visitor()"""
         ## TODO: WORK-IN-PROGRESS
 
-
 class TestInterpreter:
     """Class for testcase definition"""
 
-    # pylint: disable=invalid-name
-    def test_visit_TestsSuite(self):
-        """Test for visit_TestsSuite()"""
-        debug.trace(debug.QUITE_DETAILED,
-                    f"TestInterpreter.test_visit_TestsSuite(); self={self}")
+    def test_visit_TestSuite(self):
+        """Test for visit_TestSuite()"""
         ## TODO: WORK-IN-PROGRESS
 
-    # pylint: disable=invalid-name
+    def test_visit_GlobalSetup(self):
+        """Test for visit_GlobalSetup()"""
+        ## TODO: WORK-IN-PROGRESS
+
+    def test_visit_GlobalTeardown(self):
+        """Test for visit_GlobalTeardown()"""
+        ## TODO: WORK-IN-PROGRESS
+
     def test_visit_Test(self):
         """Test for visit_Test()"""
-        debug.trace(debug.QUITE_DETAILED,
-                    f"TestInterpreter.test_visit_Test(); self={self}")
-        data = TokenData(text_line='some line', line=3, column=3)
-        interpreter = THE_MODULE.Interpreter()
+        ## TODO: WORK-IN-PROGRESS
 
-        node = Test(reference='important test', assertions=[], data=data)
-        actual = interpreter.visit_Test(node)
+    def test_visit_Setup(self):
+        """Test for visit_Setup()"""
+        ## TODO: WORK-IN-PROGRESS
 
-        assert interpreter.last_title == 'important test'
-        assert '@test "important test"' in actual
+    def test_visit_StandaloneCommands(self):
+        """Test for visit_StandaloneCommands()"""
+        ## TODO: WORK-IN-PROGRESS
 
-    # pylint: disable=invalid-name
+    def test_visit_SetupAssertion(self):
+        """Test for visit_SetupAssertion()"""
+        ## TODO: WORK-IN-PROGRESS
+
     def test_visit_Assertion(self):
         """Test for visit_Assertion()"""
-        debug.trace(debug.QUITE_DETAILED,
-                    f"TestInterpreter.test_visit_Assertion(); self={self}")
-        data = TokenData(text_line='some line', line=3, column=3)
-        interpreter = THE_MODULE.Interpreter()
+        ## TODO: WORK-IN-PROGRESS
 
-        interpreter.last_title = 'important test'
-        node = Assertion(
-            atype=AssertionType.EQUAL,
-            actual=['echo "some text"'],
-            expected=['some text'],
-            data=data,
-            )
-        actual = interpreter.visit_Assertion(node)
+    def test_visit_CommandAssertion(self):
+        """Test for visit_CommandAssertion()"""
+        ## TODO: WORK-IN-PROGRESS
 
-        actual_assertion = actual.splitlines()[-1]
-        assert actual_assertion.startswith('\t[ ')
-        assert ' == ' in actual_assertion
-        assert actual_assertion.endswith(' ]')
-        assert interpreter.debug_required
+    def test_visit_Command(self):
+        """Test for visit_Command()"""
+        ## TODO: WORK-IN-PROGRESS
 
-    def test_interpret(self):
-        """Test for interpret()"""
-        debug.trace(debug.QUITE_DETAILED,
-                    f"TestInterpreter.test_interpret(); self={self}")
-        data = TokenData(text_line='some line', line=3, column=3)
+    def test_visit_CommandExtension(self):
+        """Test for visit_CommandExtension()"""
+        ## TODO: WORK-IN-PROGRESS
 
-        first_assertion = Assertion(
-            atype=AssertionType.EQUAL,
-            setup_commands=['echo "hello world" > file.txt'],
-            actual=['cat file.txt'],
-            expected=['hello world'],
-            data=data,
-            )
-        second_assertion = Assertion(
-            atype=AssertionType.EQUAL,
-            actual=['cat file.txt | wc -m'],
-            expected=['11'],
-            data=data,
-            )
-        test = Test(
-            reference='important test',
-            assertions=[first_assertion,
-            second_assertion],
-            data=data,
-            )
-        test_suite_node = TestsSuite(
-            tests=[test],
-            setup_commands=['echo "hello world" > file.txt'],
-            teardown_commands=['echo "finished test"'],
-            data=data,
-            )
+    def test_visit_ArrowAssertion(self):
+        """Test for visit_ArrowAssertion()"""
+        ## TODO: WORK-IN-PROGRESS
 
-        actual = THE_MODULE.Interpreter().interpret(test_suite_node)
+    def test_visit_MultilineText(self):
+        """Test for visit_MultilineText()"""
+        ## TODO: WORK-IN-PROGRESS
 
-        expected = (
-            '#!/usr/bin/env bats\n'
-            '#\n'
-            '# This test file was generated using Batspp\n'
-            '# https://github.com/LimaBD/batspp\n'
-            '#\n'
-            '\n'
-            '# Constants\n'
-            'VERBOSE_DEBUG=""\n'
-            'TEMP_DIR="/tmp"\n'
-            '\n'
-            '# Setup function\n'
-            '# $1 -> test name\n'
-            'function run_setup () {\n'
-            '\ttest_folder=$(echo $TEMP_DIR/$1-$$)\n'
-            '\tmkdir --parents "$test_folder"\n'
-            '\tcd "$test_folder" || echo Warning: Unable to "cd $test_folder"\n'
-            '\techo "hello world" > file.txt\n'
-            '}\n'
-            '\n'
-            '# Teardown function\n'
-            'function run_teardown () {\n'
-            '\techo "finished test"\n'
-            '}\n'
-            '\n'
-            '@test "important test" {\n'
-            '\trun_setup "important-test"\n'
-            '\n'
-            '\t# Assertion of line 3\n'
-            '\techo "hello world" > file.txt\n'
-            '\tshopt -s expand_aliases\n'
-            '\tprint_debug "$(cat file.txt)" "$(echo -e \'hello world\\n\')"\n'
-            '\t[ "$(cat file.txt)" == "$(echo -e \'hello world\\n\')" ]\n'
-            '\n'
-            '\t# Assertion of line 3\n'
-            '\tshopt -s expand_aliases\n'
-            '\tprint_debug "$(cat file.txt | wc -m)" "$(echo -e \'11\\n\')"\n'
-            '\t[ "$(cat file.txt | wc -m)" == "$(echo -e \'11\\n\')" ]\n'
-            '\n'
-            '\trun_teardown\n'
-            '}\n'
-            '\n'
-            '# This prints debug data when an assertion fail\n'
-            '# $1 -> actual value\n'
-            '# $2 -> expected value\n'
-            'function print_debug() {\n'
-            '\techo "=======  actual  ======="\n'
-            '\tbash -c "echo \\"$1\\" $VERBOSE_DEBUG"\n'
-            '\techo "======= expected ======="\n'
-            '\tbash -c "echo \\"$2\\" $VERBOSE_DEBUG"\n'
-            '\techo "========================"\n'
-            '}\n'
-            '\n'
-            )
+    def test_visit_Constants(self):
+        """Test for visit_Constants()"""
+        ## TODO: WORK-IN-PROGRESS
 
-        assert actual == expected
-
+    def test_visit_Text(self):
+        """Test for visit_Text()"""
+        ## TODO: WORK-IN-PROGRESS
 
 if __name__ == '__main__':
     debug.trace_current_context()
