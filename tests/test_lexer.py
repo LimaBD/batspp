@@ -6,29 +6,26 @@
 # $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_lexer.py
 #
 
-
 """Tests for _lexer module"""
-
 
 # Standard packages
 from sys import path as sys_path
-
 
 # Installed packages
 import pytest
 from mezcla import debug
 
-
 # Local packages
 sys_path.insert(0, './batspp')
 from batspp._token import (
-    Token, TokenVariant,
+    Token, EOF, NEW_LINE, PESO,
+    TEST, SETUP, CONTINUATION,
+    POINTER, ASSERT_EQ, TEXT,
+    ASSERT_NE, MINOR,
     )
-
 
 # Reference to the module being tested
 import batspp._lexer as THE_MODULE
-
 
 class TestTextLiner:
     """Class for testcase definition"""
@@ -149,12 +146,12 @@ class TestLexer:
         for token in tokens:
             assert isinstance(token, Token)
 
-        assert tokens[-1].variant == TokenVariant.EOF
+        assert tokens[-1].variant == EOF
 
         return tokens
 
     def assert_token(self,
-                     expected_variant: TokenVariant,
+                     expected_variant: str,
                      valids:list = None,
                      invalids:list = None) -> None:
         """
@@ -191,7 +188,7 @@ class TestLexer:
                     f"TestLexer.test_new_line(); self={self}")
         tokens = self.tokenize('\n')
         assert len(tokens) == 2 # two tokens: MINOR and EOF
-        assert tokens[0].variant == TokenVariant.NEW_LINE
+        assert tokens[0].variant == NEW_LINE
 
     def test_peso(self):
         """Test for PESO token variant"""
@@ -203,7 +200,7 @@ class TestLexer:
         invalids = [
             'foo $ some text',
             ]
-        self.assert_token(TokenVariant.PESO, valids=valids, invalids=invalids)
+        self.assert_token(PESO, valids=valids, invalids=invalids)
 
     def test_test(self):
         """Test for TEST token variant"""
@@ -217,7 +214,7 @@ class TestLexer:
             '# foobar foobar Test foobar',
             '# foobar Test',
             ]
-        self.assert_token(TokenVariant.TEST, valids=valids, invalids=invalids)
+        self.assert_token(TEST, valids=valids, invalids=invalids)
 
     def test_setup(self):
         """Test for SETUP token variant"""
@@ -233,7 +230,7 @@ class TestLexer:
             '# foobar foobar Setup foobar',
             '# foobar Setup',
             ]
-        self.assert_token(TokenVariant.SETUP, valids=valids, invalids=invalids)
+        self.assert_token(SETUP, valids=valids, invalids=invalids)
 
     def test_teardown(self):
         """Test for TEARDOWN token variant"""
@@ -252,7 +249,7 @@ class TestLexer:
             '# foobar foobar Continuation foobar',
             '# foobar continuation',
             ]
-        self.assert_token(TokenVariant.CONTINUATION, valids=valids, invalids=invalids)
+        self.assert_token(CONTINUATION, valids=valids, invalids=invalids)
 
     def test_pointer(self):
         """Test for POINTER token variant"""
@@ -260,8 +257,8 @@ class TestLexer:
                     f"TestLexer.test_pointer(); self={self}")
 
         variants = self.tokenize_variants('# Continuation of foobar')
-        assert variants[:2] == [TokenVariant.CONTINUATION, TokenVariant.POINTER]
-        self.assert_token(TokenVariant.POINTER, invalids=['# of foobar'])
+        assert variants[:2] == [CONTINUATION, POINTER]
+        self.assert_token(POINTER, invalids=['# of foobar'])
 
     def test_assert_eq(self):
         """Test for ASSERT_EQ token variant"""
@@ -270,10 +267,7 @@ class TestLexer:
 
         variants = self.tokenize_variants('somefunction arg1 arg2 => expected result')
         assert variants == [
-            TokenVariant.TEXT,
-            TokenVariant.ASSERT_EQ,
-            TokenVariant.TEXT,
-            TokenVariant.EOF,
+            TEXT, ASSERT_EQ, TEXT, EOF,
             ]
 
     def test_assert_ne(self):
@@ -283,34 +277,21 @@ class TestLexer:
 
         variants = self.tokenize_variants('somefunction arg1 arg2 =/> not expected result')
         assert variants == [
-            TokenVariant.TEXT,
-            TokenVariant.ASSERT_NE,
-            TokenVariant.TEXT,
-            TokenVariant.EOF,
+            TEXT, ASSERT_NE, TEXT, EOF,
             ]
 
     def test_end_eof_tags(self):
         """Test for END and EOF tags"""
         variants = self.tokenize_variants('$ some command\nexpected text\n<EOF>\n<END>')
         assert variants == [
-            TokenVariant.PESO,
-            TokenVariant.TEXT,
-            TokenVariant.TEXT,
-            TokenVariant.MINOR,
-            TokenVariant.MINOR,
-            TokenVariant.EOF,
+            PESO, TEXT, TEXT, MINOR, MINOR, EOF,
             ]
 
     def test_blank(self):
         """Test for BLANK tag"""
         variants = self.tokenize_variants('$ some command\nexpected text\n<BLANK>\nwith an blank line')
         assert variants == [
-            TokenVariant.PESO,
-            TokenVariant.TEXT,
-            TokenVariant.TEXT,
-            TokenVariant.TEXT,
-            TokenVariant.TEXT,
-            TokenVariant.EOF,
+            PESO, TEXT, TEXT, TEXT, TEXT, EOF,
             ]
 
     def test_text(self):
@@ -321,6 +302,9 @@ class TestLexer:
         """Test skip comments"""
         ## TODO: WORK-IN-PROGRESS
 
+    def test_line(self):
+        """Test for line() method"""
+        ## TODO: WORK-IN-PROGRESS
 
 if __name__ == '__main__':
     debug.trace_current_context()
