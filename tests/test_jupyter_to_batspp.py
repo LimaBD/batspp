@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 #
-# Tests for _ipynb_to_batspp module
+# Tests for _jupyter_to_batspp module
 #
 # This test must be runned with the command:
-# $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_ipynb_to_batspp.py
+# $ PYTHONPATH="$(pwd):$PYTHONPATH" ./tests/test_jupyter_to_batspp.py
 #
 
-"""Tests for _ipynb_to_batspp module"""
+"""Tests for _jupyter_to_batspp module"""
 
 # Standard packages
 from sys import path as sys_path
@@ -20,9 +20,9 @@ from mezcla import debug
 sys_path.insert(0, './batspp')
 
 # Reference to the module being tested
-import batspp._ipynb_to_batspp as THE_MODULE
+import batspp._jupyter_to_batspp as THE_MODULE
 
-class TestIpynbToBatspp:
+class TestJupyterToBatspp:
     """Class for testcase definition"""
 
     ## TODO: WORK-IN-PROGRESS
