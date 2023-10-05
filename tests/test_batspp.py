@@ -8,14 +8,11 @@
 # TODO: implement TestWrapper.run_script() to get coverage of tested subprocess
 #
 
-
 """Tests for batspp script"""
-
 
 # Standard packages
 from os import (
     path as os_path,
-    makedirs as os_makedirs,
     )
 
 # Installed packages
@@ -23,18 +20,15 @@ import pytest
 from mezcla.unittest_wrapper import TestWrapper
 from mezcla import glue_helpers as gh
 from mezcla import debug
-from mezcla import system
 
 # Local packages
 ## NOTE: this is empty for now
-
 
 # Reference to the module being tested
 #
 # This and "script_module=None" solve problem:
 #     "Assertion failed: "No module named" not in help_usage"
 BATSPP_PATH = os_path.abspath('./batspp/batspp')
-
 
 class TestBatspp(TestWrapper):
     """Class for testcase definition"""
@@ -216,7 +210,7 @@ class TestBatspp(TestWrapper):
         test_file = f'{self.temp_file}.batspp'
         gh.write_file(test_file, self.simple_test)
 
-        expected_assert = '# Assertion of line 3\n\tshopt -s expand_aliases\n\t[ "$(echo "hello world")" == "$(echo -e \'hello world\\n\')" ]'
+        expected_assert = '# Assertion of line 3\n\t[ "$(echo "hello world")" == "$(echo -e \'hello world\\n\')" ]'
         expected_function = 'function print_debug() {'
 
         # Test command-line argument
@@ -253,7 +247,6 @@ class TestBatspp(TestWrapper):
 
         result = gh.run(f'python3 {BATSPP_PATH} --debug "| wc -l" --output {test_file}')
         self.assertTrue('VERBOSE_DEBUG="| wc -l"' in result)
-
 
 if __name__ == '__main__':
     debug.trace_current_context()
