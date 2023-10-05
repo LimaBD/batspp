@@ -6,14 +6,12 @@
 # a sentence/text apart into tokens for Batspp
 #
 
-
 """
 Lexer module
 
 This is responsible for breaking
 a sentence/text apart into tokens for Batspp
 """
-
 
 # Standard packages
 from re import (
@@ -36,15 +34,13 @@ from batspp._token import (
     TEXT, EOF, NEW_LINE, MINOR
     )
 
-
 class Tags(Enum):
     """Tags enum"""
     EOF = '<EOF>' # expected output EOF
     END = '<END>' # end of assertion
     BLANK = '<BLANK>' # blank line
 
-
-class _TextLiner:
+class TextLiner:
     """
     This provides functionality to process text line per line
     """
@@ -87,8 +83,7 @@ class _TextLiner:
         self.line += 1
         self.column = 0
 
-
-class _Lexer:
+class Lexer:
     """
     This is responsible for breaking
     a sentence/text apart into tokens for Batspp
@@ -323,13 +318,12 @@ class _Lexer:
         """Tokenize text"""
         if embedded_tests:
             text = _normalize_embedded_tests(text)
-        self.text = _TextLiner(text)
+        self.text = TextLiner(text)
         self.run_extraction_of_tokens()
         debug.trace(7,
             f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests})'
             )
         return self.pop_tokens()
-
 
 def _normalize_embedded_tests(embedded_tests: str) -> str:
     """Normalize embedded comment tests into tests"""
@@ -350,7 +344,7 @@ def _normalize_embedded_tests(embedded_tests: str) -> str:
     debug.trace(7, f'normalize_embedded_tests({embedded_tests}) => \n{result}')
     return result
 
-lexer = _Lexer()
+lexer = Lexer()
 
 if __name__ == '__main__':
     warning_not_intended_for_cmd()

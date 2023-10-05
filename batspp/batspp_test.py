@@ -26,32 +26,32 @@ from batspp._exceptions import (
     warning_not_intended_for_cmd,
     )
 
-def _add_prefix_to_filename(file:str, prefix:str) -> str:
+def add_prefix_to_filename(file:str, prefix:str) -> str:
     """Adds PREFIX to FILE path"""
     return f'{gh.dir_path(file)}/{prefix}{gh.basename(file)}'
 
-def _merge_filename_into_path(filename:str, path:str) -> str:
+def merge_filename_into_path(filename:str, path:str) -> str:
     """Merge FILENAME into PATH, e.g. /etc/passwd /home/ => /home/passwd """
     assert filename and path, 'FILENAME or PATH cannot be empty'
     assert path.endswith('/'), 'PATH must end with "/".'
     return f'{path}{gh.basename(filename)}'
 
-def _replace_extension(filename:str, extension:str) -> str:
+def replace_extension(filename:str, extension:str) -> str:
     """Replace current FILENAME extension with EXTENSION"""
     current_extension = re_search(r'(?:\.\w+)+', filename).group()
     filename = gh.remove_extension(filename, current_extension)
     return f'{filename}.{extension}'
 
-def _resolve_path(path:str, alternative:str) -> str:
+def resolve_path(path:str, alternative:str) -> str:
     """Resolve PATH based on ALTERNATIVE filename"""
     result = ''
     if not path:
-        result = _add_prefix_to_filename(alternative, 'generated_')
-        result = _replace_extension(result, BATS_EXTENSION)
+        result = add_prefix_to_filename(alternative, 'generated_')
+        result = replace_extension(result, BATS_EXTENSION)
     elif path.endswith('/'):
-        result = _merge_filename_into_path(alternative, path)
-        result = _add_prefix_to_filename(result, 'generated_')
-        result = _replace_extension(result, BATS_EXTENSION)
+        result = merge_filename_into_path(alternative, path)
+        result = add_prefix_to_filename(result, 'generated_')
+        result = replace_extension(result, BATS_EXTENSION)
     else:
         result = path
     return result
@@ -113,7 +113,7 @@ class BatsppTest:
         """Save Batspp transiled test FILE to OUTPUT path,
            if OUTPUT is not provided or is a dir, a default is used 'generated_<file>.bats'"""
         assert file, 'File path cannot be empty'
-        output = _resolve_path(output, file)
+        output = resolve_path(output, file)
         transpiled_text = self.transpile_to_bats(file, args=args, opts=opts)
         gh.write_file(output, transpiled_text)
         gh.run(f'chmod +x {output}')
