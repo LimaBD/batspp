@@ -42,6 +42,7 @@ from batspp.batspp_opts import (
 from batspp._token import (
     Token, TEXT,
     )
+from batspp._timer import Timer
 
 # Constants
 #
@@ -302,10 +303,15 @@ class _SemanticAnalizer(ReferenceNodeVisitor):
             args: BatsppArgs = BatsppArgs(),
             ) -> None:
         """Analize the semantic of the code, return modified tree, opts and args"""
+        timer = Timer()
+        timer.start()
+        #
         self.opts = opts
         self.args = args
         self._entities = []
         self.visit(tree)
+        #
+        debug.trace(5, f'_SemanticAnalizer.analize() in {timer.stop()} seconds')
         return tree, opts, args
 
 semantic_analizer = _SemanticAnalizer()

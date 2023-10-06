@@ -38,6 +38,7 @@ from batspp._exceptions import (
 from batspp._token import (
     ASSERT_EQ, ASSERT_NE, Token
     )    
+from batspp._timer import Timer
 
 # Constants
 #
@@ -332,6 +333,8 @@ class Interpreter(ReferenceNodeVisitor):
         """
         Interpret Batspp abstract syntax tree and build tests
         """
+        timer = Timer()
+        timer.start()
         assert tree, 'invalid tree node'
         #
         self.reset_global_state_variables()
@@ -339,7 +342,7 @@ class Interpreter(ReferenceNodeVisitor):
         self.args = args
         #
         tests = self.visit(tree)
-        debug.trace(7, f'Interpreter.interpret() => "{tests}"')
+        debug.trace(7, f'Interpreter.interpret() => "{tests}" in {timer.stop()} seconds')
         return tests
 
 def flatten_str(string: str) -> str:

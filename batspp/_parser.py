@@ -38,6 +38,7 @@ from batspp._ast_node import (
     MultilineText, ArrowAssertion, StandaloneCommands,
     SetupAssertion,
     )
+from batspp._timer import Timer
 
 def copy_with_nested_lists(list_to_copy:list) -> list:
     """Copy a list with nested lists, better than using list.copy(), [:]
@@ -512,9 +513,14 @@ class _Parser:
 
     def parse(self, tokens: list, embedded_tests:bool=False) -> ASTnode:
         """Builds an Abstract Syntax Tree (AST) from TOKENS list following the Batspp grammar."""
+        timer = Timer()
+        timer.start()
+        #
         has_arrow_assertion = self.has_arrow_assertion(tokens)
         grammar = self.build_grammar(embedded_tests, has_arrow_assertion)
         tree, _ = grammar.build_tree_from(tokens)
+        #
+        debug.trace(5, f'Parser.parse() in {timer.stop()} seconds')
         return tree
 
 parser = _Parser()

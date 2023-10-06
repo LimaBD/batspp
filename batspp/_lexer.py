@@ -33,6 +33,7 @@ from batspp._token import (
     TEST, POINTER, CONTINUATION, ASSERT_EQ, ASSERT_NE,
     TEXT, EOF, NEW_LINE, MINOR
     )
+from batspp._timer import Timer
 
 class Tags(Enum):
     """Tags enum"""
@@ -316,12 +317,16 @@ class Lexer:
 
     def tokenize(self, text: str, embedded_tests:bool=False) -> list:
         """Tokenize text"""
+        timer = Timer()
+        timer.start()
+        #
         if embedded_tests:
             text = _normalize_embedded_tests(text)
         self.text = TextLiner(text)
         self.run_extraction_of_tokens()
+        #
         debug.trace(7,
-            f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests})'
+            f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests}) in {timer.stop()} seconds'
             )
         return self.pop_tokens()
 
