@@ -26,13 +26,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+    - name: Build docker image
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements/production.txt
-        pip install -r requirements/development.txt
-        npm install --location=global bats
+        docker build -t batspp-dev -f- . <Dockerfile
     - name: Run tests and generate coverage report
       run: |
-        PYTHONPATH="$(pwd):$PYTHONPATH" coverage run -m pytest ./tests/
-        coverage xml
+        docker run --entrypoint './tools/run_tests.bash' -it --rm --mount type=bind,source="$(pwd)",target=/home/batspp batspp-dev

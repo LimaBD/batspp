@@ -4,7 +4,10 @@
 # $ docker build -t batspp-dev -f- . <Dockerfile
 #
 # Run the image:
-# $ docker run -it --rm  --mount type=bind,source="$(pwd)",target=/home/batspp batspp-dev
+# docker run -it --rm --mount type=bind,source="$(pwd)",target=/home/batspp batspp-dev
+#
+# Run the tests:
+# $ docker run --entrypoint './tools/run_tests.bash' -it --rm --mount type=bind,source="$(pwd)",target=/home/batspp batspp-dev
 #
 
 FROM ubuntu:22.04
