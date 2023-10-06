@@ -31,4 +31,4 @@ jobs:
         docker build -t batspp-dev -f- . <Dockerfile
     - name: Run tests and generate coverage report
       run: |
-        docker run --entrypoint './tools/run_tests.bash' -it --rm --mount type=bind,source="$(pwd)",target=/home/batspp batspp-dev
+        docker run --entrypoint './tools/run_tests.bash' --rm --mount type=bind,source="$(pwd)",target=/home/batspp batspp-dev
