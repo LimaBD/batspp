@@ -94,7 +94,7 @@ class CommandAssertion(ASTnode):
 class Assertion(ASTnode):
     """Assertion node"""
 
-    def __init__(self, assertion: CommandAssertion|ArrowAssertion) -> None:
+    def __init__(self, assertion: 'CommandAssertion|ArrowAssertion') -> None:
         """Initialize AST node"""
         self.assertion = assertion
 
@@ -109,7 +109,7 @@ class ContinuationReferencePrefix(ASTnode):
 class TestReference(ASTnode):
     """Test reference node"""
 
-    def __init__(self, pointer: Token|ContinuationReferencePrefix, reference: Token) -> None:
+    def __init__(self, pointer: 'Token|ContinuationReferencePrefix', reference: Token) -> None:
         """Initialize AST node"""
         self.pointer = pointer
         self.reference = reference
@@ -167,7 +167,7 @@ class TestOrSetup(ASTnode):
 
     ## TODO: remove all ast nodes like this that only are used to store one child node
 
-    def __init__(self, child: Test|Setup) -> None:
+    def __init__(self, child: 'Test|Setup') -> None:
         """Initialize AST node"""
         self.child = child
 
