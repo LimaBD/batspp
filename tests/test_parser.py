@@ -31,6 +31,7 @@ TOKEN_TWO = 'TOKEN_TWO'
 # AST nodes for testing purposes
 class TestAstNode():
     """AST node for testing purposes"""
+    __test__ = False
     def __init__(self, *children) -> None:
         self.children = children
 
