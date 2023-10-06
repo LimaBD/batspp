@@ -278,7 +278,7 @@ class _Rule:
             self._print_debug('_run_zero_or_more', f'{expected} <{status}>')
         self._setup_loop_instruction()
         print_debug('starting')
-        while True:
+        while self.tokens:
             print_debug('loop')
             if not_expected is not None:
                 if self._is_rule_followed(not_expected):
@@ -341,7 +341,7 @@ class _Rule:
     def _run_ignore_next(self, token_or_rule) -> None:
         """Advance TOKEN_OR_RULE, but don't append any child node"""
         children_backup = copy_with_nested_lists(self._generated_child_nodes)
-        while True:
+        while self.tokens:
             self._print_debug('_run_ignore_next', f'{token_or_rule} <running loop>')
             try:
                 self._run_expect(token_or_rule)
