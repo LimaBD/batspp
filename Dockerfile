@@ -29,7 +29,21 @@ RUN ln -s $(which python3) /usr/local/bin/python
 # Set the working directory visible.
 ENV PYTHONPATH="${PYTHONPATH}:$WORKDIR"
 
-# Install the requirements
+# Install bsdmainutils for the
+# Hexdump tool used for debugging
+RUN apt-get update -y && \
+  apt-get install -y bsdmainutils
+
+# Also install sudo required for some usage
+# cases as writing files, etc
+RUN apt install sudo
+
+# Install bats-core
+RUN git clone https://github.com/bats-core/bats-core.git \
+  && cd bats-core \
+  && ./install.sh /usr/local
+
+# Install the Python dependencies.
 RUN python -m pip install --upgrade pip
 COPY ./requirements/development.txt $WORKDIR/requirements/development.txt
 RUN python -m pip install -r $WORKDIR/requirements/development.txt
