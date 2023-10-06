@@ -108,6 +108,7 @@ class ContinuationReferencePrefix(ASTnode):
 
 class TestReference(ASTnode):
     """Test reference node"""
+    __test__ = False # This is not a test case
 
     def __init__(self, pointer: 'Token|ContinuationReferencePrefix', reference: Token) -> None:
         """Initialize AST node"""
@@ -139,6 +140,7 @@ class Setup(ASTnode):
 
 class Test(ASTnode):
     """Test node"""
+    __test__ = False # This is not a test case
 
     def __init__(self, reference: TestReference, setup_assertions: list) -> None:
         """Initialize AST node"""
@@ -164,6 +166,7 @@ class GlobalTeardown(ASTnode):
 
 class TestOrSetup(ASTnode):
     """Test or setup node"""
+    __test__ = False # This is not a test case
 
     ## TODO: remove all ast nodes like this that only are used to store one child node
 
@@ -173,6 +176,7 @@ class TestOrSetup(ASTnode):
 
 class TestSuite(ASTnode):
     """Test suite node"""
+    __test__ = False # This is not a test case
 
     def __init__(
             self,
