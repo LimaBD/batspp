@@ -42,6 +42,12 @@ class TestBatspp(TestWrapper):
         'hello world\n\n'
         )
 
+    embedded_test = (
+        '# Example test\n\n'
+        '# $ echo "hello world"\n'
+        '# hello world\n\n'
+        )
+
     def test_file(self):
         """Test for test file argument"""
         debug.trace(debug.DETAILED, f"TestBatspp.test_file({self})")
@@ -247,6 +253,19 @@ class TestBatspp(TestWrapper):
 
         result = gh.run(f'python3 {BATSPP_PATH} --debug "| wc -l" --output {test_file}')
         self.assertTrue('VERBOSE_DEBUG="| wc -l"' in result)
+
+    def test_embedded_tests(self):
+        """Test --embedded_tests argument"""
+        debug.trace(debug.DETAILED, f"TestBatspp.test_embedded_tests({self})")
+
+        test_file = f'{self.temp_file}.test'
+        gh.write_file(test_file, self.embedded_test)
+
+        result = gh.run(f'EMBEDDED_TESTS=1 python3 {BATSPP_PATH} {test_file}')
+        self.assertTrue('1..1' in result)
+        result = gh.run(f'EMBEDDED_TESTS=0 python3 {BATSPP_PATH} {test_file}')
+        ## TODO: fix parser raising exception when no tests or setup is found
+        self.assertTrue('SyntaxError: Expected some of "(Test, Setup)" but got "EOF"' in result)
 
 if __name__ == '__main__':
     debug.trace_current_context()

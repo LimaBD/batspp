@@ -24,7 +24,7 @@ class BatsppOpts:
 
     def __init__(
             self,
-            embedded_tests: bool = False,
+            embedded_tests: 'bool|None' = None,
             verbose_debug: bool = False,
             hexdump_debug: bool = False,
             omit_trace: bool = False,
@@ -32,7 +32,7 @@ class BatsppOpts:
             ) -> None:
 
         # Check for embedded_tests
-        assert_type(embedded_tests, bool)
+        assert_type(embedded_tests, (bool, type(None)))
         self.embedded_tests = embedded_tests
 
         # Check for verbose_debug

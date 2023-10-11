@@ -83,11 +83,11 @@ class BatsppTest:
         assert file, 'File path cannot be empty'
 
         # Check for embedded tests
-        if not opts.embedded_tests and self.is_not_ipynb_file(file):
-            opts.embedded_tests = self._is_not_batspp_file(file)
+        if opts.embedded_tests is None:
+            opts.embedded_tests = self._is_not_batspp_file(file) and self.is_not_ipynb_file(file)
 
         # Check for sources files
-        if self._is_not_batspp_file(file) and self.is_not_ipynb_file(file):
+        if opts.embedded_tests:
             if args.sources:
                 args.sources.append(file)
             else:
