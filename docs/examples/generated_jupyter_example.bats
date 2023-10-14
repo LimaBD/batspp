@@ -29,7 +29,13 @@ function run_teardown () {
 	print_debug "$(echo -e "hello\nworld")" "$(echo -e 'hello\nworld\n')"
 	[ "$(echo -e "hello\nworld")" == "$(echo -e 'hello\nworld\n')" ]
 
-	# Assertion of line 24
+	run_teardown
+}
+
+@test "test of line 10" {
+	run_setup "test-of-line-10"
+
+	# Assertion of line 25
 	shopt -s expand_aliases
 	function fibonacci () {
 	result=""
