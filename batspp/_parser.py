@@ -28,7 +28,7 @@ from batspp._exceptions import (
 from batspp._token import (
     PESO, GREATER, SETUP, TEARDOWN,
     TEST, POINTER, CONTINUATION, ASSERT_EQ,
-    ASSERT_NE, TEXT, EOF, NEW_LINE,
+    ASSERT_NE, TEXT, EOF, NEW_LINE, GLOBAL,
     )
 from batspp._ast_node import (
     ASTnode, TestSuite, TestOrSetup, GlobalTeardown,
@@ -392,8 +392,8 @@ class _Parser:
         #
         # any_text : multiline_text | NEW_LINE
         #
-        # global_setup : SETUP standalone_commands
-        # global_teardown : TEARDOWN standalone_commands
+        # global_setup : GLOBAL? SETUP standalone_commands
+        # global_teardown : GLOBAL? TEARDOWN standalone_commands
         # test : test_reference? (setup_assertion)+ (?!NEW_LINE)*
         # setup_assertion : setup? assertion
         # setup : setup_reference? standalone_commands
@@ -478,9 +478,9 @@ class _Parser:
             .optionally(test_reference) \
             .one_or_more(setup_assertion).ignore_next(NEW_LINE)
         global_teardown = _Rule(GlobalTeardown) \
-            .expect(TEARDOWN).expect(standalone_commands)
+            .optionally(GLOBAL).expect(TEARDOWN).expect(standalone_commands)
         global_setup = _Rule(GlobalSetup) \
-            .expect(SETUP).expect(standalone_commands)
+            .optionally(GLOBAL).expect(SETUP).expect(standalone_commands)
 
         # This rule is only used with embedded tests to reduce
         # functions calls we can avoid it if is not used

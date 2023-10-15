@@ -31,7 +31,7 @@ from batspp._exceptions import (
 from batspp._token import (
     TokenData, Token, PESO, GREATER, SETUP, TEARDOWN,
     TEST, POINTER, CONTINUATION, ASSERT_EQ, ASSERT_NE,
-    TEXT, EOF, NEW_LINE, MINOR
+    TEXT, EOF, NEW_LINE, MINOR, GLOBAL,
     )
 from batspp._timer import Timer
 
@@ -201,12 +201,46 @@ class Lexer:
                     ))
                 continue
 
+            # Tokenize global setup
+            ## TODO: fix pattern to avoid matching "setup" in any part of the line
+            match = re_match(r'^# *[Gg]lobal *[Ss]etup(?: +|$)', self.text.get_rest_line())
+            if match:
+                self.text.advance_column(match.span()[1])
+                self.push_token(Token(
+                    GLOBAL,
+                    match.group(),
+                    data,
+                    ))
+                self.push_token(Token(
+                    SETUP,
+                    match.group(),
+                    data,
+                    ))
+                continue
+
             # Tokenize setup
             match = re_match(r'^# *[Ss]etup(?: +|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
                     SETUP,
+                    match.group(),
+                    data,
+                    ))
+                continue
+
+            # Tokenize global teardown
+            ## TODO: fix pattern to avoid matching "teardown" in any part of the line
+            match = re_match(r'^# *[Gg]lobal *[Tt]eardown(?: +|$)', self.text.get_rest_line())
+            if match:
+                self.text.advance_column(match.span()[1])
+                self.push_token(Token(
+                    GLOBAL,
+                    match.group(),
+                    data,
+                    ))
+                self.push_token(Token(
+                    TEARDOWN,
                     match.group(),
                     data,
                     ))

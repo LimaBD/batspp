@@ -150,8 +150,9 @@ class Test(ASTnode):
 class GlobalSetup(ASTnode):
     """Global setup node"""
 
-    def __init__(self, setup: Token, commands: StandaloneCommands) -> None:
+    def __init__(self, globalt:Token, setup: Token, commands: StandaloneCommands) -> None:
         """Initialize AST node"""
+        self.globalt = globalt
         self.setup = setup
         self.one_time_commands = StandaloneCommands()
         self.commands = commands
@@ -159,8 +160,9 @@ class GlobalSetup(ASTnode):
 class GlobalTeardown(ASTnode):
     """Global teardown node"""
 
-    def __init__(self, teardown: Token, commands: StandaloneCommands) -> None:
+    def __init__(self, globalt:Token, teardown: Token, commands: StandaloneCommands) -> None:
         """Initialize AST node"""
+        self.globalt = globalt
         self.teardown = teardown
         self.commands = commands
 

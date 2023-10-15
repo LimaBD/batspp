@@ -188,11 +188,11 @@ class _SemanticAnalizer(ReferenceNodeVisitor):
         node.constants = self.build_constants_node()
         #
         if not node.global_setup:
-            node.global_setup = GlobalSetup(None, StandaloneCommands([]))
+            node.global_setup = GlobalSetup(None, None, StandaloneCommands([]))
         self.visit(node.global_setup)
         #
         if not node.global_teardown:
-            node.global_teardown = GlobalTeardown(None, StandaloneCommands([]))
+            node.global_teardown = GlobalTeardown(None, None, StandaloneCommands([]))
         self.visit(node.global_teardown)
         #
         for test_or_setup in node.tests_or_setups:
