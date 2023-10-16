@@ -56,6 +56,12 @@ def resolve_path(path:str, alternative:str) -> str:
         result = path
     return result
 
+def save(original_file, new_file, content):
+    """Save CONTENT to NEW_FILE, resolving NEW_FILE path based on ORIGINAL_FILE"""
+    new_file = resolve_path(new_file, original_file)
+    gh.write_file(new_file, content)
+    gh.run(f'chmod +x {new_file}')
+
 class BatsppTest:
     """
     This is responsible to parse and run Batspp tests
@@ -76,6 +82,7 @@ class BatsppTest:
     def transpile_to_bats(
             self,
             file: str,
+            copy_path:str='',
             args: BatsppArgs = BatsppArgs(),
             opts: BatsppOpts = BatsppOpts()
             ) -> str:
@@ -99,9 +106,13 @@ class BatsppTest:
         tokens = lexer.tokenize(content, opts.embedded_tests)
         tree = parser.parse(tokens, opts.embedded_tests)
         tree, opts, args = semantic_analizer.analize(tree, opts=opts, args=args)
-        result = interpreter.interpret(tree, opts=opts, args=args)
+        transpiled = interpreter.interpret(tree, opts=opts, args=args)
 
-        return result
+        # Save copy if requested
+        if copy_path:
+            save(file, copy_path, transpiled)
+
+        return transpiled
 
     def transpile_and_save_bats(
             self,
@@ -112,23 +123,25 @@ class BatsppTest:
             ) -> None:
         """Save Batspp transiled test FILE to OUTPUT path,
            if OUTPUT is not provided or is a dir, a default is used 'generated_<file>.bats'"""
-        assert file, 'File path cannot be empty'
-        output = resolve_path(output, file)
-        transpiled_text = self.transpile_to_bats(file, args=args, opts=opts)
-        gh.write_file(output, transpiled_text)
-        gh.run(f'chmod +x {output}')
+        _ = self.transpile_to_bats(file, copy_path=output, args=args, opts=opts)
 
     def run(
             self,
             file:str,
+            copy_path:str='',
             args: BatsppArgs = BatsppArgs(),
             opts: BatsppOpts = BatsppOpts()
             ) -> str:
         """Run Batspp test FILE and return result"""
-        assert file, 'File path cannot be empty'
+        transpiled = self.transpile_to_bats(file, args=args, opts=opts)
+        # Save in TMP to run
         temp_bats = f'{gh.get_temp_file()}.{BATS_EXTENSION}'
-        self.transpile_and_save_bats(file, temp_bats, args=args, opts=opts)
-        sudo = 'sudo' if 'sudo' in gh.read_file(temp_bats) else ''
+        save(file, temp_bats, transpiled)
+        # Save copy if requested
+        if copy_path:
+            save(file, copy_path, transpiled)
+        # Run
+        sudo = 'sudo' if 'sudo' in transpiled else ''
         return gh.run(f'{sudo} bats {args.run_opts} {temp_bats}')
 
 if __name__ == '__main__':

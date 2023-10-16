@@ -103,7 +103,7 @@ class Batspp(Main):
 
         # Check the command-line/enviroment vars options
         self.file = self.get_parsed_argument(FILE, self.file)
-        self.save_path = self.get_entered_text(SAVE, self.temp_file)
+        self.save_path = self.get_entered_text(SAVE, self.save_path)
         self.sources = text_utils.extract_string_list(self.get_entered_text(SOURCES, ''))
         self.output = self.get_entered_bool(OUTPUT, self.output)
         self.embedded_tests = self.get_entered_bool(EMBEDDED_TESTS, self.embedded_tests)
@@ -144,13 +144,22 @@ class Batspp(Main):
             debug = self.debug,
             )
 
-        if self.save_path:
-            test.transpile_and_save_bats(self.file, self.save_path, args=args, opts=opts)
-
         if self.output:
-            print(test.transpile_to_bats(self.file, args=args, opts=opts))
+            transpiled = test.transpile_to_bats(
+                self.file,
+                copy_path=self.save_path,
+                args=args,
+                opts=opts
+                )
+            print(transpiled)
         elif not self.skip_run:
-            print(test.run(self.file, args=args, opts=opts))
+            run_output = test.run(
+                self.file,
+                copy_path=self.save_path,
+                args=args,
+                opts=opts
+                )
+            print(run_output)
 
     def get_entered_bool(
             self,
