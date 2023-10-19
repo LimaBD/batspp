@@ -34,6 +34,12 @@ from batspp._token import (
     TEXT, EOF, NEW_LINE, MINOR, GLOBAL,
     )
 from batspp._timer import Timer
+from batspp.batspp_args import (
+    BatsppArgs,
+    )
+from batspp.batspp_opts import (
+    BatsppOpts,
+    )
 
 class Tags(Enum):
     """Tags enum"""
@@ -92,6 +98,8 @@ class Lexer:
 
     def __init__(self) -> None:
         # Global states variables
+        self.opts = None
+        self.args = None
         self.text = None
         self.tokens_stack = []
 
@@ -188,6 +196,7 @@ class Lexer:
                     match.group(),
                     data,
                     ))
+                self.opts.greater_token_present = True
                 continue
 
             # Tokenize test
@@ -308,6 +317,7 @@ class Lexer:
                     match.group(),
                     data,
                     ))
+                self.opts.has_arrow_assertion = True
                 continue
 
             # Tokenize assert not equal
@@ -319,6 +329,7 @@ class Lexer:
                     match.group(),
                     data,
                     ))
+                self.opts.has_arrow_assertion = True
                 continue
 
             # Skip other comments that are not directives
@@ -349,24 +360,32 @@ class Lexer:
         # Tokenize End of file
         self.push_token(Token(EOF, None, data))
 
-    def tokenize(self, text: str, embedded_tests:bool=False) -> list:
+    def tokenize(
+            self,
+            text: str,
+            opts: BatsppOpts = BatsppOpts(),
+            args: BatsppArgs = BatsppArgs()
+            ) -> list:
         """Tokenize text"""
+        self.opts = opts
+        self.args = args
+        #
         timer = Timer()
         timer.start()
         #
-        if embedded_tests:
+        if opts.embedded_tests:
             text = _normalize_embedded_tests(text)
         self.text = TextLiner(text)
         self.run_extraction_of_tokens()
         #
         debug.trace(7,
-            f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests}) in {timer.stop()} seconds'
+            f'Lexer.tokenize(text={text}, opts, args) in {timer.stop()} seconds'
             )
-        return self.pop_tokens()
+        return self.pop_tokens(), opts, args
 
-def _normalize_embedded_tests(embedded_tests: str) -> str:
+def _normalize_embedded_tests(content: str) -> str:
     """Normalize embedded comment tests into tests"""
-    result = embedded_tests
+    result = content
 
     # 1st remove not commented lines
     result = re_sub(r'^[^#]+?$', '\n', result, flags=re_MULTILINE)
@@ -380,7 +399,7 @@ def _normalize_embedded_tests(embedded_tests: str) -> str:
         flags=re_MULTILINE,
         )
 
-    debug.trace(7, f'normalize_embedded_tests({embedded_tests}) => \n{result}')
+    debug.trace(7, f'normalize_embedded_tests({content}) => \n{result}')
     return result
 
 lexer = Lexer()

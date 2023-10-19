@@ -10,6 +10,7 @@ from re import search as re_search
 
 # Installed packages
 from mezcla import glue_helpers as gh
+from mezcla import debug
 
 # Local packages
 from batspp._lexer import lexer
@@ -24,6 +25,13 @@ from batspp.batspp_opts import BatsppOpts
 from batspp.batspp_args import BatsppArgs
 from batspp._exceptions import (
     warning_not_intended_for_cmd,
+    )
+from batspp._timer import Timer
+from batspp.batspp_args import (
+    BatsppArgs,
+    )
+from batspp.batspp_opts import (
+    BatsppOpts,
     )
 
 def add_prefix_to_filename(file:str, prefix:str) -> str:
@@ -88,6 +96,8 @@ class BatsppTest:
             ) -> str:
         """Return transpiled Bats content from Batspp test FILE"""
         assert file, 'File path cannot be empty'
+        timer = Timer()
+        timer.start()
 
         # Check for embedded tests
         if opts.embedded_tests is None:
@@ -103,8 +113,8 @@ class BatsppTest:
         # Transpilation
         content = gh.read_file(file)
         content = jupyter_to_batspp.convert(content) if self.is_ipynb_file(file) else content
-        tokens = lexer.tokenize(content, opts.embedded_tests)
-        tree = parser.parse(tokens, opts.embedded_tests)
+        tokens, opts, args = lexer.tokenize(content, opts=opts, args=args)
+        tree, opts, args = parser.parse(tokens, opts=opts, args=args)
         tree, opts, args = semantic_analizer.analize(tree, opts=opts, args=args)
         transpiled = interpreter.interpret(tree, opts=opts, args=args)
 
@@ -112,6 +122,7 @@ class BatsppTest:
         if copy_path:
             save(file, copy_path, transpiled)
 
+        debug.trace(5, f'BatsppTest.transpile_to_bats() finished in {timer.stop()} seconds')
         return transpiled
 
     def transpile_and_save_bats(
@@ -133,6 +144,9 @@ class BatsppTest:
             opts: BatsppOpts = BatsppOpts()
             ) -> str:
         """Run Batspp test FILE and return result"""
+        timer = Timer()
+        timer.start()
+
         transpiled = self.transpile_to_bats(file, args=args, opts=opts)
         # Save in TMP to run
         temp_bats = f'{gh.get_temp_file()}.{BATS_EXTENSION}'
@@ -142,7 +156,10 @@ class BatsppTest:
             save(file, copy_path, transpiled)
         # Run
         sudo = 'sudo' if 'sudo' in transpiled else ''
-        return gh.run(f'{sudo} bats {args.run_opts} {temp_bats}')
+        output = gh.run(f'{sudo} bats {args.run_opts} {temp_bats}')
+
+        debug.trace(5, f'BatsppTest.run() finished in {timer.stop()} seconds')
+        return output
 
 if __name__ == '__main__':
     warning_not_intended_for_cmd()

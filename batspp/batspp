@@ -9,7 +9,6 @@
 ## TODO: implement --discover flag to discover all tests file in a folder.
 ## TODO: beautify exceptions, catch and hide python traceback, only show batspp traceback.
 
-
 """
 BATSPP
 
@@ -31,11 +30,9 @@ Also you can test bash functions:
  fibonacci 9 => "0 1 1 2 3 5 8 13 21 34"
 """
 
-
 # Standard packages
 from os import getpid as os_getpid
 from sys import argv as sys_argv
-
 
 # Installed packages
 from mezcla.main import Main
@@ -44,13 +41,12 @@ from mezcla import debug
 from mezcla import glue_helpers as gh
 from mezcla import text_utils
 
-
 # Local packages
 from batspp.__version__ import __version__
 from batspp.batspp_opts import BatsppOpts
 from batspp.batspp_args import BatsppArgs
 from batspp.batspp_test import BatsppTest
-
+from batspp._timer import Timer
 
 # Command-line labels and
 # enviroment variables constants
@@ -144,22 +140,28 @@ class Batspp(Main):
             debug = self.debug,
             )
 
+        # Start timer for profiling
+        timer = Timer()
+        timer.start()
+
+        stdout = ''
         if self.output:
-            transpiled = test.transpile_to_bats(
+            stdout = test.transpile_to_bats(
                 self.file,
                 copy_path=self.save_path,
                 args=args,
                 opts=opts
                 )
-            print(transpiled)
         elif not self.skip_run:
-            run_output = test.run(
+            stdout = test.run(
                 self.file,
                 copy_path=self.save_path,
                 args=args,
                 opts=opts
                 )
-            print(run_output)
+        print(stdout)
+
+        debug.trace(5, f'Batspp.run_main_step() finished in {timer.stop()} seconds')
 
     def get_entered_bool(
             self,
@@ -193,7 +195,6 @@ class Batspp(Main):
         result = result if result else default
         debug.trace(7, f'batspp.get_entered_text(label={label}) => {result}')
         return result
-
 
 if __name__ == '__main__':
 

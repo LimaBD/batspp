@@ -68,11 +68,11 @@ class CommandExtension(ASTnode):
 class Command(ASTnode):
     """Command node"""
 
-    def __init__(self, peso: Token, command: Token, extensions: list) -> None:
+    def __init__(self, peso: Token, command: Token, extensions: list=None) -> None:
         """Initialize AST node"""
         self.peso = peso
         self.command = command
-        self.extensions = extensions
+        self.extensions = extensions if extensions else []
 
 class ArrowAssertion(ASTnode):
     """Arrow EQ assertion node"""

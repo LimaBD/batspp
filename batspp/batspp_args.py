@@ -20,7 +20,8 @@ from batspp._exceptions import (
 
 
 class BatsppArgs:
-    """Batspp test related arguments"""
+    """Batspp test arguments class, useful
+       to share and set arguments between modules"""
 
     def __init__(
             self,

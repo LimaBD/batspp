@@ -39,6 +39,12 @@ from batspp._ast_node import (
     SetupAssertion,
     )
 from batspp._timer import Timer
+from batspp.batspp_args import (
+    BatsppArgs,
+    )
+from batspp.batspp_opts import (
+    BatsppOpts,
+    )
 
 def copy_with_nested_lists(list_to_copy:list) -> list:
     """Copy a list with nested lists, better than using list.copy(), [:]
@@ -368,12 +374,20 @@ class _Rule:
 class _Parser:
     """Batspp parser class"""
 
-    def build_grammar(self, embedded_tests:bool, has_arrow_assertion:bool=True) -> _Rule:
+    def build_grammar(
+            self,
+            embedded_tests:bool,
+            has_arrow_assertion:bool,
+            greater_token_present:bool,
+            ) -> _Rule:
         """Returns the grammar rules for Batspp.\n
            If EMBEDDED_TESTS is True, the grammar rules will be
            modified to allow embedded tests.\n
            If HAS_ARROW_ASSERTION is False, the grammar rules
-           will be optimized with shortcuts."""
+           will be optimized with shortcuts, same with
+           GREATER_TOKEN_PRESENT"""
+        timer = Timer()
+        timer.start()
 
         # Batspp complete grammar
         #
@@ -432,6 +446,9 @@ class _Parser:
         else:
             text = _Rule(Text).expect_some_of(TEXT, NEW_LINE)
 
+        # Optimization shortcuting arrow assertion,
+        # due that arrow assertion is less used than
+        # command assertions
         command_start = _Rule(None, alias="command_start") \
             .one_or_more(NEW_LINE).expect(PESO)
         end_of_mtext = command_start
@@ -443,11 +460,16 @@ class _Parser:
         multiline_text = _Rule(MultilineText) \
             .one_or_more(text).until(end_of_mtext)
 
-        command_extension = _Rule(CommandExtension) \
-            .expect(GREATER).expect(TEXT)
+        # Optimization shortcuting command extension,
+        # due that command extension is not used in
+        # most of the tests
         command = _Rule(Command) \
-            .expect(PESO).expect(TEXT) \
-            .zero_or_more(command_extension).ignore_next(NEW_LINE)
+            .expect(PESO).expect(TEXT)
+        if greater_token_present:
+            command_extension = _Rule(CommandExtension) \
+                .expect(GREATER).expect(TEXT)
+            command = command.zero_or_more(command_extension)
+        command = command.ignore_next(NEW_LINE)
 
         command_assertion = _Rule(CommandAssertion) \
             .expect(command).expect(multiline_text)
@@ -503,25 +525,28 @@ class _Parser:
             .one_or_more(test_or_setup).optionally(global_teardown) \
             .expect(EOF)
 
+        debug.trace(5, f'Parser.build_grammar(...) in {timer.stop()} seconds')
         return test_suite
 
-    def has_arrow_assertion(self, tokens: list) -> bool:
-        """Check if tokens has an arrow assertion"""
-        for token in tokens:
-            if token.variant in (ASSERT_EQ, ASSERT_NE):
-                return True
-
-    def parse(self, tokens: list, embedded_tests:bool=False) -> ASTnode:
+    def parse(
+            self,
+            tokens: list,
+            opts: BatsppOpts = None,
+            args: BatsppArgs = None
+            ) -> ASTnode:
         """Builds an Abstract Syntax Tree (AST) from TOKENS list following the Batspp grammar."""
         timer = Timer()
         timer.start()
         #
-        has_arrow_assertion = self.has_arrow_assertion(tokens)
-        grammar = self.build_grammar(embedded_tests, has_arrow_assertion)
+        grammar = self.build_grammar(
+            opts.embedded_tests,
+            opts.has_arrow_assertion,
+            opts.greater_token_present
+            )
         tree, _ = grammar.build_tree_from(tokens)
         #
         debug.trace(5, f'Parser.parse() in {timer.stop()} seconds')
-        return tree
+        return tree, opts, args
 
 parser = _Parser()
 
