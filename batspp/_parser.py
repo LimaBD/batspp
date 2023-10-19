@@ -358,6 +358,11 @@ class _Rule:
 
     def _print_debug(self, method_name:str, notes:str) -> None:
         """Print debug information"""
+        # Optimization shortcut if debugging is not required
+        # This makes the parser x1.6 faster
+        if debug.trace_level < 6:
+            return
+        #
         variant = self.tokens[0].variant if self.tokens else 'None'
         line_number = self.tokens[0].data.line if self.tokens else -1
         debug.trace(7, (
