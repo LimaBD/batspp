@@ -1,7 +1,12 @@
-1..6
 ok 1 test of line 14
 ok 2 test of line 22
 ok 3 test of line 25
 ok 4 test of line 56
+this is a file content to run an example test
 ok 5 setup and title
+in this test
+we are using
+multiple assertions
 ok 6 test of line 74
+
+Short summary: 0 failed, 6 passed.

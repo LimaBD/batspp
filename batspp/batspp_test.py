@@ -19,7 +19,7 @@ from batspp._semantic_analizer import semantic_analizer
 from batspp._interpreter import interpreter
 from batspp._jupyter_to_batspp import jupyter_to_batspp
 from batspp._settings import (
-    BATSPP_EXTENSION, BATS_EXTENSION
+    BATSPP_EXTENSION, TEST_OUTPUT_INTERPRETER,
 )
 from batspp.batspp_opts import BatsppOpts
 from batspp.batspp_args import BatsppArgs
@@ -55,11 +55,11 @@ def resolve_path(path:str, alternative:str) -> str:
     result = ''
     if not path:
         result = add_prefix_to_filename(alternative, 'generated_')
-        result = replace_extension(result, BATS_EXTENSION)
+        result = replace_extension(result, TEST_OUTPUT_INTERPRETER)
     elif path.endswith('/'):
         result = merge_filename_into_path(alternative, path)
         result = add_prefix_to_filename(result, 'generated_')
-        result = replace_extension(result, BATS_EXTENSION)
+        result = replace_extension(result, TEST_OUTPUT_INTERPRETER)
     else:
         result = path
     return result
@@ -94,7 +94,7 @@ class BatsppTest:
             args: BatsppArgs = BatsppArgs(),
             opts: BatsppOpts = BatsppOpts()
             ) -> str:
-        """Return transpiled Bats content from Batspp test FILE"""
+        """Return transpiled Bash content from Batspp test FILE"""
         assert file, 'File path cannot be empty'
         timer = Timer()
         timer.start()
@@ -133,7 +133,7 @@ class BatsppTest:
             opts: BatsppOpts = BatsppOpts()
             ) -> None:
         """Save Batspp transiled test FILE to OUTPUT path,
-           if OUTPUT is not provided or is a dir, a default is used 'generated_<file>.bats'"""
+           if OUTPUT is not provided or is a dir, a default is used 'generated_<file>.bash'"""
         _ = self.transpile_to_bats(file, copy_path=output, args=args, opts=opts)
 
     def run(
@@ -149,14 +149,14 @@ class BatsppTest:
 
         transpiled = self.transpile_to_bats(file, args=args, opts=opts)
         # Save in TMP to run
-        temp_bats = f'{gh.get_temp_file()}.{BATS_EXTENSION}'
+        temp_bats = f'{gh.get_temp_file()}.{TEST_OUTPUT_INTERPRETER}'
         save(file, temp_bats, transpiled)
         # Save copy if requested
         if copy_path:
             save(file, copy_path, transpiled)
         # Run
         sudo = 'sudo' if 'sudo' in transpiled else ''
-        output = gh.run(f'{sudo} bats {args.run_opts} {temp_bats}')
+        output = gh.run(f'{sudo} {TEST_OUTPUT_INTERPRETER} {args.run_opts} {temp_bats}')
 
         debug.trace(5, f'BatsppTest.run() finished in {timer.stop()} seconds')
         return output

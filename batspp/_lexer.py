@@ -133,7 +133,6 @@ class Lexer:
     def run_extraction_of_tokens(self):
         """Run extraction of all tokens from text"""
         ## TODO: refactor this copypaste caos
-        ## TODO: analyze how much execution time takes regex
         ## TODO: implement usage of extra_indent to comments embedded tests
 
         # For convention each token is responsible

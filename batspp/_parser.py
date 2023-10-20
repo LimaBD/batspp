@@ -5,8 +5,6 @@
 # This module is responsible for building
 # an abstract syntax tree (AST) for Batspp
 #
-## TODO: solve: Setup and Continue referenced before
-##       assignment should print the correct line, not the next.
 
 """
 Parser module

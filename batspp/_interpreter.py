@@ -50,6 +50,8 @@ TEMP_DIR = 'TEMP_DIR'
 COPY_DIR = 'COPY_DIR'
 SETUP_FUNCTION = 'run_setup'
 TEARDOWN_FUNCTION = 'run_teardown'
+RUN_TEST_FUNCTION = 'run_test'
+ASSERTION_FUNCTION = 'assert'
 
 class Interpreter(ReferenceNodeVisitor):
     """
@@ -71,7 +73,7 @@ class Interpreter(ReferenceNodeVisitor):
         """Visit TestSuite NODE"""
         # Build text parts
         header_text = (
-            '#!/usr/bin/env bats'
+            '#!/usr/bin bash'
             f'{" " if self.args.run_opts else ""}'
             f'{self.args.run_opts}\n'
             '#\n'
@@ -85,6 +87,8 @@ class Interpreter(ReferenceNodeVisitor):
         debug_function_text = ''
         if self.opts.verbose_debug and not self.opts.omit_trace:
             debug_function_text += build_debug_function()
+        run_test_function_text = build_run_test_function()
+        summary_test_function_text = build_summary_function()
         # Tests suite should contain only tests on this point
         # due to the semantic analyzer that merges setups into tests
         tests_text = ''.join([self.visit(test) for test in node.tests_or_setups])
@@ -93,11 +97,13 @@ class Interpreter(ReferenceNodeVisitor):
         if tests_text:
             result += '' \
                 + header_text \
+                + run_test_function_text \
+                + debug_function_text \
                 + constants_text \
                 + global_setup_text \
                 + global_teardown_text \
                 + tests_text \
-                + debug_function_text \
+                + summary_test_function_text \
                 + ''
         debug.trace(7, f'interpreter.visit_TestsSuite(node={node}) => {result}')
         return result
@@ -120,7 +126,7 @@ class Interpreter(ReferenceNodeVisitor):
             '# $1 -> test name\n'
             f'function {SETUP_FUNCTION} () {{\n'
             )
-        result += build_commands_block(self.visit(node.commands), '\t')
+        result += build_commands_block(self.visit(node.commands), '    ')
         result += '}\n\n'
         debug.trace(7, f'interpreter.visit_GlobalSetup() => {result}')
         return result
@@ -138,7 +144,7 @@ class Interpreter(ReferenceNodeVisitor):
         if commands:
             body = build_commands_block(commands)
         else:
-            body = '\t: # Nothing here...'
+            body = '    : # Nothing here...'
         result = (
             '# Teardown function\n'
             f'function {TEARDOWN_FUNCTION} () {{\n'
@@ -161,11 +167,12 @@ class Interpreter(ReferenceNodeVisitor):
         Visit Test NODE, also updates global class test title
         """
         name = self.visit(node.reference)
+        flatten_name = flatten_str(name)
         # Test header
         # with call to a global setup function
         result = (
-            f'@test "{name}" {{\n'
-            f'\t{SETUP_FUNCTION} "{flatten_str(name)}"\n'
+            f'function {flatten_name} {{\n'
+            f'    {SETUP_FUNCTION} "{flatten_name}"\n'
             )
         # Visit assertions
         # Note that due to the semantic analyzer,
@@ -177,8 +184,10 @@ class Interpreter(ReferenceNodeVisitor):
         # with call to a global teardown function
         result += (
             '\n'
-            f'\t{TEARDOWN_FUNCTION}\n'
-            '}\n\n'
+            f'    {TEARDOWN_FUNCTION}\n'
+            '    return 0\n'
+            '}\n'
+            f'{RUN_TEST_FUNCTION} "{name}" "{flatten_name}"\n\n'
             )
         debug.trace(7, f'interpreter.visit_Test(node={node}) => {result}')
         return result
@@ -207,7 +216,7 @@ class Interpreter(ReferenceNodeVisitor):
         Visit SetupAssertion NODE
         """
         result = (
-            f'\n\t# Assertion of line {node.assertion.line}\n'
+            f'\n    # Assertion of line {node.assertion.line}\n'
         )
         result += self.visit_optional(node.setup, '')
         result += self.visit(node.assertion)
@@ -286,13 +295,18 @@ class Interpreter(ReferenceNodeVisitor):
         debug_cmd = ''
         if not self.opts.omit_trace:
             debug_cmd = (
-                '\tshopt -s expand_aliases\n'
-                f'\tprint_debug "$({actual})" "$(echo -e {expected})"\n'
+                '    shopt -s expand_aliases\n'
                 )
         # Unify everything
         result = (
             f'{debug_cmd}'
-            f'\t[ "$({actual})" {operator} "$(echo -e {expected})" ]\n'
+            f'    if [ "$({actual})" {operator} "$(echo -e {expected})" ]\n'
+            '    then\n'
+            '        : # keep\n'
+            '    else\n'
+            f'        print_debug "$({actual})" "$(echo -e {expected})"\n'
+            '        return 1\n'
+            '    fi\n'
             )
         debug.trace(7, f'interpreter.build_assertion(operator={operator}, actual={actual}, expeted={expected}) => {result}')
         return result
@@ -353,7 +367,7 @@ def flatten_str(string: str) -> str:
 
 def build_commands_block(
         commands: list,
-        indent: str = '\t',
+        indent: str = '    ',
         end_of_line: str = '\n',
         ) -> str:
     """Build commands block with COMMANDS indented with tab"""
@@ -378,21 +392,67 @@ def build_commands_block(
 def build_debug_function() -> str:
     """Build debug function"""
     # NOTE: this provide a debug trace too.
-
+    ## TODO: move this function to a separate bash common file
     result = (
         '# This prints debug data when an assertion fail\n'
         '# $1 -> actual value\n'
         '# $2 -> expected value\n'
         'function print_debug() {\n'
-        '\techo "=======  actual  ======="\n'
-        f'\tbash -c "echo \\\"$1\\\" ${VERBOSE_DEBUG}"\n'
-        '\techo "======= expected ======="\n'
-        f'\tbash -c "echo \\\"$2\\\" ${VERBOSE_DEBUG}"\n'
-        '\techo "========================"\n'
+        '    echo ""\n'
+        '    echo "=======  actual  ======="\n'
+        f'    bash -c "echo \\\"$1\\\" ${VERBOSE_DEBUG}"\n'
+        '    echo "======= expected ======="\n'
+        f'    bash -c "echo \\\"$2\\\" ${VERBOSE_DEBUG}"\n'
+        '    echo "========================"\n'
         '}\n\n'
         )
-
     debug.trace(7, 'interpreter.build_debug()')
+    return result
+
+def build_run_test_function() -> str:
+    """Build run test function"""
+    ## TODO: move this function to a separate bash common file
+    result = (
+        '# Function to run tests and keep track of results\n'
+        '# $1 => name\n'
+        '# $2 => test function\n'
+        'n=0\n'
+        'good=0\n'
+        'bad=0\n'
+        f'function {RUN_TEST_FUNCTION} {{\n'
+        '    local name="$1"\n'
+        '    local test="$2"\n'
+        '    let n++\n'
+        '    result=""\n'
+        '    $test\n'
+        '    if [ $? -eq 0 ]\n'
+        '    then\n'
+        '        let good++\n'
+        '        result=ok\n'
+        '    else\n'
+        '        let bad++\n'
+        '        result="not ok"\n'
+        '    fi\n'
+        '    echo "$result $n $name"\n'
+        '}\n'
+        '\n'
+        )
+    debug.trace(7, 'interpreter.build_run_test_function()')
+    return result
+
+def build_summary_function() -> str:
+    """Build summary function"""
+    ## TODO: move this function to a separate bash common file
+    summary_function_name = 'print_summary'
+    result = (
+        '# Summary function\n'
+        f'function {summary_function_name} {{\n'
+        '    echo ""\n'
+        '    echo "Short summary: $bad failed, $good passed."\n'
+        '}\n'
+        f'{summary_function_name}\n'
+        )
+    debug.trace(7, 'interpreter.build_summary_function()')
     return result
 
 interpreter = Interpreter()

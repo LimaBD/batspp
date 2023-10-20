@@ -55,8 +55,8 @@ function run_eg () {
     replacement="source <REPLACED>"
     sed -i "s/$to_replace/$replacement/g" $generated
     # Replace random temporal files
-    to_replace="\/tmp\/.*\.bats"
-    replacement="\/tmp\/<REPLACED>.bats"
+    to_replace="\/tmp\/.*\.bash"
+    replacement="\/tmp\/<REPLACED>.bash"
     sed -i "s/$to_replace/$replacement/g" $output
 }
 
@@ -65,7 +65,7 @@ function run_eg () {
 # $2 -> test file (without extension)
 # $3 -> extension of test file
 function run_named_eg () {
-    run_eg $1 "$2.$3" "generated_$2.bats" "output_$2.txt"
+    run_eg $1 "$2.$3" "generated_$2.bash" "output_$2.txt"
 }
 
 # Run example that starts with number order 
@@ -74,7 +74,7 @@ function run_named_eg () {
 # $3 -> test file (without extension and order number)
 # $4 -> extension of test file
 function run_numeric_eg () {
-    run_eg $1 "$2_$3.$4" "$2_generated_$3.bats" "$2_output_$3.txt"
+    run_eg $1 "$2_$3.$4" "$2_generated_$3.bash" "$2_output_$3.txt"
 }
 
 

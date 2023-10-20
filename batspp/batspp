@@ -2,17 +2,15 @@
 #
 # BATSPP
 #
-# Shell style tests using bats-core
+# Shell style tests
 #
-## TODO: add timer and print execution time
-## TODO: use a separate pass of the test source to fill in the missing test names.
 ## TODO: implement --discover flag to discover all tests file in a folder.
 ## TODO: beautify exceptions, catch and hide python traceback, only show batspp traceback.
 
 """
 BATSPP
 
-Shell style tests using bats-core
+Shell style tests
 
 You can run tests for aliases and more using the
 command line with '$ [command]' followed by the
