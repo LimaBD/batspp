@@ -39,6 +39,10 @@ from batspp._token import (
     ASSERT_EQ, ASSERT_NE, Token
     )    
 from batspp._timer import Timer
+from batspp._settings import (
+    SETUP_FUNCTION, TEARDOWN_FUNCTION,
+    RUN_TEST_FUNCTION, DEBUG_FUNCTION,
+)
 
 # Constants
 #
@@ -48,10 +52,6 @@ from batspp._timer import Timer
 VERBOSE_DEBUG = 'VERBOSE_DEBUG'
 TEMP_DIR = 'TEMP_DIR'
 COPY_DIR = 'COPY_DIR'
-SETUP_FUNCTION = 'run_setup'
-TEARDOWN_FUNCTION = 'run_teardown'
-RUN_TEST_FUNCTION = 'run_test'
-ASSERTION_FUNCTION = 'assert'
 
 class Interpreter(ReferenceNodeVisitor):
     """
@@ -84,11 +84,6 @@ class Interpreter(ReferenceNodeVisitor):
         constants_text = self.visit(node.constants)
         global_setup_text = self.visit_optional(node.global_setup, '')
         global_teardown_text = self.visit_optional(node.global_teardown, '')
-        debug_function_text = ''
-        if self.opts.verbose_debug and not self.opts.omit_trace:
-            debug_function_text += build_debug_function()
-        run_test_function_text = build_run_test_function()
-        summary_test_function_text = build_summary_function()
         # Tests suite should contain only tests on this point
         # due to the semantic analyzer that merges setups into tests
         tests_text = ''.join([self.visit(test) for test in node.tests_or_setups])
@@ -97,13 +92,10 @@ class Interpreter(ReferenceNodeVisitor):
         if tests_text:
             result += '' \
                 + header_text \
-                + run_test_function_text \
-                + debug_function_text \
                 + constants_text \
                 + global_setup_text \
                 + global_teardown_text \
                 + tests_text \
-                + summary_test_function_text \
                 + ''
         debug.trace(7, f'interpreter.visit_TestsSuite(node={node}) => {result}')
         return result
@@ -304,7 +296,7 @@ class Interpreter(ReferenceNodeVisitor):
             '    then\n'
             '        : # keep\n'
             '    else\n'
-            f'        print_debug "$({actual})" "$(echo -e {expected})"\n'
+            f'        {DEBUG_FUNCTION} "$({actual})" "$(echo -e {expected})"\n'
             '        return 1\n'
             '    fi\n'
             )
@@ -387,72 +379,6 @@ def build_commands_block(
     if result and not result.endswith('\n'):
         result += '\n'
     debug.trace(7, f'interpreter.build_commands_block({commands}) => {result}')
-    return result
-
-def build_debug_function() -> str:
-    """Build debug function"""
-    # NOTE: this provide a debug trace too.
-    ## TODO: move this function to a separate bash common file
-    result = (
-        '# This prints debug data when an assertion fail\n'
-        '# $1 -> actual value\n'
-        '# $2 -> expected value\n'
-        'function print_debug() {\n'
-        '    echo ""\n'
-        '    echo "=======  actual  ======="\n'
-        f'    bash -c "echo \\\"$1\\\" ${VERBOSE_DEBUG}"\n'
-        '    echo "======= expected ======="\n'
-        f'    bash -c "echo \\\"$2\\\" ${VERBOSE_DEBUG}"\n'
-        '    echo "========================"\n'
-        '}\n\n'
-        )
-    debug.trace(7, 'interpreter.build_debug()')
-    return result
-
-def build_run_test_function() -> str:
-    """Build run test function"""
-    ## TODO: move this function to a separate bash common file
-    result = (
-        '# Function to run tests and keep track of results\n'
-        '# $1 => name\n'
-        '# $2 => test function\n'
-        'n=0\n'
-        'good=0\n'
-        'bad=0\n'
-        f'function {RUN_TEST_FUNCTION} {{\n'
-        '    local name="$1"\n'
-        '    local test="$2"\n'
-        '    let n++\n'
-        '    result=""\n'
-        '    $test\n'
-        '    if [ $? -eq 0 ]\n'
-        '    then\n'
-        '        let good++\n'
-        '        result=ok\n'
-        '    else\n'
-        '        let bad++\n'
-        '        result="not ok"\n'
-        '    fi\n'
-        '    echo "$result $n $name"\n'
-        '}\n'
-        '\n'
-        )
-    debug.trace(7, 'interpreter.build_run_test_function()')
-    return result
-
-def build_summary_function() -> str:
-    """Build summary function"""
-    ## TODO: move this function to a separate bash common file
-    summary_function_name = 'print_summary'
-    result = (
-        '# Summary function\n'
-        f'function {summary_function_name} {{\n'
-        '    echo ""\n'
-        '    echo "Short summary: $bad failed, $good passed."\n'
-        '}\n'
-        f'{summary_function_name}\n'
-        )
-    debug.trace(7, 'interpreter.build_summary_function()')
     return result
 
 interpreter = Interpreter()

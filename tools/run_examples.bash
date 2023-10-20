@@ -48,15 +48,15 @@ function run_eg () {
     # Replace random generated values
     # to avoid changes on git diff
     to_replace="TEMP_DIR=\"\/tmp\/batspp-.*\""
-    replacement="TEMP_DIR=\"\/tmp\/batspp-<REPLACED>\""
+    replacement="TEMP_DIR=\"\/tmp\/batspp-'<REPLACED>'\""
     sed -i "s/$to_replace/$replacement/g" $generated
     # Replace local paths
     to_replace="source .*"
-    replacement="source <REPLACED>"
+    replacement="source '<REPLACED>'"
     sed -i "s/$to_replace/$replacement/g" $generated
     # Replace random temporal files
     to_replace="\/tmp\/.*\.bash"
-    replacement="\/tmp\/<REPLACED>.bash"
+    replacement="\/tmp\/'<REPLACED>'.bash"
     sed -i "s/$to_replace/$replacement/g" $output
 }
 

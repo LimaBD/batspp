@@ -19,8 +19,18 @@ from batspp._exceptions import (
     warning_not_intended_for_cmd,
     )
 
-BATSPP_EXTENSION = 'batspp'
+# Bash testing utils settings
+SRC_PATH = __file__.rsplit('/', 1)[0]
+TESTING_UTILS_PATH = SRC_PATH + '/testing_utils.bash'
+DEBUG_FUNCTION = 'print_debug'
+RUN_TEST_FUNCTION = 'run_test'
+SUMMARY_FUNCTION = 'print_summary'
 
+# Another function names
+SETUP_FUNCTION = 'run_setup'
+TEARDOWN_FUNCTION = 'run_teardown'
+
+BATSPP_EXTENSION = 'batspp'
 TEST_OUTPUT_INTERPRETER = 'bash'
 
 if __name__ == '__main__':
