@@ -1,8 +1,7 @@
+1..6
 ok 1 test of line 15
 ok 2 test of line 20
 ok 3 test of line 27
 ok 4 test of line 30
-this is a file content to run an example testok 5 setup and title
+ok 5 setup and title
 ok 6 test of line 52
-
-Short summary: 0 failed, 6 passed.

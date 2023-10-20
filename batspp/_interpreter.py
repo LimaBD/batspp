@@ -37,12 +37,11 @@ from batspp._exceptions import (
     )
 from batspp._token import (
     ASSERT_EQ, ASSERT_NE, Token
-    )    
+    )
 from batspp._timer import Timer
 from batspp._settings import (
     SETUP_FUNCTION, TEARDOWN_FUNCTION,
-    RUN_TEST_FUNCTION, DEBUG_FUNCTION,
-)
+    )
 
 # Constants
 #
@@ -60,7 +59,8 @@ class Interpreter(ReferenceNodeVisitor):
     """
 
     def __init__(self) -> None:
-        # Global states variables
+        """Initialize Interpreter class"""
+        # Default options
         self.opts = BatsppOpts()
         self.args = BatsppArgs()
 
@@ -73,7 +73,7 @@ class Interpreter(ReferenceNodeVisitor):
         """Visit TestSuite NODE"""
         # Build text parts
         header_text = (
-            '#!/usr/bin bash'
+            f'#!/usr/bin {self.args.runner}'
             f'{" " if self.args.run_opts else ""}'
             f'{self.args.run_opts}\n'
             '#\n'
@@ -158,31 +158,7 @@ class Interpreter(ReferenceNodeVisitor):
         """
         Visit Test NODE, also updates global class test title
         """
-        name = self.visit(node.reference)
-        flatten_name = flatten_str(name)
-        # Test header
-        # with call to a global setup function
-        result = (
-            f'function {flatten_name} {{\n'
-            f'    {SETUP_FUNCTION} "{flatten_name}"\n'
-            )
-        # Visit assertions
-        # Note that due to the semantic analyzer,
-        # only tests should be here
-        for t in node.setup_assertions:
-            assert isinstance(t, SetupAssertion), 'Only SetupAssertion nodes should be at this point'
-            result += self.visit(t)
-        # Test footer
-        # with call to a global teardown function
-        result += (
-            '\n'
-            f'    {TEARDOWN_FUNCTION}\n'
-            '    return 0\n'
-            '}\n'
-            f'{RUN_TEST_FUNCTION} "{name}" "{flatten_name}"\n\n'
-            )
-        debug.trace(7, f'interpreter.visit_Test(node={node}) => {result}')
-        return result
+        raise Exception('visit_Test must be implemented by subclasses')
 
     # pylint: disable=invalid-name
     def visit_Setup(self, node: Setup) -> str:
@@ -281,27 +257,7 @@ class Interpreter(ReferenceNodeVisitor):
         """
         Build assertion
         """
-        actual = actual.replace('\n', '')
-        expected = repr(expected.strip().rstrip('\n') + '\n')
-        # Set debug
-        debug_cmd = ''
-        if not self.opts.omit_trace:
-            debug_cmd = (
-                '    shopt -s expand_aliases\n'
-                )
-        # Unify everything
-        result = (
-            f'{debug_cmd}'
-            f'    if [ "$({actual})" {operator} "$(echo -e {expected})" ]\n'
-            '    then\n'
-            '        : # keep\n'
-            '    else\n'
-            f'        {DEBUG_FUNCTION} "$({actual})" "$(echo -e {expected})"\n'
-            '        return 1\n'
-            '    fi\n'
-            )
-        debug.trace(7, f'interpreter.build_assertion(operator={operator}, actual={actual}, expeted={expected}) => {result}')
-        return result
+        raise Exception('build_assertion must be implemented by subclasses')
 
     def visit_MultilineText(self, node: MultilineText) -> str:
         """
@@ -380,8 +336,6 @@ def build_commands_block(
         result += '\n'
     debug.trace(7, f'interpreter.build_commands_block({commands}) => {result}')
     return result
-
-interpreter = Interpreter()
 
 if __name__ == '__main__':
     warning_not_intended_for_cmd()

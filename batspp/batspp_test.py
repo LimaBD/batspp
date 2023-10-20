@@ -16,10 +16,12 @@ from mezcla import debug
 from batspp._lexer import lexer
 from batspp._parser import parser
 from batspp._semantic_analizer import semantic_analizer
-from batspp._interpreter import interpreter
 from batspp._jupyter_to_batspp import jupyter_to_batspp
+from batspp._bats_interpreter import bats_interpreter
+from batspp._bash_interpreter import bash_interpreter
 from batspp._settings import (
     BATSPP_EXTENSION, TEST_OUTPUT_INTERPRETER,
+    BASH, BATS,
 )
 from batspp.batspp_opts import BatsppOpts
 from batspp.batspp_args import BatsppArgs
@@ -116,6 +118,12 @@ class BatsppTest:
         tokens, opts, args = lexer.tokenize(content, opts=opts, args=args)
         tree, opts, args = parser.parse(tokens, opts=opts, args=args)
         tree, opts, args = semantic_analizer.analize(tree, opts=opts, args=args)
+        ## TODO: refactor with polymorfism but carefull with circular imports!
+        interpreter = None
+        if args.runner == BATS:
+            interpreter = bats_interpreter
+        elif args.runner == BASH:
+            interpreter = bash_interpreter
         transpiled = interpreter.interpret(tree, opts=opts, args=args)
 
         # Save copy if requested
@@ -146,18 +154,18 @@ class BatsppTest:
         """Run Batspp test FILE and return result"""
         timer = Timer()
         timer.start()
-
+        # Get tests
         transpiled = self.transpile_to_bats(file, args=args, opts=opts)
         # Save in TMP to run
-        temp_bats = f'{gh.get_temp_file()}.{TEST_OUTPUT_INTERPRETER}'
+        temp_bats = f'{gh.get_temp_file()}.tmp'
         save(file, temp_bats, transpiled)
         # Save copy if requested
         if copy_path:
             save(file, copy_path, transpiled)
         # Run
         sudo = 'sudo' if 'sudo' in transpiled else ''
-        output = gh.run(f'{sudo} {TEST_OUTPUT_INTERPRETER} {args.run_opts} {temp_bats}')
-
+        output = gh.run(f'{sudo} {args.runner} {args.run_opts} {temp_bats}')
+        #
         debug.trace(5, f'BatsppTest.run() finished in {timer.stop()} seconds')
         return output
 

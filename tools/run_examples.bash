@@ -28,10 +28,16 @@ function run_eg () {
     generated=$3
     output=$4
 
+    # Set runner if passed
+    runner="bats"
+    if [ ! -z "$5" ]; then
+        runner=$5
+    fi
+
     # Set args to run
     script="python3 $base/batspp/batspp"
     test_file=$folder/$test_file
-    generated=$folder/$generated
+    generated=$folder/$generated.$runner
     output=$folder/$output
 
     # Print trace
@@ -43,7 +49,7 @@ function run_eg () {
 
     # Run
     cd $folder
-    $script --hexdump_debug --save $generated $test_file > $output
+    $script --hexdump_debug --runner $runner --save $generated $test_file > $output
 
     # Replace random generated values
     # to avoid changes on git diff
@@ -55,8 +61,8 @@ function run_eg () {
     replacement="source '<REPLACED>'"
     sed -i "s/$to_replace/$replacement/g" $generated
     # Replace random temporal files
-    to_replace="\/tmp\/.*\.bash"
-    replacement="\/tmp\/'<REPLACED>'.bash"
+    to_replace="\/tmp\/.*"
+    replacement="\/tmp\/'<REPLACED>'"
     sed -i "s/$to_replace/$replacement/g" $output
 }
 
@@ -65,7 +71,7 @@ function run_eg () {
 # $2 -> test file (without extension)
 # $3 -> extension of test file
 function run_named_eg () {
-    run_eg $1 "$2.$3" "generated_$2.bash" "output_$2.txt"
+    run_eg $1 "$2.$3" "generated_$2" "output_$2.txt"
 }
 
 # Run example that starts with number order 
@@ -73,8 +79,9 @@ function run_named_eg () {
 # $2 -> order number
 # $3 -> test file (without extension and order number)
 # $4 -> extension of test file
+# $5 -> runner, bats by default
 function run_numeric_eg () {
-    run_eg $1 "$2_$3.$4" "$2_generated_$3.bash" "$2_output_$3.txt"
+    run_eg $1 "$2_$3.$4" "$2_generated_$3" "$2_output_$3.txt" $5
 }
 
 

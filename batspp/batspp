@@ -65,7 +65,7 @@ SKIP_RUN = 'skip_run'
 OMIT_TRACE = 'omit_trace'
 DISABLE_ALIASES = 'disable_aliases'
 VERSION = 'version'
-PLATFORM = 'platform'
+RUNNER = 'runner'
 
 class Batspp(Main):
     """Argument processing class"""
@@ -88,7 +88,7 @@ class Batspp(Main):
     omit_trace = False
     disable_aliases = False
     version = False
-    platform = 'bats-core'
+    runner = 'bats'
 
     def setup(self) -> None:
         """Process arguments"""
@@ -113,7 +113,7 @@ class Batspp(Main):
         self.omit_trace = self.get_entered_bool(OMIT_TRACE,  self.omit_trace)
         self.disable_aliases = self.get_entered_bool(DISABLE_ALIASES,  self.disable_aliases)
         self.version = self.has_parsed_option(VERSION)
-        self.platform = self.get_entered_text(PLATFORM, self.platform)
+        self.runner = self.get_entered_text(RUNNER, self.runner)
 
     def run_main_step(self) -> None:
         """Process main script"""
@@ -138,7 +138,7 @@ class Batspp(Main):
             run_opts = self.run_opts,
             copy_dir = self.copy_dir,
             debug = self.debug,
-            platform = self.platform,
+            runner = self.runner,
             )
 
         # Start timer for profiling
@@ -224,7 +224,7 @@ if __name__ == '__main__':
             (RUN_OPTS, 'Options for run Bats command'),
             (COPY_DIR, 'Copy directory to temp. dir for input files, etc.'),
             (DEBUG, 'Add custom debug to actual/expected values'),
-            (PLATFORM, 'Testing platform to run tests, e.g. framework "bats-core" or "bash" directly'),
+            (RUNNER, 'Testing runner, could be "Bats" or "Bash"'),
             ],
         manual_input = True,
         )

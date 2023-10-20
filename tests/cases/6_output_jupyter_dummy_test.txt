@@ -1,12 +1,13 @@
+1..2
 ok 1 test of line 2
-
-=======  actual  =======
-00000000  0a                                                |.|
-00000001
-======= expected =======
-00000000  31 0a                                             |1.|
-00000002
-========================
 not ok 2 test of line 6
-
-Short summary: 1 failed, 1 passed.
+# (in test file /tmp/'<REPLACED>'
+#   `[ "$(date | grep "oct 2020")" == "$(echo -e '1\n')" ]' failed
+#
+# =======  actual  =======
+# 00000000  22 22 0a                                          |"".|
+# 00000003
+# ======= expected =======
+# 00000000  22 31 22 0a                                       |"1".|
+# 00000004
+# ========================

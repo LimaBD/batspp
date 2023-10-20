@@ -33,5 +33,9 @@ TEARDOWN_FUNCTION = 'run_teardown'
 BATSPP_EXTENSION = 'batspp'
 TEST_OUTPUT_INTERPRETER = 'bash'
 
+# Runners
+BATS = 'bats'
+BASH = 'bash'
+
 if __name__ == '__main__':
     warning_not_intended_for_cmd()
