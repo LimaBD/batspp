@@ -31,6 +31,7 @@ class BatsppArgs:
             run_opts: str = '',
             copy_dir: str = '',
             debug: str = '',
+            platform: str = '',
             ) -> None:
 
         # Check for sources, filter empty sources
@@ -61,6 +62,9 @@ class BatsppArgs:
         assert_type(debug, str)
         self.debug = debug
 
+        # Check for platform
+        assert_type(platform, str)
+        self.platform = platform
 
 if __name__ == '__main__':
     warning_not_intended_for_cmd()
