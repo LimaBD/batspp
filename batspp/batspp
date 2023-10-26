@@ -45,6 +45,9 @@ from batspp.batspp_opts import BatsppOpts
 from batspp.batspp_args import BatsppArgs
 from batspp.batspp_test import BatsppTest
 from batspp._timer import Timer
+from batspp._settings import (
+    BASH, BATS,
+)
 
 # Command-line labels and
 # enviroment variables constants
@@ -66,6 +69,8 @@ OMIT_TRACE = 'omit_trace'
 DISABLE_ALIASES = 'disable_aliases'
 VERSION = 'version'
 RUNNER = 'runner'
+BASH_EVAL = 'bash_eval'
+BATS_EVAL = 'bats_eval'
 
 class Batspp(Main):
     """Argument processing class"""
@@ -88,7 +93,9 @@ class Batspp(Main):
     omit_trace = False
     disable_aliases = False
     version = False
-    runner = 'bats'
+    runner = ''
+    bats_eval = True
+    bash_eval = False
 
     def setup(self) -> None:
         """Process arguments"""
@@ -114,6 +121,8 @@ class Batspp(Main):
         self.disable_aliases = self.get_entered_bool(DISABLE_ALIASES,  self.disable_aliases)
         self.version = self.has_parsed_option(VERSION)
         self.runner = self.get_entered_text(RUNNER, self.runner)
+        self.bats_eval = self.get_entered_bool(BATS_EVAL, self.bats_eval)
+        self.bash_eval = self.get_entered_bool(BASH_EVAL, self.bash_eval)
 
     def run_main_step(self) -> None:
         """Process main script"""
@@ -121,6 +130,13 @@ class Batspp(Main):
         if self.version:
             print(f'Batspp version {__version__}')
             return
+
+        # Set runner to evaluate tests
+        if not self.runner:
+            if self.bats_eval:
+                self.runner = BATS
+            elif self.bash_eval:
+                self.runner = BASH
 
         # Build tests
         test = BatsppTest()
@@ -225,6 +241,8 @@ if __name__ == '__main__':
             (COPY_DIR, 'Copy directory to temp. dir for input files, etc.'),
             (DEBUG, 'Add custom debug to actual/expected values'),
             (RUNNER, 'Testing runner, could be "Bats" or "Bash"'),
+            (BATS_EVAL, 'Evaluate Batspp tests with Bats'),
+            (BASH_EVAL, 'Evaluate Batspp tests with Bash'),
             ],
         manual_input = True,
         )
