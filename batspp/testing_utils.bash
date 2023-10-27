@@ -9,9 +9,9 @@
 function print_debug() {
     echo ""
     echo "=======  actual  ======="
-    bash -c "echo \\\"$1\\\" ${VERBOSE_DEBUG}"
+    bash -c "echo \"$1\" ${VERBOSE_DEBUG}"
     echo "======= expected ======="
-    bash -c "echo \\\"$2\\\" ${VERBOSE_DEBUG}"
+    bash -c "echo \"$2\" ${VERBOSE_DEBUG}"
     echo "========================"
 }
 

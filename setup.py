@@ -51,4 +51,5 @@ setuptools.setup(
     packages=['batspp'],
     python_requires=">=3.8",
     install_requires=required,
+    package_data={'': ['*.bash']},
 )
