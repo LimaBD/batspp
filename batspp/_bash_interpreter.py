@@ -44,37 +44,27 @@ class BashInterpreter(Interpreter):
         result += f'{SUMMARY_FUNCTION}\n'
         return result
 
-    # pylint: disable=invalid-name
-    def visit_Test(self, node: Test) -> str:
-        """
-        Visit Test NODE, also updates global class test title
-        """
-        name = self.visit(node.reference)
-        flatten_name = flatten_str(name)
-        # Test header
-        # with call to a global setup function
+    def build_test_header(self, test_name:str) -> str:
+        """Build test header"""
+        flatten_name = flatten_str(test_name)
         result = (
             f'function {flatten_name} {{\n'
             f'    exec > /dev/null # avoid setup commands to show output\n'
             f'    {SETUP_FUNCTION} "{flatten_name}"\n'
             )
-        # Visit assertions
-        # Note that due to the semantic analyzer,
-        # only tests should be here
-        for t in node.setup_assertions:
-            assert isinstance(t, SetupAssertion), 'Only SetupAssertion nodes should be at this point'
-            result += self.visit(t)
-        # Test footer
-        # with call to a global teardown function
-        result += (
+        return result
+
+    def build_test_footer(self, test_name:str) -> str:
+        """Build test footer"""
+        flatten_name = flatten_str(test_name)
+        result = (
             '\n'
             f'    {TEARDOWN_FUNCTION}\n'
             '    exec >/dev/tty # restore stdout\n'
             '    return 0\n'
             '}\n'
-            f'{RUN_TEST_FUNCTION} "{name}" "{flatten_name}"\n\n'
+            f'{RUN_TEST_FUNCTION} "{test_name}" "{flatten_name}"\n\n'
             )
-        debug.trace(7, f'interpreter.visit_Test(node={node}) => {result}')
         return result
 
     def build_assertion(

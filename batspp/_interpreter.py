@@ -153,12 +153,30 @@ class Interpreter(ReferenceNodeVisitor):
         """
         return self.visit(node.child)
 
-    # pylint: disable=invalid-name
+   # pylint: disable=invalid-name
     def visit_Test(self, node: Test) -> str:
         """
         Visit Test NODE, also updates global class test title
         """
-        raise Exception('visit_Test must be implemented by subclasses')
+        name = self.visit(node.reference)
+        result = self.build_test_header(name)
+        # Visit assertions
+        # Note that due to the semantic analyzer,
+        # only tests should be here
+        for t in node.setup_assertions:
+            assert isinstance(t, SetupAssertion), 'Only SetupAssertion nodes should be at this point'
+            result += self.visit(t)
+        result += self.build_test_footer(name)
+        debug.trace(7, f'interpreter.visit_Test(node={node}) => {result}')
+        return result
+
+    def build_test_header(self, test_name:str) -> str:
+        """Build test header"""
+        raise Exception('build_test_header must be implemented by child classes')
+
+    def build_test_footer(self, test_name:str) -> str:
+        """Build test footer"""
+        raise Exception('build_test_footer must be implemented by child classes')
 
     # pylint: disable=invalid-name
     def visit_Setup(self, node: Setup) -> str:

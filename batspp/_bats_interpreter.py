@@ -35,32 +35,21 @@ class BatsInterpreter(Interpreter):
     def __init__(self):
         super().__init__()
 
-   # pylint: disable=invalid-name
-    def visit_Test(self, node: Test) -> str:
-        """
-        Visit Test NODE, also updates global class test title
-        """
-        name = self.visit(node.reference)
-        # Test header
-        # with call to a global setup function
+    def build_test_header(self, test_name:str) -> str:
+        """Build test header"""
         result = (
-            f'@test "{name}" {{\n'
-            f'    {SETUP_FUNCTION} "{flatten_str(name)}"\n'
+            f'@test "{test_name}" {{\n'
+            f'    {SETUP_FUNCTION} "{flatten_str(test_name)}"\n'
             )
-        # Visit assertions
-        # Note that due to the semantic analyzer,
-        # only tests should be here
-        for t in node.setup_assertions:
-            assert isinstance(t, SetupAssertion), 'Only SetupAssertion nodes should be at this point'
-            result += self.visit(t)
-        # Test footer
-        # with call to a global teardown function
-        result += (
+        return result
+
+    def build_test_footer(self, test_name:str) -> str:
+        """Build test footer"""
+        result = (
             '\n'
             f'    {TEARDOWN_FUNCTION}\n'
             '}\n\n'
             )
-        debug.trace(7, f'interpreter.visit_Test(node={node}) => {result}')
         return result
 
     def build_assertion(
