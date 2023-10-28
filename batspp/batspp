@@ -94,7 +94,7 @@ class Batspp(Main):
     disable_aliases = False
     version = False
     runner = ''
-    bats_eval = True
+    bats_eval = False
     bash_eval = False
 
     def setup(self) -> None:
@@ -137,6 +137,9 @@ class Batspp(Main):
                 self.runner = BATS
             elif self.bash_eval:
                 self.runner = BASH
+            else:
+                # By default
+                self.runner = BATS
 
         # Build tests
         test = BatsppTest()
@@ -231,6 +234,8 @@ if __name__ == '__main__':
             (SKIP_RUN, 'Do not run the test script'),
             (OMIT_TRACE, 'Omit actual/expected trace from test file'),
             (DISABLE_ALIASES, 'Disable alias expansion'),
+            (BATS_EVAL, 'Evaluate Batspp tests with Bats'),
+            (BASH_EVAL, 'Evaluate Batspp tests with Bash'),
             ],
         text_options = [
             (SAVE, 'Specify path to save the generated test file'),
@@ -241,8 +246,6 @@ if __name__ == '__main__':
             (COPY_DIR, 'Copy directory to temp. dir for input files, etc.'),
             (DEBUG, 'Add custom debug to actual/expected values'),
             (RUNNER, 'Testing runner, could be "Bats" or "Bash"'),
-            (BATS_EVAL, 'Evaluate Batspp tests with Bats'),
-            (BASH_EVAL, 'Evaluate Batspp tests with Bash'),
             ],
         manual_input = True,
         )
