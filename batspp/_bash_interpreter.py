@@ -21,11 +21,12 @@ from batspp._interpreter import (
     Interpreter, flatten_str
     )
 from batspp._ast_node import (
-    Test, SetupAssertion,
+    Test, SetupAssertion, TestSuite,
     )
 from batspp._settings import (
     SETUP_FUNCTION, TEARDOWN_FUNCTION,
     RUN_TEST_FUNCTION, DEBUG_FUNCTION,
+    SUMMARY_FUNCTION,
     )
 
 class BashInterpreter(Interpreter):
@@ -35,6 +36,13 @@ class BashInterpreter(Interpreter):
 
     def __init__(self):
         super().__init__()
+
+    # pylint: disable=invalid-name
+    def visit_TestSuite(self, node: TestSuite) -> str:
+        """Visit TestSuite NODE"""
+        result = super().visit_TestSuite(node)
+        result += f'{SUMMARY_FUNCTION}\n'
+        return result
 
     # pylint: disable=invalid-name
     def visit_Test(self, node: Test) -> str:
@@ -47,6 +55,7 @@ class BashInterpreter(Interpreter):
         # with call to a global setup function
         result = (
             f'function {flatten_name} {{\n'
+            f'    exec > /dev/null # avoid setup commands to show output\n'
             f'    {SETUP_FUNCTION} "{flatten_name}"\n'
             )
         # Visit assertions
@@ -60,6 +69,7 @@ class BashInterpreter(Interpreter):
         result += (
             '\n'
             f'    {TEARDOWN_FUNCTION}\n'
+            '    exec >/dev/tty # restore stdout\n'
             '    return 0\n'
             '}\n'
             f'{RUN_TEST_FUNCTION} "{name}" "{flatten_name}"\n\n'
@@ -87,6 +97,7 @@ class BashInterpreter(Interpreter):
         # Unify everything
         result = (
             f'{debug_cmd}'
+            '    exec >/dev/tty # restore stdout\n'
             f'    if [ "$({actual})" {operator} "$(echo -e {expected})" ]\n'
             '    then\n'
             '        : # keep\n'
@@ -94,6 +105,7 @@ class BashInterpreter(Interpreter):
             f'        {DEBUG_FUNCTION} "$({actual})" "$(echo -e {expected})"\n'
             '        return 1\n'
             '    fi\n'
+            '    exec > /dev/null # next setup commands should not show output\n'
             )
         debug.trace(7, f'interpreter.build_assertion(operator={operator}, actual={actual}, expeted={expected}) => {result}')
         return result
