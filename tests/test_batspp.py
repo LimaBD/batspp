@@ -99,13 +99,13 @@ class TestBatspp(TestWrapper):
         # Test with content
         gh.write_file(test_file, self.simple_test)
         result = gh.run(f'python3 {BATSPP_PATH} --output {test_file}')
-        self.assertTrue(result.startswith('#!/usr/bin/env bats'))
+        self.assertTrue(result.startswith('#!/usr/bin bats'))
 
         # Test argument as enviroment variable
         result = gh.run(f'OUTPUT=0 python3 {BATSPP_PATH} {test_file}')
-        self.assertFalse(result.startswith('#!/usr/bin/env bats'))
+        self.assertFalse(result.startswith('#!/usr/bin bats'))
         result = gh.run(f'OUTPUT=1 python3 {BATSPP_PATH} {test_file}')
-        self.assertTrue(result.startswith('#!/usr/bin/env bats'))
+        self.assertTrue(result.startswith('#!/usr/bin bats'))
 
     def test_sources(self):
         """Test --sources argument"""

@@ -31,9 +31,15 @@ from batspp._exceptions import (
 from batspp._token import (
     TokenData, Token, PESO, GREATER, SETUP, TEARDOWN,
     TEST, POINTER, CONTINUATION, ASSERT_EQ, ASSERT_NE,
-    TEXT, EOF, NEW_LINE, MINOR
+    TEXT, EOF, NEW_LINE, MINOR, GLOBAL,
     )
 from batspp._timer import Timer
+from batspp.batspp_args import (
+    BatsppArgs,
+    )
+from batspp.batspp_opts import (
+    BatsppOpts,
+    )
 
 class Tags(Enum):
     """Tags enum"""
@@ -92,6 +98,8 @@ class Lexer:
 
     def __init__(self) -> None:
         # Global states variables
+        self.opts = None
+        self.args = None
         self.text = None
         self.tokens_stack = []
 
@@ -125,7 +133,6 @@ class Lexer:
     def run_extraction_of_tokens(self):
         """Run extraction of all tokens from text"""
         ## TODO: refactor this copypaste caos
-        ## TODO: analyze how much execution time takes regex
         ## TODO: implement usage of extra_indent to comments embedded tests
 
         # For convention each token is responsible
@@ -188,6 +195,7 @@ class Lexer:
                     match.group(),
                     data,
                     ))
+                self.opts.greater_token_present = True
                 continue
 
             # Tokenize test
@@ -201,12 +209,46 @@ class Lexer:
                     ))
                 continue
 
+            # Tokenize global setup
+            ## TODO: fix pattern to avoid matching "setup" in any part of the line
+            match = re_match(r'^# *[Gg]lobal *[Ss]etup(?: +|$)', self.text.get_rest_line())
+            if match:
+                self.text.advance_column(match.span()[1])
+                self.push_token(Token(
+                    GLOBAL,
+                    match.group(),
+                    data,
+                    ))
+                self.push_token(Token(
+                    SETUP,
+                    match.group(),
+                    data,
+                    ))
+                continue
+
             # Tokenize setup
             match = re_match(r'^# *[Ss]etup(?: +|$)', self.text.get_rest_line())
             if match:
                 self.text.advance_column(match.span()[1])
                 self.push_token(Token(
                     SETUP,
+                    match.group(),
+                    data,
+                    ))
+                continue
+
+            # Tokenize global teardown
+            ## TODO: fix pattern to avoid matching "teardown" in any part of the line
+            match = re_match(r'^# *[Gg]lobal *[Tt]eardown(?: +|$)', self.text.get_rest_line())
+            if match:
+                self.text.advance_column(match.span()[1])
+                self.push_token(Token(
+                    GLOBAL,
+                    match.group(),
+                    data,
+                    ))
+                self.push_token(Token(
+                    TEARDOWN,
                     match.group(),
                     data,
                     ))
@@ -274,6 +316,7 @@ class Lexer:
                     match.group(),
                     data,
                     ))
+                self.opts.has_arrow_assertion = True
                 continue
 
             # Tokenize assert not equal
@@ -285,6 +328,7 @@ class Lexer:
                     match.group(),
                     data,
                     ))
+                self.opts.has_arrow_assertion = True
                 continue
 
             # Skip other comments that are not directives
@@ -315,24 +359,32 @@ class Lexer:
         # Tokenize End of file
         self.push_token(Token(EOF, None, data))
 
-    def tokenize(self, text: str, embedded_tests:bool=False) -> list:
+    def tokenize(
+            self,
+            text: str,
+            opts: BatsppOpts = BatsppOpts(),
+            args: BatsppArgs = BatsppArgs()
+            ) -> list:
         """Tokenize text"""
+        self.opts = opts
+        self.args = args
+        #
         timer = Timer()
         timer.start()
         #
-        if embedded_tests:
+        if opts.embedded_tests:
             text = _normalize_embedded_tests(text)
         self.text = TextLiner(text)
         self.run_extraction_of_tokens()
         #
         debug.trace(7,
-            f'Lexer.tokenize(text={text}, embedded_tests={embedded_tests}) in {timer.stop()} seconds'
+            f'Lexer.tokenize(text={text}, opts, args) in {timer.stop()} seconds'
             )
-        return self.pop_tokens()
+        return self.pop_tokens(), opts, args
 
-def _normalize_embedded_tests(embedded_tests: str) -> str:
+def _normalize_embedded_tests(content: str) -> str:
     """Normalize embedded comment tests into tests"""
-    result = embedded_tests
+    result = content
 
     # 1st remove not commented lines
     result = re_sub(r'^[^#]+?$', '\n', result, flags=re_MULTILINE)
@@ -346,7 +398,7 @@ def _normalize_embedded_tests(embedded_tests: str) -> str:
         flags=re_MULTILINE,
         )
 
-    debug.trace(7, f'normalize_embedded_tests({embedded_tests}) => \n{result}')
+    debug.trace(7, f'normalize_embedded_tests({content}) => \n{result}')
     return result
 
 lexer = Lexer()

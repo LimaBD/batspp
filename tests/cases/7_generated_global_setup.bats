@@ -17,6 +17,7 @@ function run_setup () {
     test_folder=$(echo $TEMP_DIR/$1-$$)
     mkdir --parents "$test_folder"
     cd "$test_folder" || echo Warning: Unable to "cd $test_folder"
+    alias count-words='wc -w'
 }
 
 # Teardown function
@@ -24,13 +25,24 @@ function run_teardown () {
     : # Nothing here...
 }
 
-@test "test of line 1" {
-    run_setup "test-of-line-1"
+@test "word count 1" {
+    run_setup "word-count-1"
 
-    # Assertion of line 1
+    # Assertion of line 7
 	shopt -s expand_aliases
-	print_debug "$(echo "Hello World!")" "$(echo -e 'Hello World!\n')"
-	[ "$(echo "Hello World!")" == "$(echo -e 'Hello World!\n')" ]
+	print_debug "$(echo abc | count-words)" "$(echo -e '1\n')"
+	[ "$(echo abc | count-words)" == "$(echo -e '1\n')" ]
+
+    run_teardown
+}
+
+@test "word count 2" {
+    run_setup "word-count-2"
+
+    # Assertion of line 11
+	shopt -s expand_aliases
+	print_debug "$(echo abc def ghi | count-words)" "$(echo -e '3\n')"
+	[ "$(echo abc def ghi | count-words)" == "$(echo -e '3\n')" ]
 
     run_teardown
 }

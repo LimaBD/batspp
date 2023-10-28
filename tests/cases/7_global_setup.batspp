@@ -1,0 +1,12 @@
+# Simple global setup test
+
+# Global Setup
+$ alias count-words='wc -w'
+
+# Test word count 1
+$ echo abc | count-words
+1
+
+# Test word count 2
+$ echo abc def ghi | count-words
+3

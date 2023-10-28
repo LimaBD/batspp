@@ -30,7 +30,7 @@ from batspp._ast_node import (
     )
 
 # Reference to the module being tested
-from batspp._interpreter import interpreter
+from batspp._bats_interpreter import bats_interpreter
 
 class TestNodeVisitor:
     """Class for testcase definition"""

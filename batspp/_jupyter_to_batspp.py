@@ -66,11 +66,14 @@ class _JupyterToBatspp:
 
             # Error output type
             elif output['output_type'] == 'error':
-                result += _merge_lines(output['ename'])
+                result += _merge_lines(output['evalue'])
 
             else:
                 ## NOTE: display_data (used for images) is not supported for now
                 raise Exception("Output type not sopported for now: " + output['output_type'])
+
+        # Add trailing newline to separate commands from one cell to another
+        result += '\n'
 
         return result
 

@@ -37,8 +37,11 @@ from batspp._exceptions import (
     )
 from batspp._token import (
     ASSERT_EQ, ASSERT_NE, Token
-    )    
+    )
 from batspp._timer import Timer
+from batspp._settings import (
+    SETUP_FUNCTION, TEARDOWN_FUNCTION,
+    )
 
 # Constants
 #
@@ -48,8 +51,6 @@ from batspp._timer import Timer
 VERBOSE_DEBUG = 'VERBOSE_DEBUG'
 TEMP_DIR = 'TEMP_DIR'
 COPY_DIR = 'COPY_DIR'
-SETUP_FUNCTION = 'run_setup'
-TEARDOWN_FUNCTION = 'run_teardown'
 
 class Interpreter(ReferenceNodeVisitor):
     """
@@ -58,7 +59,8 @@ class Interpreter(ReferenceNodeVisitor):
     """
 
     def __init__(self) -> None:
-        # Global states variables
+        """Initialize Interpreter class"""
+        # Default options
         self.opts = BatsppOpts()
         self.args = BatsppArgs()
 
@@ -71,7 +73,7 @@ class Interpreter(ReferenceNodeVisitor):
         """Visit TestSuite NODE"""
         # Build text parts
         header_text = (
-            '#!/usr/bin/env bats'
+            f'#!/usr/bin {self.args.runner}'
             f'{" " if self.args.run_opts else ""}'
             f'{self.args.run_opts}\n'
             '#\n'
@@ -82,9 +84,6 @@ class Interpreter(ReferenceNodeVisitor):
         constants_text = self.visit(node.constants)
         global_setup_text = self.visit_optional(node.global_setup, '')
         global_teardown_text = self.visit_optional(node.global_teardown, '')
-        debug_function_text = ''
-        if self.opts.verbose_debug and not self.opts.omit_trace:
-            debug_function_text += build_debug_function()
         # Tests suite should contain only tests on this point
         # due to the semantic analyzer that merges setups into tests
         tests_text = ''.join([self.visit(test) for test in node.tests_or_setups])
@@ -97,7 +96,6 @@ class Interpreter(ReferenceNodeVisitor):
                 + global_setup_text \
                 + global_teardown_text \
                 + tests_text \
-                + debug_function_text \
                 + ''
         debug.trace(7, f'interpreter.visit_TestsSuite(node={node}) => {result}')
         return result
@@ -120,7 +118,7 @@ class Interpreter(ReferenceNodeVisitor):
             '# $1 -> test name\n'
             f'function {SETUP_FUNCTION} () {{\n'
             )
-        result += build_commands_block(self.visit(node.commands), '\t')
+        result += build_commands_block(self.visit(node.commands), '    ')
         result += '}\n\n'
         debug.trace(7, f'interpreter.visit_GlobalSetup() => {result}')
         return result
@@ -138,7 +136,7 @@ class Interpreter(ReferenceNodeVisitor):
         if commands:
             body = build_commands_block(commands)
         else:
-            body = '\t: # Nothing here...'
+            body = '    : # Nothing here...'
         result = (
             '# Teardown function\n'
             f'function {TEARDOWN_FUNCTION} () {{\n'
@@ -155,33 +153,30 @@ class Interpreter(ReferenceNodeVisitor):
         """
         return self.visit(node.child)
 
-    # pylint: disable=invalid-name
+   # pylint: disable=invalid-name
     def visit_Test(self, node: Test) -> str:
         """
         Visit Test NODE, also updates global class test title
         """
         name = self.visit(node.reference)
-        # Test header
-        # with call to a global setup function
-        result = (
-            f'@test "{name}" {{\n'
-            f'\t{SETUP_FUNCTION} "{flatten_str(name)}"\n'
-            )
+        result = self.build_test_header(name)
         # Visit assertions
         # Note that due to the semantic analyzer,
         # only tests should be here
         for t in node.setup_assertions:
             assert isinstance(t, SetupAssertion), 'Only SetupAssertion nodes should be at this point'
             result += self.visit(t)
-        # Test footer
-        # with call to a global teardown function
-        result += (
-            '\n'
-            f'\t{TEARDOWN_FUNCTION}\n'
-            '}\n\n'
-            )
+        result += self.build_test_footer(name)
         debug.trace(7, f'interpreter.visit_Test(node={node}) => {result}')
         return result
+
+    def build_test_header(self, test_name:str) -> str:
+        """Build test header"""
+        raise Exception('build_test_header must be implemented by child classes')
+
+    def build_test_footer(self, test_name:str) -> str:
+        """Build test footer"""
+        raise Exception('build_test_footer must be implemented by child classes')
 
     # pylint: disable=invalid-name
     def visit_Setup(self, node: Setup) -> str:
@@ -207,7 +202,7 @@ class Interpreter(ReferenceNodeVisitor):
         Visit SetupAssertion NODE
         """
         result = (
-            f'\n\t# Assertion of line {node.assertion.line}\n'
+            f'\n    # Assertion of line {node.assertion.line}\n'
         )
         result += self.visit_optional(node.setup, '')
         result += self.visit(node.assertion)
@@ -280,22 +275,7 @@ class Interpreter(ReferenceNodeVisitor):
         """
         Build assertion
         """
-        actual = actual.replace('\n', '')
-        expected = repr(expected.strip().rstrip('\n') + '\n')
-        # Set debug
-        debug_cmd = ''
-        if not self.opts.omit_trace:
-            debug_cmd = (
-                '\tshopt -s expand_aliases\n'
-                f'\tprint_debug "$({actual})" "$(echo -e {expected})"\n'
-                )
-        # Unify everything
-        result = (
-            f'{debug_cmd}'
-            f'\t[ "$({actual})" {operator} "$(echo -e {expected})" ]\n'
-            )
-        debug.trace(7, f'interpreter.build_assertion(operator={operator}, actual={actual}, expeted={expected}) => {result}')
-        return result
+        raise Exception('build_assertion must be implemented by subclasses')
 
     def visit_MultilineText(self, node: MultilineText) -> str:
         """
@@ -353,7 +333,7 @@ def flatten_str(string: str) -> str:
 
 def build_commands_block(
         commands: list,
-        indent: str = '\t',
+        indent: str = '    ',
         end_of_line: str = '\n',
         ) -> str:
     """Build commands block with COMMANDS indented with tab"""
@@ -374,28 +354,6 @@ def build_commands_block(
         result += '\n'
     debug.trace(7, f'interpreter.build_commands_block({commands}) => {result}')
     return result
-
-def build_debug_function() -> str:
-    """Build debug function"""
-    # NOTE: this provide a debug trace too.
-
-    result = (
-        '# This prints debug data when an assertion fail\n'
-        '# $1 -> actual value\n'
-        '# $2 -> expected value\n'
-        'function print_debug() {\n'
-        '\techo "=======  actual  ======="\n'
-        f'\tbash -c "echo \\\"$1\\\" ${VERBOSE_DEBUG}"\n'
-        '\techo "======= expected ======="\n'
-        f'\tbash -c "echo \\\"$2\\\" ${VERBOSE_DEBUG}"\n'
-        '\techo "========================"\n'
-        '}\n\n'
-        )
-
-    debug.trace(7, 'interpreter.build_debug()')
-    return result
-
-interpreter = Interpreter()
 
 if __name__ == '__main__':
     warning_not_intended_for_cmd()
