@@ -5,7 +5,7 @@
 
 name: tests
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   build:
@@ -14,17 +14,14 @@ jobs:
 
     strategy:
       matrix:
-        # NOTE:
-        # - ubuntu-16.04 is not being supported by Github.
-        #   https://github.blog/changelog/2021-04-29-github-actions-ubuntu-16-04-lts-virtual-environment-will-be-removed-on-september-20-2021/
-        os: [18.04, 20.04, 22.04, latest]
-        python-version: ["3.10"]
+        os: [latest]
+        python-version: [3.10.13, ]
 
     steps:
     - uses: actions/checkout@v3
     - name: Build docker image
       run: |
-        docker build --build-arg UBUNTU=${{ matrix.os }} --build-arg PYTHON=${{ matrix.python-version }} -t batspp-dev -f- . <Dockerfile
+        docker build --build-arg UBUNTU_VERSION=${{ matrix.os }} --build-arg PYTHON_VERSION=${{ matrix.python-version }} -t batspp-dev -f- . <Dockerfile
     - name: Run tests and generate coverage report
       run: |
         docker run --entrypoint './tools/run_tests.bash' --rm --mount type=bind,source="$(pwd)",target=/home/batspp batspp-dev
