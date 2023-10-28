@@ -20,7 +20,7 @@ from batspp._jupyter_to_batspp import jupyter_to_batspp
 from batspp._bats_interpreter import bats_interpreter
 from batspp._bash_interpreter import bash_interpreter
 from batspp._settings import (
-    BATSPP_EXTENSION, TEST_OUTPUT_INTERPRETER,
+    BATSPP_EXTENSION,
     BASH, BATS,
 )
 from batspp.batspp_opts import BatsppOpts
@@ -52,25 +52,35 @@ def replace_extension(filename:str, extension:str) -> str:
     filename = gh.remove_extension(filename, current_extension)
     return f'{filename}.{extension}'
 
-def resolve_path(path:str, alternative:str) -> str:
-    """Resolve PATH based on ALTERNATIVE filename"""
+def resolve_path(path:str, alternative:str, extension:str) -> str:
+    """
+    Resolve PATH based on ALTERNATIVE filename and EXTENSION
+    \n
+    resolve_path('/folder/', '/project/folder/test_file.batspp', 'bash')
+    => '/folder/generated_test_file.bash'
+    """
     result = ''
     if not path:
         result = add_prefix_to_filename(alternative, 'generated_')
-        result = replace_extension(result, TEST_OUTPUT_INTERPRETER)
+        result = replace_extension(result, extension)
     elif path.endswith('/'):
         result = merge_filename_into_path(alternative, path)
         result = add_prefix_to_filename(result, 'generated_')
-        result = replace_extension(result, TEST_OUTPUT_INTERPRETER)
+        result = replace_extension(result, extension)
     else:
         result = path
     return result
 
-def save(original_file, new_file, content):
-    """Save CONTENT to NEW_FILE, resolving NEW_FILE path based on ORIGINAL_FILE"""
-    new_file = resolve_path(new_file, original_file)
-    gh.write_file(new_file, content)
-    gh.run(f'chmod +x {new_file}')
+def save_resolving_path(original_file, new_file, extension, content):
+    """Save with exec permissions CONTENT to NEW_FILE,
+       resolving NEW_FILE path based on ORIGINAL_FILE"""
+    new_file = resolve_path(new_file, original_file, extension)
+    save_with_permissions(new_file, content)
+
+def save_with_permissions(file:str, content:str) -> None:
+    """Save CONTENT to FILE with exec permissions"""
+    gh.write_file(file, content)
+    gh.run(f'chmod +x {file}')
 
 class BatsppTest:
     """
@@ -128,7 +138,7 @@ class BatsppTest:
 
         # Save copy if requested
         if copy_path:
-            save(file, copy_path, transpiled)
+            save_resolving_path(file, copy_path, args.runner, transpiled)
 
         debug.trace(5, f'BatsppTest.transpile_to_bats() finished in {timer.stop()} seconds')
         return transpiled
@@ -141,7 +151,7 @@ class BatsppTest:
             opts: BatsppOpts = BatsppOpts()
             ) -> None:
         """Save Batspp transiled test FILE to OUTPUT path,
-           if OUTPUT is not provided or is a dir, a default is used 'generated_<file>.bash'"""
+           if OUTPUT is not provided or is a dir, a default is used 'generated_<file>.runner'"""
         _ = self.transpile_to_bats(file, copy_path=output, args=args, opts=opts)
 
     def run(
@@ -158,10 +168,10 @@ class BatsppTest:
         transpiled = self.transpile_to_bats(file, args=args, opts=opts)
         # Save in TMP to run
         temp_bats = f'{gh.get_temp_file()}.tmp'
-        save(file, temp_bats, transpiled)
+        save_with_permissions(temp_bats, transpiled)
         # Save copy if requested
         if copy_path:
-            save(file, copy_path, transpiled)
+            save_resolving_path(file, copy_path, args.runner, transpiled)
         # Run
         sudo = 'sudo' if 'sudo' in transpiled else ''
         output = gh.run(f'{sudo} {args.runner} {args.run_opts} {temp_bats}')
