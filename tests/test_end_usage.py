@@ -169,12 +169,36 @@ class TestEndUsage(TestWrapper):
     def test_long_outputs(self):
         """End test tests/cases/5_long_outputs.batspp"""
         debug.trace(debug.QUITE_DETAILED,
-                    f"TestEndUsage.test_comments(); self={self}")
+                    f"TestEndUsage.test_long_outputs(); self={self}")
         self.run_regression_test(
             dir_path=CASES_PATH,
             test_file='5_long_outputs', extension='batspp',
             generated_file='5_generated_long_outputs',
             output_file='5_output_long_outputs'
+            )
+
+    @pytest.mark.reinstall
+    def test_jupyter_dummy_test(self):
+        """End test tests/cases/6_jupyter_dummy_test.batspp"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestEndUsage.test_jupyter_dummy_test(); self={self}")
+        self.run_regression_test(
+            dir_path=CASES_PATH,
+            test_file='6_jupyter_dummy_test', extension='ipynb',
+            generated_file='6_generated_jupyter_dummy_test',
+            output_file='6_output_jupyter_dummy_test'
+            )
+
+    @pytest.mark.reinstall
+    def test_global_setup(self):
+        """End test tests/cases/7_global_setup.batspp"""
+        debug.trace(debug.QUITE_DETAILED,
+                    f"TestEndUsage.test_global_setup(); self={self}")
+        self.run_regression_test(
+            dir_path=CASES_PATH,
+            test_file='7_global_setup', extension='batspp',
+            generated_file='7_generated_global_setup',
+            output_file='7_output_global_setup'
             )
 
 if __name__ == '__main__':

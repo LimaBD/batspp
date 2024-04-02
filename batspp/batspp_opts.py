@@ -20,7 +20,8 @@ from batspp._exceptions import (
 
 
 class BatsppOpts:
-    """Batspp test related options"""
+    """Batspp test options class, useful to share
+       and set options between modules"""
 
     def __init__(
             self,
@@ -29,6 +30,8 @@ class BatsppOpts:
             hexdump_debug: bool = False,
             omit_trace: bool = False,
             disable_aliases: bool = False,
+            has_arrow_assertion: bool = False,
+            greater_token_present: bool = False,
             ) -> None:
 
         # Check for embedded_tests
@@ -51,6 +54,11 @@ class BatsppOpts:
         assert_type(disable_aliases, bool)
         self.disable_aliases = disable_aliases
 
+        # Optimization flags
+        assert_type(has_arrow_assertion, bool)
+        self.has_arrow_assertion = has_arrow_assertion
+        assert_type(greater_token_present, bool)
+        self.greater_token_present = greater_token_present
 
 if __name__ == '__main__':
     warning_not_intended_for_cmd()

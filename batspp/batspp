@@ -2,18 +2,15 @@
 #
 # BATSPP
 #
-# Shell style tests using bats-core
+# Shell style tests
 #
-## TODO: add timer and print execution time
-## TODO: use a separate pass of the test source to fill in the missing test names.
 ## TODO: implement --discover flag to discover all tests file in a folder.
 ## TODO: beautify exceptions, catch and hide python traceback, only show batspp traceback.
-
 
 """
 BATSPP
 
-Shell style tests using bats-core
+Shell style tests
 
 You can run tests for aliases and more using the
 command line with '$ [command]' followed by the
@@ -31,11 +28,9 @@ Also you can test bash functions:
  fibonacci 9 => "0 1 1 2 3 5 8 13 21 34"
 """
 
-
 # Standard packages
 from os import getpid as os_getpid
 from sys import argv as sys_argv
-
 
 # Installed packages
 from mezcla.main import Main
@@ -44,13 +39,15 @@ from mezcla import debug
 from mezcla import glue_helpers as gh
 from mezcla import text_utils
 
-
 # Local packages
 from batspp.__version__ import __version__
 from batspp.batspp_opts import BatsppOpts
 from batspp.batspp_args import BatsppArgs
 from batspp.batspp_test import BatsppTest
-
+from batspp._timer import Timer
+from batspp._settings import (
+    BASH, BATS,
+)
 
 # Command-line labels and
 # enviroment variables constants
@@ -71,7 +68,9 @@ SKIP_RUN = 'skip_run'
 OMIT_TRACE = 'omit_trace'
 DISABLE_ALIASES = 'disable_aliases'
 VERSION = 'version'
-
+RUNNER = 'runner'
+BASH_EVAL = 'bash_eval'
+BATS_EVAL = 'bats_eval'
 
 class Batspp(Main):
     """Argument processing class"""
@@ -82,7 +81,7 @@ class Batspp(Main):
     save_path = ''
     sources = []
     output = False
-    embedded_tests = False
+    embedded_tests = None
     hexdump_debug = False
     verbose_debug = False
     debug = ''
@@ -94,6 +93,9 @@ class Batspp(Main):
     omit_trace = False
     disable_aliases = False
     version = False
+    runner = ''
+    bats_eval = False
+    bash_eval = False
 
     def setup(self) -> None:
         """Process arguments"""
@@ -103,7 +105,7 @@ class Batspp(Main):
 
         # Check the command-line/enviroment vars options
         self.file = self.get_parsed_argument(FILE, self.file)
-        self.save_path = self.get_entered_text(SAVE, self.temp_file)
+        self.save_path = self.get_entered_text(SAVE, self.save_path)
         self.sources = text_utils.extract_string_list(self.get_entered_text(SOURCES, ''))
         self.output = self.get_entered_bool(OUTPUT, self.output)
         self.embedded_tests = self.get_entered_bool(EMBEDDED_TESTS, self.embedded_tests)
@@ -118,6 +120,9 @@ class Batspp(Main):
         self.omit_trace = self.get_entered_bool(OMIT_TRACE,  self.omit_trace)
         self.disable_aliases = self.get_entered_bool(DISABLE_ALIASES,  self.disable_aliases)
         self.version = self.has_parsed_option(VERSION)
+        self.runner = self.get_entered_text(RUNNER, self.runner)
+        self.bats_eval = self.get_entered_bool(BATS_EVAL, self.bats_eval)
+        self.bash_eval = self.get_entered_bool(BASH_EVAL, self.bash_eval)
 
     def run_main_step(self) -> None:
         """Process main script"""
@@ -125,6 +130,16 @@ class Batspp(Main):
         if self.version:
             print(f'Batspp version {__version__}')
             return
+
+        # Set runner to evaluate tests
+        if not self.runner:
+            if self.bats_eval:
+                self.runner = BATS
+            elif self.bash_eval:
+                self.runner = BASH
+            else:
+                # By default
+                self.runner = BATS
 
         # Build tests
         test = BatsppTest()
@@ -142,15 +157,31 @@ class Batspp(Main):
             run_opts = self.run_opts,
             copy_dir = self.copy_dir,
             debug = self.debug,
+            runner = self.runner,
             )
 
-        if self.save_path:
-            test.transpile_and_save_bats(self.file, self.save_path, args=args, opts=opts)
+        # Start timer for profiling
+        timer = Timer()
+        timer.start()
 
+        stdout = ''
         if self.output:
-            print(test.transpile_to_bats(self.file, args=args, opts=opts))
+            stdout = test.transpile_to_bats(
+                self.file,
+                copy_path=self.save_path,
+                args=args,
+                opts=opts
+                )
         elif not self.skip_run:
-            print(test.run(self.file, args=args, opts=opts))
+            stdout = test.run(
+                self.file,
+                copy_path=self.save_path,
+                args=args,
+                opts=opts
+                )
+        print(stdout)
+
+        debug.trace(5, f'Batspp.run_main_step() finished in {timer.stop()} seconds')
 
     def get_entered_bool(
             self,
@@ -162,7 +193,7 @@ class Batspp(Main):
         also can be specified a DEFAULT value
         """
         result = (self.has_parsed_option(label.lower()) or
-                  system.getenv_bool(var=label.upper()))
+                  system.getenv_bool(var=label.upper(), default=None))
         if result is None:
             result = default
         else:
@@ -185,7 +216,6 @@ class Batspp(Main):
         debug.trace(7, f'batspp.get_entered_text(label={label}) => {result}')
         return result
 
-
 if __name__ == '__main__':
 
     print_version = (f"--{VERSION}" in " ".join(sys_argv))
@@ -204,6 +234,8 @@ if __name__ == '__main__':
             (SKIP_RUN, 'Do not run the test script'),
             (OMIT_TRACE, 'Omit actual/expected trace from test file'),
             (DISABLE_ALIASES, 'Disable alias expansion'),
+            (BATS_EVAL, 'Evaluate Batspp tests with Bats'),
+            (BASH_EVAL, 'Evaluate Batspp tests with Bash'),
             ],
         text_options = [
             (SAVE, 'Specify path to save the generated test file'),
@@ -213,6 +245,7 @@ if __name__ == '__main__':
             (RUN_OPTS, 'Options for run Bats command'),
             (COPY_DIR, 'Copy directory to temp. dir for input files, etc.'),
             (DEBUG, 'Add custom debug to actual/expected values'),
+            (RUNNER, 'Testing runner, could be "Bats" or "Bash"'),
             ],
         manual_input = True,
         )

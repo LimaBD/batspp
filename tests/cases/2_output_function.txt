@@ -1,10 +1,11 @@
 1..3
 ok 1 test of line 1
 not ok 2 test of line 20
-# (in test file /tmp/<REPLACED>.bats, line 55)
+# (in test file /tmp/'<REPLACED>'
 #   `[ "$(echo -e "hello\nworld!" | line-wc)" == "$(echo -e '1       hello\n1       world!\n')" ]' failed
 # syntax error at -e line 1, at EOF
 # Execution of -e aborted due to compilation errors.
+#
 # =======  actual  =======
 # 00000000  0a                                                |.|
 # 00000001

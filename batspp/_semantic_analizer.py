@@ -43,6 +43,9 @@ from batspp._token import (
     Token, TEXT,
     )
 from batspp._timer import Timer
+from batspp._settings import (
+    TESTING_UTILS_PATH,
+)
 
 # Constants
 #
@@ -133,6 +136,9 @@ class _SemanticAnalizer(ReferenceNodeVisitor):
         one_time_setup_commands = []
         setup_commands = []
 
+        # Add default one time commands
+        one_time_setup_commands.append(build_command_node(f'source {TESTING_UTILS_PATH}'))
+
         # Add commands to visible paths
         if self.args.visible_paths:
             value = f'PATH={":".join(self.args.visible_paths)}:$PATH\n'
@@ -188,11 +194,11 @@ class _SemanticAnalizer(ReferenceNodeVisitor):
         node.constants = self.build_constants_node()
         #
         if not node.global_setup:
-            node.global_setup = GlobalSetup(None, StandaloneCommands([]))
+            node.global_setup = GlobalSetup(None, None, StandaloneCommands([]))
         self.visit(node.global_setup)
         #
         if not node.global_teardown:
-            node.global_teardown = GlobalTeardown(None, StandaloneCommands([]))
+            node.global_teardown = GlobalTeardown(None, None, StandaloneCommands([]))
         self.visit(node.global_teardown)
         #
         for test_or_setup in node.tests_or_setups:

@@ -24,13 +24,24 @@ function run_teardown () {
     : # Nothing here...
 }
 
-@test "test of line 1" {
-    run_setup "test-of-line-1"
+@test "test of line 2" {
+    run_setup "test-of-line-2"
 
-    # Assertion of line 1
+    # Assertion of line 2
 	shopt -s expand_aliases
-	print_debug "$(echo "Hello World!")" "$(echo -e 'Hello World!\n')"
-	[ "$(echo "Hello World!")" == "$(echo -e 'Hello World!\n')" ]
+	print_debug "$(echo dummy)" "$(echo -e 'dummy\n')"
+	[ "$(echo dummy)" == "$(echo -e 'dummy\n')" ]
+
+    run_teardown
+}
+
+@test "test of line 6" {
+    run_setup "test-of-line-6"
+
+    # Assertion of line 6
+	shopt -s expand_aliases
+	print_debug "$(date | grep "oct 2020")" "$(echo -e '1\n')"
+	[ "$(date | grep "oct 2020")" == "$(echo -e '1\n')" ]
 
     run_teardown
 }

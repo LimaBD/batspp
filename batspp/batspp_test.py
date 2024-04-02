@@ -10,20 +10,30 @@ from re import search as re_search
 
 # Installed packages
 from mezcla import glue_helpers as gh
+from mezcla import debug
 
 # Local packages
 from batspp._lexer import lexer
 from batspp._parser import parser
 from batspp._semantic_analizer import semantic_analizer
-from batspp._interpreter import interpreter
 from batspp._jupyter_to_batspp import jupyter_to_batspp
+from batspp._bats_interpreter import bats_interpreter
+from batspp._bash_interpreter import bash_interpreter
 from batspp._settings import (
-    BATSPP_EXTENSION, BATS_EXTENSION
+    BATSPP_EXTENSION,
+    BASH, BATS,
 )
 from batspp.batspp_opts import BatsppOpts
 from batspp.batspp_args import BatsppArgs
 from batspp._exceptions import (
     warning_not_intended_for_cmd,
+    )
+from batspp._timer import Timer
+from batspp.batspp_args import (
+    BatsppArgs,
+    )
+from batspp.batspp_opts import (
+    BatsppOpts,
     )
 
 def add_prefix_to_filename(file:str, prefix:str) -> str:
@@ -42,19 +52,35 @@ def replace_extension(filename:str, extension:str) -> str:
     filename = gh.remove_extension(filename, current_extension)
     return f'{filename}.{extension}'
 
-def resolve_path(path:str, alternative:str) -> str:
-    """Resolve PATH based on ALTERNATIVE filename"""
+def resolve_path(path:str, alternative:str, extension:str) -> str:
+    """
+    Resolve PATH based on ALTERNATIVE filename and EXTENSION
+    \n
+    resolve_path('/folder/', '/project/folder/test_file.batspp', 'bash')
+    => '/folder/generated_test_file.bash'
+    """
     result = ''
     if not path:
         result = add_prefix_to_filename(alternative, 'generated_')
-        result = replace_extension(result, BATS_EXTENSION)
+        result = replace_extension(result, extension)
     elif path.endswith('/'):
         result = merge_filename_into_path(alternative, path)
         result = add_prefix_to_filename(result, 'generated_')
-        result = replace_extension(result, BATS_EXTENSION)
+        result = replace_extension(result, extension)
     else:
         result = path
     return result
+
+def save_resolving_path(original_file, new_file, extension, content):
+    """Save with exec permissions CONTENT to NEW_FILE,
+       resolving NEW_FILE path based on ORIGINAL_FILE"""
+    new_file = resolve_path(new_file, original_file, extension)
+    save_with_permissions(new_file, content)
+
+def save_with_permissions(file:str, content:str) -> None:
+    """Save CONTENT to FILE with exec permissions"""
+    gh.write_file(file, content)
+    gh.run(f'chmod +x {file}')
 
 class BatsppTest:
     """
@@ -76,11 +102,14 @@ class BatsppTest:
     def transpile_to_bats(
             self,
             file: str,
+            copy_path:str='',
             args: BatsppArgs = BatsppArgs(),
             opts: BatsppOpts = BatsppOpts()
             ) -> str:
-        """Return transpiled Bats content from Batspp test FILE"""
+        """Return transpiled Bash content from Batspp test FILE"""
         assert file, 'File path cannot be empty'
+        timer = Timer()
+        timer.start()
 
         # Check for embedded tests
         if opts.embedded_tests is None:
@@ -96,12 +125,23 @@ class BatsppTest:
         # Transpilation
         content = gh.read_file(file)
         content = jupyter_to_batspp.convert(content) if self.is_ipynb_file(file) else content
-        tokens = lexer.tokenize(content, opts.embedded_tests)
-        tree = parser.parse(tokens, opts.embedded_tests)
+        tokens, opts, args = lexer.tokenize(content, opts=opts, args=args)
+        tree, opts, args = parser.parse(tokens, opts=opts, args=args)
         tree, opts, args = semantic_analizer.analize(tree, opts=opts, args=args)
-        result = interpreter.interpret(tree, opts=opts, args=args)
+        ## TODO: refactor with polymorfism but carefull with circular imports!
+        interpreter = None
+        if args.runner == BATS:
+            interpreter = bats_interpreter
+        elif args.runner == BASH:
+            interpreter = bash_interpreter
+        transpiled = interpreter.interpret(tree, opts=opts, args=args)
 
-        return result
+        # Save copy if requested
+        if copy_path:
+            save_resolving_path(file, copy_path, args.runner, transpiled)
+
+        debug.trace(5, f'BatsppTest.transpile_to_bats() finished in {timer.stop()} seconds')
+        return transpiled
 
     def transpile_and_save_bats(
             self,
@@ -111,25 +151,33 @@ class BatsppTest:
             opts: BatsppOpts = BatsppOpts()
             ) -> None:
         """Save Batspp transiled test FILE to OUTPUT path,
-           if OUTPUT is not provided or is a dir, a default is used 'generated_<file>.bats'"""
-        assert file, 'File path cannot be empty'
-        output = resolve_path(output, file)
-        transpiled_text = self.transpile_to_bats(file, args=args, opts=opts)
-        gh.write_file(output, transpiled_text)
-        gh.run(f'chmod +x {output}')
+           if OUTPUT is not provided or is a dir, a default is used 'generated_<file>.runner'"""
+        _ = self.transpile_to_bats(file, copy_path=output, args=args, opts=opts)
 
     def run(
             self,
             file:str,
+            copy_path:str='',
             args: BatsppArgs = BatsppArgs(),
             opts: BatsppOpts = BatsppOpts()
             ) -> str:
         """Run Batspp test FILE and return result"""
-        assert file, 'File path cannot be empty'
-        temp_bats = f'{gh.get_temp_file()}.{BATS_EXTENSION}'
-        self.transpile_and_save_bats(file, temp_bats, args=args, opts=opts)
-        sudo = 'sudo' if 'sudo' in gh.read_file(temp_bats) else ''
-        return gh.run(f'{sudo} bats {args.run_opts} {temp_bats}')
+        timer = Timer()
+        timer.start()
+        # Get tests
+        transpiled = self.transpile_to_bats(file, args=args, opts=opts)
+        # Save in TMP to run
+        temp_bats = f'{gh.get_temp_file()}.tmp'
+        save_with_permissions(temp_bats, transpiled)
+        # Save copy if requested
+        if copy_path:
+            save_resolving_path(file, copy_path, args.runner, transpiled)
+        # Run
+        sudo = 'sudo' if 'sudo' in transpiled else ''
+        output = gh.run(f'{sudo} {args.runner} {args.run_opts} {temp_bats}')
+        #
+        debug.trace(5, f'BatsppTest.run() finished in {timer.stop()} seconds')
+        return output
 
 if __name__ == '__main__':
     warning_not_intended_for_cmd()

@@ -26,6 +26,9 @@ from batspp._token import (
 
 # Reference to the module being tested
 import batspp._lexer as THE_MODULE
+from batspp.batspp_opts import (
+    BatsppOpts,
+    )
 
 class TestTextLiner:
     """Class for testcase definition"""
@@ -138,8 +141,9 @@ class TestLexer:
         """
         Tokenize STRING, verify tokens and returned variants
         """
-
-        tokens = THE_MODULE.Lexer().tokenize(string, embedded_tests=embedded_tests)
+        opts = BatsppOpts()
+        opts.embedded_tests=embedded_tests
+        tokens, _, _ = THE_MODULE.Lexer().tokenize(string, opts=opts)
         assert tokens
         assert isinstance(tokens, list)
 

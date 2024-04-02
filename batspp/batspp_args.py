@@ -3,9 +3,7 @@
 # Batspp arguments module
 #
 
-
 """Batspp arguments module"""
-
 
 # Standard packages
 ## NOTE: this is empty for now
@@ -17,10 +15,13 @@
 from batspp._exceptions import (
     assert_type, warning_not_intended_for_cmd,
     )
-
+from batspp._settings import (
+    BATS, BASH,
+    )
 
 class BatsppArgs:
-    """Batspp test related arguments"""
+    """Batspp test arguments class, useful
+       to share and set arguments between modules"""
 
     def __init__(
             self,
@@ -30,6 +31,7 @@ class BatsppArgs:
             run_opts: str = '',
             copy_dir: str = '',
             debug: str = '',
+            runner: str = 'bats',
             ) -> None:
 
         # Check for sources, filter empty sources
@@ -60,6 +62,11 @@ class BatsppArgs:
         assert_type(debug, str)
         self.debug = debug
 
+        # Check for runner
+        assert_type(runner, str)
+        if runner not in [BATS, BASH]:
+            raise Exception(f'Unknown test runner, must be "{BATS}" or "{BASH}"')
+        self.runner = runner.lower()
 
 if __name__ == '__main__':
     warning_not_intended_for_cmd()
