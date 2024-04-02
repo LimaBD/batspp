@@ -21,7 +21,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build docker image
       run: |
-        docker build --build-arg UBUNTU_VERSION=${{ matrix.os }} --build-arg PYTHON_VERSION=${{ matrix.python-version }} -t batspp-dev -f- . <Dockerfile
+        docker build --build-arg --build-arg PYTHON_VERSION=${{ matrix.python-version }} -t batspp-dev -f- . <Dockerfile
     - name: Run tests and generate coverage report
       run: |
         docker run --entrypoint './tools/run_tests.bash' --rm --mount type=bind,source="$(pwd)",target=/home/batspp batspp-dev

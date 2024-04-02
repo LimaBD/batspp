@@ -1,7 +1,7 @@
 # This builds the base images that we can use for development
 #
 # Build the image:
-# $ docker build --no-cache --build-arg UBUNTU_VERSION=latest --build-arg PYTHON_VERSION=3.9.18 -t batspp-dev -f- . <Dockerfile
+# $ docker build --no-cache --build-arg --build-arg PYTHON_VERSION=3.9.18 -t batspp-dev -f- . <Dockerfile
 #
 # Run the image:
 # $ docker run -it --rm --mount type=bind,source="$(pwd)",target=/home/batspp batspp-dev
@@ -10,8 +10,8 @@
 # $ docker run --entrypoint './tools/run_tests.bash' -it --rm --mount type=bind,source="$(pwd)",target=/home/batspp batspp-dev
 #
 
-ARG UBUNTU_VERSION
-FROM ubuntu:${UBUNTU_VERSION}
+# See https://github.com/catthehacker/docker_images
+FROM catthehacker/ubuntu:act-20.04
 
 ARG WORKDIR=/home/batspp
 WORKDIR $WORKDIR
@@ -39,7 +39,9 @@ RUN apt update -y && apt upgrade -y \
     make install
 
 # Some tools expect a "python" binary.
-RUN ln -s $(which python3) /usr/local/bin/python
+RUN if [ ! -e /usr/local/bin/python ]; then \
+      ln -s $(which python3) /usr/local/bin/python \
+    ;fi
 
 # Set the working directory visible.
 ENV PYTHONPATH="${PYTHONPATH}:$WORKDIR"
