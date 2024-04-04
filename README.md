@@ -26,5 +26,9 @@ $ cat $filepath | wc -c
 
 Batspp grew out of work for [Thomas O'Hara](https://github.com/tomasohara) on [shell-scripts](https://github.com/tomasohara/shell-scripts) and [mezcla](https://github.com/tomasohara/mezcla).
 
+## Documentation
+
+You can learn more about Batspp reading the [docs](https://batspp.readthedocs.io/en/latest/).
+
 ## License
 Batspp is released under an GNU Lesser General Public License Version 3, see [LICENSE.TXT](./LICENSE.txt) for details.
