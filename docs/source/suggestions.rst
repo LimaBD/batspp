@@ -47,6 +47,7 @@ Bad:
 This will output:
 
 .. code-block:: bash
+
     this is a long output
     this is a long output
     this is a long output
@@ -82,4 +83,5 @@ Good:
 this outputs:
 
 .. code-block:: bash
+
     50
