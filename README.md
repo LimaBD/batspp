@@ -26,17 +26,5 @@ $ cat $filepath | wc -c
 
 Batspp grew out of work for [Thomas O'Hara](https://github.com/tomasohara) on [shell-scripts](https://github.com/tomasohara/shell-scripts) and [mezcla](https://github.com/tomasohara/mezcla).
 
-
-## Docs
-- [Installation](./docs/installation.md)
-- [Basic usage](./docs/basic_usage.md)
-- [Writing tests](./docs/writing_tests.md)
-- [Writing setups and teardowns](./docs/writing_setups_and_teardowns.md)
-- [Tests examples](./docs/tests_examples.md)
-- [Regressions tests with Jupyter Notebook](./docs/regressions_tests_with_jupyter_notebook.ipynb)
-- [Coverage reports](./docs/coverage_report.md)
-- [Batspp internals](./docs/batspp_internals.md)
-- [Contributing](./docs/contributing.md)
-
 ## License
 Batspp is released under an GNU Lesser General Public License Version 3, see [LICENSE.TXT](./LICENSE.txt) for details.

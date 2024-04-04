@@ -27,3 +27,7 @@ twine
 # This is useful to run tests and coverage reports
 pytest
 coverage
+
+# THis is useful to generate documentation
+sphinx
+myst-parser
